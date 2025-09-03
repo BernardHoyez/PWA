@@ -1,0 +1,115 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visite Viewer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style> body { font-family: sans-serif; } </style>
+</head>
+<body class="bg-gray-900 text-white flex flex-col h-screen">
+    <main class="flex-grow flex flex-col relative">
+        <div id="main-display" class="w-full flex-grow bg-black flex items-center justify-center relative"></div>
+    </main>
+    <footer class="bg-gray-800 shadow-inner p-4 z-10 h-48">
+        <div class="max-w-7xl mx-auto h-full flex flex-col">
+            <div class="flex justify-between items-start mb-2">
+                <div class="flex-grow mr-4 min-w-0">
+                    <h2 id="slide-name" class="text-lg font-semibold truncate"></h2>
+                    <p id="slide-commentary" class="text-sm text-gray-300 mt-1"></p>
+                </div>
+                <div id="audio-player-container"></div>
+            </div>
+            <div id="carousel" class="flex-grow flex items-center gap-4 overflow-x-auto pb-2"></div>
+        </div>
+    </footer>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('data.json')
+                .then(response => response.json())
+                .then(slides => {
+                    if (!slides || slides.length === 0) return;
+                    let currentIndex = 0;
+                    const mainDisplay = document.getElementById('main-display');
+                    const slideNameEl = document.getElementById('slide-name');
+                    const slideCommentaryEl = document.getElementById('slide-commentary');
+                    const carouselEl = document.getElementById('carousel');
+                    const audioContainer = document.getElementById('audio-player-container');
+
+                    function renderSlide(index) {
+                        if (index < 0 || index >= slides.length) return;
+                        currentIndex = index;
+                        const slide = slides[index];
+
+                        mainDisplay.innerHTML = '';
+                        if (slide.type === 'image') {
+                            const img = document.createElement('img');
+                            img.src = slide.url;
+                            img.alt = slide.name;
+                            img.className = 'max-h-full max-w-full object-contain';
+                            mainDisplay.appendChild(img);
+                        } else {
+                            const video = document.createElement('video');
+                            video.src = slide.url;
+                            video.controls = true;
+                            video.className = 'max-h-full max-w-full object-contain';
+                            mainDisplay.appendChild(video);
+                        }
+                        
+                        audioContainer.innerHTML = '';
+                        if(slide.audioUrl) {
+                            const audio = document.createElement('audio');
+                            audio.src = slide.audioUrl;
+                            audio.controls = true;
+                            audio.autoplay = true;
+                            audioContainer.appendChild(audio);
+                        }
+
+                        slideNameEl.textContent = slide.name;
+                        slideCommentaryEl.textContent = slide.commentary || '';
+                        slideCommentaryEl.style.display = slide.commentary ? 'block' : 'none';
+
+                        Array.from(carouselEl.children).forEach((child, i) => {
+                            child.classList.toggle('ring-4', i === index);
+                            child.classList.toggle('ring-emerald-500', i === index);
+                        });
+                    }
+
+                    function renderCarousel() {
+                        carouselEl.innerHTML = '';
+                        slides.forEach((slide, index) => {
+                            const thumb = document.createElement('div');
+                            thumb.className = 'relative flex-shrink-0 w-32 h-24 rounded-lg cursor-pointer overflow-hidden ring-2 ring-transparent';
+                            thumb.onclick = () => renderSlide(index);
+                            
+                            if (slide.type === 'image') {
+                                const img = document.createElement('img');
+                                img.src = slide.url;
+                                img.className = 'w-full h-full object-cover';
+                                thumb.appendChild(img);
+                            } else {
+                                const video = document.createElement('video');
+                                video.src = slide.url;
+                                video.className = 'w-full h-full object-cover bg-black';
+                                thumb.appendChild(video);
+                            }
+                            const overlay = document.createElement('div');
+                            overlay.className = "absolute inset-0 bg-black bg-opacity-30 flex items-end p-1";
+                            const p = document.createElement('p');
+                            p.className = "text-white text-xs truncate";
+                            p.textContent = slide.name;
+                            overlay.appendChild(p);
+                            thumb.appendChild(overlay);
+
+                            carouselEl.appendChild(thumb);
+                        });
+                    }
+                    
+                    renderCarousel();
+                    renderSlide(0);
+                });
+        });
+    </script>
+</body>
+</html>

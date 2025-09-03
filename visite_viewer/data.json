@@ -1,0 +1,23 @@
+[
+  {
+    "id": "1",
+    "type": "image",
+    "url": "https://picsum.photos/seed/nature1/1280/720",
+    "name": "Paysage Montagneux",
+    "commentary": "Une vue magnifique depuis le sommet, par temps clair."
+  },
+  {
+    "id": "2",
+    "type": "video",
+    "url": "https://www.w3schools.com/html/mov_bbb.mp4",
+    "name": "Rivière en Forêt",
+    "commentary": "Le son de l'eau est très apaisant."
+  },
+  {
+    "id": "3",
+    "type": "image",
+    "url": "https://picsum.photos/seed/nature3/1280/720",
+    "name": "Coucher de Soleil",
+    "commentary": "Les couleurs étaient incroyables ce soir-là."
+  }
+]
