@@ -1,0 +1,41 @@
+[
+  {
+    "id": "97295c9a-d76c-40cb-839d-2c6d148ede3f",
+    "title": "Diapositive 1",
+    "comment": "",
+    "gps": {
+      "lat": 43.4864128,
+      "lon": 6.078464
+    },
+    "image": {
+      "name": "IMG_20241212_110733.jpg",
+      "type": "image/jpeg"
+    }
+  },
+  {
+    "id": "7ae7d2d0-3ca8-491f-8430-724e65c63415",
+    "title": "Diapositive 2",
+    "comment": "",
+    "gps": {
+      "lat": 43.4864128,
+      "lon": 6.078464
+    },
+    "image": {
+      "name": "IMG_20241212_110733.jpg",
+      "type": "image/jpeg"
+    }
+  },
+  {
+    "id": "b1ad7f12-0cad-4c41-839a-068db56bcb3e",
+    "title": "Diapositive 3",
+    "comment": "",
+    "gps": {
+      "lat": 43.4864128,
+      "lon": 6.078464
+    },
+    "image": {
+      "name": "Fossiles Senneville HG_ interprétation_3jan_2025.jpg",
+      "type": "image/jpeg"
+    }
+  }
+]
