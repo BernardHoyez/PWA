@@ -1,0 +1,21 @@
+{
+  "name": "Créateur de Visites Virtuelles",
+  "short_name": "Visites Virtuelles",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2c3e50",
+  "description": "Créez et explorez des visites virtuelles immersives avec un guide IA.",
+  "icons": [
+    {
+      "src": "icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
