@@ -1,0 +1,21 @@
+{
+  "name": "Allez-y",
+  "short_name": "Allez-y",
+  "description": "Allez-y: une application pour suivre la distance et l'azimut par rapport à un point de référence.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0078d4",
+  "icons": [
+    {
+      "src": "https://www.gstatic.com/images/branding/product/1x/maps_512dp.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://www.gstatic.com/images/branding/product/1x/maps_512dp.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
