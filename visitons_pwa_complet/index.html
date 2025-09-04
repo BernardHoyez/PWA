@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>visitons — Éditeur</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    body { font-family: system-ui; margin: 0; padding: 12px; }
+    header { display: flex; justify-content: space-between; align-items: center; }
+    .coords { font-family: monospace; }
+    .preview img, .preview video { max-width: 100%; max-height: 400px; }
+    .carousel { display: flex; gap: 8px; overflow-x: auto; padding-top: 8px; }
+    .thumb { width: 80px; height: 80px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; }
+    .controls { margin-top: 12px; display: flex; gap: 8px; }
+    button { padding: 8px 12px; cursor: pointer; border-radius: 6px; border: 1px solid #aaa; background: #f5f5f5; }
+    textarea, input[type="text"] { width: 100%; padding: 6px; margin-top: 4px; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>visitons — Éditeur</h1>
+    <div>
+      <label for="modeToggle">Édition ↔ Visualisation</label>
+      <input id="modeToggle" type="checkbox">
+    </div>
+  </header>
+  <div class="coords" id="coords">Lat -- Lon --</div>
+  <hr>
+  <div>
+    <label>Image(s) <input id="imgInput" type="file" accept="image/*" multiple></label><br>
+    <label>Vidéo <input id="vidInput" type="file" accept="video/*"></label><br>
+    <label>Commentaire sonore <input id="audInput" type="file" accept="audio/*"></label><br>
+    <label>Titre : <input id="title" type="text" placeholder="Titre de la diapo"></label>
+    <label>Commentaire textuel :</label>
+    <textarea id="textcomment" rows="3" placeholder="Description"></textarea>
+  </div>
+  <div class="preview" id="preview"><p>Aucune diapo sélectionnée</p></div>
+  <div id="carousel" class="carousel"></div>
+  <div class="controls">
+    <button id="saveFull">Sauvegarder PWA complète</button>
+    <button id="saveVisit">Sauvegarder VISITE seule</button>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+  <script>
+    const state = { items: [], selectedIndex: -1 };
+    const el = id => document.getElementById(id);
+    function fmtLatLon(lat, lon){
+      if(lat==null||lon==null) return 'Lat -- Lon --';
+      return `Lat ${Math.abs(lat).toFixed(5)}${lat>=0?'N':'S'} Lon ${Math.abs(lon).toFixed(5)}${lon>=0?'E':'W'}`;
+    }
+    if('geolocation' in navigator){
+      navigator.geolocation.watchPosition(pos=>{
+        el('coords').textContent=fmtLatLon(pos.coords.latitude,pos.coords.longitude);
+      },()=> el('coords').textContent='Position non autorisée');
+    }
+    el('imgInput').addEventListener('change', e=>{
+      const files=Array.from(e.target.files);
+      for(const f of files){
+        const item={id:crypto.randomUUID(), imageFile:f, title:f.name, text:''};
+        state.items.push(item);
+      }
+      renderCarousel(); selectIndex(state.items.length-1);
+    });
+    el('vidInput').addEventListener('change', e=>{
+      const f=e.target.files[0]; if(!f)return;
+      if(state.selectedIndex<0){const item={id:crypto.randomUUID(), videoFile:f, title:f.name,text:''}; state.items.push(item); selectIndex(state.items.length-1);}
+      else state.items[state.selectedIndex].videoFile=f;
+      renderCarousel();
+    });
+    el('audInput').addEventListener('change', e=>{
+      const f=e.target.files[0]; if(!f)return;
+      if(state.selectedIndex<0){const item={id:crypto.randomUUID(), audioFile:f, title:f.name,text:''}; state.items.push(item); selectIndex(state.items.length-1);}
+      else state.items[state.selectedIndex].audioFile=f;
+      renderCarousel();
+    });
+    el('title').addEventListener('input', e=>{
+      if(state.selectedIndex<0)return;
+      state.items[state.selectedIndex].title=e.target.value;
+      renderCarousel();
+    });
+    el('textcomment').addEventListener('input', e=>{
+      if(state.selectedIndex<0)return;
+      state.items[state.selectedIndex].text=e.target.value;
+    });
+    function renderCarousel(){
+      const c=el('carousel'); c.innerHTML='';
+      state.items.forEach((it,idx)=>{
+        const img=document.createElement('img');
+        img.className='thumb';
+        img.src=it.imageFile?URL.createObjectURL(it.imageFile):'';
+        img.addEventListener('click',()=>selectIndex(idx));
+        c.appendChild(img);
+      });
+    }
+    function selectIndex(i){
+      state.selectedIndex=i;
+      const prev=el('preview'); prev.innerHTML='';
+      if(i<0||!state.items[i]){prev.innerHTML='<p>Aucune diapo sélectionnée</p>';el('title').value='';el('textcomment').value='';return;}
+      const it=state.items[i];
+      if(it.imageFile){const img=document.createElement('img');img.src=URL.createObjectURL(it.imageFile);prev.appendChild(img);}
+      else if(it.videoFile){const v=document.createElement('video');v.controls=true;v.src=URL.createObjectURL(it.videoFile);prev.appendChild(v);}
+      if(it.audioFile){const a=document.createElement('audio');a.controls=true;a.src=URL.createObjectURL(it.audioFile);prev.appendChild(a);}
+      el('title').value=it.title||'';el('textcomment').value=it.text||'';
+    }
+    function makeManifest(){return JSON.stringify({
+      name:'visitons',short_name:'visitons',start_url:'./visit.html',display:'standalone',background_color:'#ffffff',description:'PWA générée avec visitons'
+    },null,2);}
+    function makeSW(){return `self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('fetch',()=>{});`;}
+    function makeVisitHTML(){return `<!doctype html><html lang=fr><head><meta charset=utf-8><meta name=viewport content=width=device-width,initial-scale=1><title>visitons — VISITE</title><link rel=manifest href=manifest.json><style>body{font-family:system-ui;padding:12px}img,video{max-width:100%}</style></head><body><h1>visitons — VISITE</h1><div id=coords>Lat -- Lon --</div><div id=content></div><button id=prev>◀</button><button id=next>▶</button><script>let data=null;let idx=0;function fmt(lat,lon){if(lat==null||lon==null)return'Lat -- Lon --';return'Lat '+Math.abs(lat).toFixed(5)+(lat>=0?'N':'S')+' Lon '+Math.abs(lon).toFixed(5)+(lon>=0?'E':'W')}fetch('visit.json').then(r=>r.json()).then(d=>{data=d;render(0)});function render(i){idx=i;const content=document.getElementById('content');content.innerHTML='';const it=data.items[i];if(it.image){const img=document.createElement('img');img.src=it.image;content.appendChild(img);}if(it.video){const v=document.createElement('video');v.controls=true;v.src=it.video;content.appendChild(v);}if(it.audio){const a=document.createElement('audio');a.controls=true;a.src=it.audio;content.appendChild(a);}const t=document.createElement('h3');t.textContent=it.title||'';content.appendChild(t);const p=document.createElement('p');p.textContent=it.text||'';content.appendChild(p);}document.getElementById('prev').onclick=()=>{if(!data)return;idx=(idx-1+data.items.length)%data.items.length;render(idx)};document.getElementById('next').onclick=()=>{if(!data)return;idx=(idx+1)%data.items.length;render(idx)};if('geolocation'in navigator)navigator.geolocation.watchPosition(p=>{document.getElementById('coords').textContent=fmt(p.coords.latitude,p.coords.longitude)});</script></body></html>`;}
+    async function buildVisitJSON(){
+      const items=[];for(const it of state.items){const e={id:it.id,title:it.title||'',text:it.text||''};if(it.imageFile)e.image=`media/${it.id}_img_${it.imageFile.name}`;if(it.videoFile)e.video=`media/${it.id}_vid_${it.videoFile.name}`;if(it.audioFile)e.audio=`media/${it.id}_aud_${it.audioFile.name}`;items.push(e);}return{items};
+    }
+    async function addMediaToZip(zip){const folder=zip.folder('media');for(const it of state.items){if(it.imageFile)await folder.file(`${it.id}_img_${it.imageFile.name}`,it.imageFile);if(it.videoFile)await folder.file(`${it.id}_vid_${it.videoFile.name}`,it.videoFile);if(it.audioFile)await folder.file(`${it.id}_aud_${it.audioFile.name}`,it.audioFile);}}
+    async function saveFullPWA(){const zip=new JSZip();zip.file('manifest.json',makeManifest());zip.file('sw.js',makeSW());zip.file('index.html',document.documentElement.outerHTML);const visitJSON=await buildVisitJSON();await addMediaToZip(zip);zip.file('visit.json',JSON.stringify(visitJSON,null,2));zip.file('visit.html',makeVisitHTML());const blob=await zip.generateAsync({type:'blob'});saveAs(blob,'visitons_full_pwa.zip');}
+    async function saveVisitOnly(){const zip=new JSZip();zip.file('manifest.json',makeManifest());zip.file('sw.js',makeSW());const visitJSON=await buildVisitJSON();await addMediaToZip(zip);zip.file('visit.json',JSON.stringify(visitJSON,null,2));zip.file('visit.html',makeVisitHTML());const blob=await zip.generateAsync({type:'blob'});saveAs(blob,'visitons_visit_only.zip');}
+    el('saveFull').addEventListener('click',saveFullPWA);
+    el('saveVisit').addEventListener('click',saveVisitOnly);
+  </script>
+</body>
+</html>
