@@ -1,0 +1,8 @@
+
+{
+  "name": "Visitons",
+  "description": "An application to create and follow guided tour itineraries. In editor mode, you can build a tour with images, videos, audio, and text for each stop. In viewer mode, a tourist can follow the created itinerary.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

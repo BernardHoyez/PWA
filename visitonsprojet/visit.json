@@ -1,0 +1,28 @@
+[
+  {
+    "id": "07f843f6-6abb-435a-8543-0122dcf2738b",
+    "title": "Falaise 1",
+    "comment": "",
+    "gps": {
+      "lat": 43.4773185,
+      "lon": 6.0753937
+    },
+    "image": {
+      "name": "IMG_20241212_110451.jpg",
+      "type": "image/jpeg"
+    }
+  },
+  {
+    "id": "21e48649-0486-4c42-87a6-7a100ab52bfc",
+    "title": "Falaise 2",
+    "comment": "daadadada",
+    "gps": {
+      "lat": 43.4773185,
+      "lon": 6.0753937
+    },
+    "image": {
+      "name": "IMG_20241212_120904.jpg",
+      "type": "image/jpeg"
+    }
+  }
+]
