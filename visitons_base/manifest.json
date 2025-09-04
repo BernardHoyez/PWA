@@ -1,9 +1,0 @@
-{
-  "name": "visitons",
-  "short_name": "visitons",
-  "start_url": "./visit.html",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "description": "PWA de visite générée avec visitons",
-  "icons": []
-}
