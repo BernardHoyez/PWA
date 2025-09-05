@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0066cc">
+<title>Voyageur — Lecteur de circuit v2.5</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
+<style>
+  body{font-family:system-ui,Arial;margin:0}
+  header{background:#0066cc;color:white;padding:12px;text-align:center}
+  main{display:flex;gap:12px;padding:12px;flex-wrap:wrap}
+  #left{flex:1;min-width:320px}
+  #map{height:60vh;border:1px solid #ddd}
+  #controls{width:360px;min-width:280px}
+  .card{background:white;padding:10px;border-radius:6px;box-shadow:0 0 6px rgba(0,0,0,0.08);margin-bottom:10px}
+  button{background:#0066cc;color:white;border:none;padding:8px 10px;border-radius:6px;cursor:pointer}
+  .status{color:#444;font-size:0.95rem}
+  .big{font-size:1.6rem;font-weight:600}
+  .small{font-size:0.95rem;color:#666}
+  #resumeModal{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center}
+  #resumeBox{background:white;padding:18px;border-radius:8px;max-width:420px;width:90%}
+  audio,video{max-width:100%;display:block;margin-top:8px}
+</style>
+</head>
+<body>
+<header><h1>Voyageur — Lecteur de circuit</h1></header>
+<main>
+  <section id="left">
+    <div class="card">
+      <label class="small">Charger un circuit (.zip) : <input id="zipInput" type="file" accept=".zip"></label>
+      <div id="circuitTitle" class="status"></div>
+    </div>
+    <div id="map" class="card"></div>
+    <div class="card small">
+      <div>Position actuelle : <span id="posText">—</span></div>
+      <div>Distance au prochain POI : <span id="distance">—</span></div>
+      <div>Azimut (°) : <span id="bearing">—</span></div>
+    </div>
+  </section>
+  <aside id="controls">
+    <div class="card">
+      <div><strong>POI courant</strong></div>
+      <div id="poiInfo" class="small">Aucun circuit chargé.</div>
+      <div style="margin-top:8px">
+        <button id="gotoNext">Aller au suivant</button>
+        <button id="markReached" style="margin-left:6px;background:#2a9d8f">Marquer atteint</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div><strong>Historique</strong></div>
+      <ol id="visitedList" class="small"></ol>
+      <div style="margin-top:8px"><button id="clearProgress" style="background:#cc3b3b">Supprimer progression</button></div>
+    </div>
+
+    <div class="card small">
+      <label><input id="autoSave" type="checkbox" checked> Sauvegarde automatique de la progression</label>
+      <div style="margin-top:6px" class="small">Les données restent sur votre appareil (localStorage).</div>
+    </div>
+  </aside>
+</main>
+
+<!-- Resume modal -->
+<div id="resumeModal"><div id="resumeBox">
+  <h3>Reprendre la visite ?</h3>
+  <div id="resumeText" class="small"></div>
+  <div style="margin-top:12px;text-align:right">
+    <button id="resumeBtn">Reprendre</button>
+    <button id="restartBtn" style="background:#888;margin-left:8px">Recommencer</button>
+    <button id="deleteProgressBtn" style="background:#cc3b3b;margin-left:8px">Supprimer</button>
+  </div>
+</div></div>
+
+<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+
+<script>
+// --- Utilities: distance & bearing ---
+function toRad(d){return d*Math.PI/180;}
+function toDeg(r){return r*180/Math.PI;}
+function haversine(aLat,aLon,bLat,bLon){
+  const R=6371000;
+  const dLat=toRad(bLat-aLat), dLon=toRad(bLon-aLon);
+  const A=Math.sin(dLat/2)**2 + Math.cos(toRad(aLat))*Math.cos(toRad(bLat))*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(A), Math.sqrt(1-A));
+}
+function bearing(aLat,aLon,bLat,bLon){
+  const φ1=toRad(aLat), φ2=toRad(bLat), Δλ=toRad(bLon-aLon);
+  const y=Math.sin(Δλ)*Math.cos(φ2);
+  const x=Math.cos(φ1)*Math.sin(φ2)-Math.sin(φ1)*Math.cos(φ2)*Math.cos(Δλ);
+  return (toDeg(Math.atan2(y,x))+360)%360;
+}
+
+// --- State ---
+let map, userMarker=null, poiMarkers=[], currentCircuit=null, currentPoiIndex=0;
+let watchId = null;
+
+// --- DOM ---
+const zipInput = document.getElementById('zipInput');
+const circuitTitle = document.getElementById('circuitTitle');
+const posText = document.getElementById('posText');
+const distanceText = document.getElementById('distance');
+const bearingText = document.getElementById('bearing');
+const poiInfo = document.getElementById('poiInfo');
+const visitedList = document.getElementById('visitedList');
+const resumeModal = document.getElementById('resumeModal');
+const resumeText = document.getElementById('resumeText');
+const resumeBtn = document.getElementById('resumeBtn');
+const restartBtn = document.getElementById('restartBtn');
+const deleteProgressBtn = document.getElementById('deleteProgressBtn');
+const autoSaveCheckbox = document.getElementById('autoSave');
+
+// --- Map init ---
+map = L.map('map').setView([45.0, 5.0], 12);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
+
+// --- Progress persistence ---
+function progressKey(circuitId){ return 'circuitProgress:' + circuitId; }
+function saveProgress(obj){
+  if(!autoSaveCheckbox.checked) return;
+  localStorage.setItem(progressKey(obj.circuitId), JSON.stringify(obj));
+}
+function loadProgress(circuitId){
+  const raw = localStorage.getItem(progressKey(circuitId));
+  return raw ? JSON.parse(raw) : null;
+}
+function clearProgress(circuitId){
+  localStorage.removeItem(progressKey(circuitId));
+  renderVisited([]);
+}
+
+// --- UI helpers ---
+function renderVisited(arr){
+  visitedList.innerHTML='';
+  arr.forEach(id => { const li=document.createElement('li'); li.textContent=id; visitedList.appendChild(li); });
+}
+
+// --- Circuit loader (ZIP) ---
+zipInput.addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const z = await JSZip.loadAsync(file);
+  let manifestFile = z.file('manifest.json') ? 'manifest.json' : null;
+  if(!manifestFile){ alert('ZIP invalide : manifest.json introuvable.'); return; }
+  const manifestText = await z.file(manifestFile).async('string');
+  const manifest = JSON.parse(manifestText);
+
+  let waypoints = manifest.waypoints || [];
+  for(const wp of waypoints){
+    wp.mediaBlob = null; wp.audioBlob = null;
+    if(wp.media){
+      const f = z.file(wp.media) || z.file('media/'+wp.media);
+      if(f) wp.mediaBlob = await f.async('blob');
+    }
+    if(wp.audio){
+      const f = z.file(wp.audio) || z.file('media/'+wp.audio);
+      if(f) wp.audioBlob = await f.async('blob');
+    }
+  }
+
+  currentCircuit = { id: manifest.id || ('circuit-'+Date.now()), title: manifest.title || 'Circuit', waypoints };
+  circuitTitle.textContent = `${currentCircuit.title} — ${waypoints.length} POI(s)`;
+
+  poiMarkers.forEach(m=>map.removeLayer(m)); poiMarkers=[];
+  waypoints.forEach((wp,i)=>{
+    if(wp.lat && wp.lon){
+      const m = L.marker([wp.lat, wp.lon]).addTo(map).bindPopup(wp.title||wp.name||('POI '+(i+1)));
+      poiMarkers.push(m);
+    }
+  });
+  map.fitBounds(poiMarkers.length? L.featureGroup(poiMarkers).getBounds():[[45,5]]);
+
+  const existing = loadProgress(currentCircuit.id);
+  if(existing){
+    resumeText.textContent = `Dernière visite : ${new Date(existing.timestamp).toLocaleString()}. POI atteint : ${existing.lastPoiId || existing.lastPoiIndex}.`;
+    resumeModal.style.display='flex';
+    currentCircuit._loadedProgress = existing;
+  } else {
+    startCircuitAt(0);
+  }
+});
+
+// --- Resume / restart ---
+resumeBtn.addEventListener('click', ()=>{ resumeModal.style.display='none'; startCircuitAt((currentCircuit._loadedProgress.lastPoiIndex??-1)+1); });
+restartBtn.addEventListener('click', ()=>{ resumeModal.style.display='none'; clearProgress(currentCircuit.id); startCircuitAt(0); });
+deleteProgressBtn.addEventListener('click', ()=>{ resumeModal.style.display='none'; clearProgress(currentCircuit.id); alert('Progression supprimée.'); });
+
+// --- Navigation ---
+function startCircuitAt(index){
+  currentPoiIndex = Math.max(0, Math.min(index, currentCircuit.waypoints.length-1));
+  updatePoiUI();
+  startWatchPosition();
+  const prog = loadProgress(currentCircuit.id) || { circuitId: currentCircuit.id, lastPoiId:null, lastPoiIndex:-1, visited:[], timestamp:new Date().toISOString() };
+  renderVisited(prog.visited || []);
+}
+
+function updatePoiUI(){
+  if(!currentCircuit) return;
+  const wp = currentCircuit.waypoints[currentPoiIndex];
+  poiInfo.innerHTML = `<div class="big">${wp.title || wp.name || wp.id}</div><div class="small">${wp.description || wp.desc || ''}</div>`;
+  const mediaArea = document.createElement('div'); mediaArea.className='media';
+  if(wp.mediaBlob){
+    const url = URL.createObjectURL(wp.mediaBlob);
+    if((wp.media||'').toLowerCase().match(/\.(mp4|webm|ogg)$/)) mediaArea.innerHTML = `<video controls src="${url}"></video>`;
+    else mediaArea.innerHTML = `<img src="${url}" style="max-width:100%;margin-top:8px" />`;
+  }
+  if(wp.audioBlob){
+    const aurl = URL.createObjectURL(wp.audioBlob);
+    mediaArea.innerHTML += `<audio controls src="${aurl}"></audio>`;
+  }
+  const existing = poiInfo.querySelector('.media');
+  if(existing) existing.remove();
+  poiInfo.appendChild(mediaArea);
+}
+
+// --- GPS ---
+function startWatchPosition(){
+  if(watchId) return;
+  if(!('geolocation' in navigator)){ alert('Géolocalisation non disponible'); return; }
+  watchId = navigator.geolocation.watchPosition(onPosition, e=>console.warn('GPS err',e), {enableHighAccuracy:true, maximumAge:1000, timeout:10000});
+}
+
+function onPosition(pos){
+  const lat = pos.coords.latitude, lon = pos.coords.longitude;
+  posText.textContent = lat.toFixed(6)+', '+lon.toFixed(6);
+  if(userMarker) userMarker.setLatLng([lat,lon]); else userMarker = L.marker([lat,lon],{title:'Vous'}).addTo(map);
+  if(!currentCircuit) return;
+  const wp = currentCircuit.waypoints[currentPoiIndex];
+  if(!wp || !wp.lat || !wp.lon) return;
+  const d = haversine(lat,lon,parseFloat(wp.lat),parseFloat(wp.lon));
+  distanceText.textContent = (d>1000? (d/1000).toFixed(2)+' km' : Math.round(d)+' m');
+  bearingText.textContent = Math.round(bearing(lat,lon,parseFloat(wp.lat),parseFloat(wp.lon)));
+  const radius = wp.arrivalRadius || wp.radius || 20;
+  if(d <= radius) markPoiReached();
+}
+
+function markPoiReached(){
+  const wp = currentCircuit.waypoints[currentPoiIndex];
+  const prog = loadProgress(currentCircuit.id) || { circuitId: currentCircuit.id, lastPoiId:null, lastPoiIndex:-1, visited:[], timestamp:null };
+  if(!prog.visited) prog.visited = [];
+  if(!prog.visited.includes(wp.id)) prog.visited.push(wp.id);
+  prog.lastPoiId = wp.id; prog.lastPoiIndex = currentPoiIndex; prog.timestamp = new Date().toISOString();
+  saveProgress(prog);
+  renderVisited(prog.visited);
+}
+
+document.getElementById('markReached').addEventListener('click', ()=>{ if(!currentCircuit) return alert('Aucun circuit chargé'); markPoiReached(); });
+document.getElementById('gotoNext').addEventListener('click', ()=>{ if(!currentCircuit) return; if(currentPoiIndex < currentCircuit.waypoints.length-1){ currentPoiIndex++; updatePoiUI(); } else alert('Fin du circuit.'); });
+document.getElementById('clearProgress').addEventListener('click', ()=>{ if(!currentCircuit) return; clearProgress(currentCircuit.id); alert('Progression supprimée.'); });
+window.addEventListener('beforeunload', ()=>{ if(watchId) navigator.geolocation.clearWatch(watchId); });
+</script>
+</body>
+</html>
