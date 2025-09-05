@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Éditeur de circuit</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" sizes="192x192" href="icon-192.png" />
+  <link rel="icon" sizes="512x512" href="icon-512.png" />
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; }
+    h1 { text-align: center; }
+    form { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 0 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    label { display: block; margin-top: 10px; }
+    textarea { width: 100%; height: 60px; }
+    button { margin-top: 15px; padding: 10px 15px; border: none; background: #007BFF; color: #fff; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    #poiList { margin-top: 20px; }
+    .poi-item { background: #eef; padding: 8px; border-radius: 6px; margin-bottom: 5px; }
+  </style>
+</head>
+<body>
+  <h1>Éditeur de circuit</h1>
+  <form id="poiForm">
+    <label>Nom du point d'intérêt : <input type="text" id="poiName" required></label>
+    <label>Description : <textarea id="poiDescription"></textarea></label>
+    <label>Photo/Vidéo : <input type="file" id="poiMedia" accept="image/*,video/*"></label>
+    <label>Audio : <input type="file" id="poiAudio" accept="audio/*"></label>
+    <label>Latitude : <input type="text" id="poiLat"></label>
+    <label>Longitude : <input type="text" id="poiLon"></label>
+    <div id="map" style="width:100%;height:300px;background:#eee;margin-top:10px;"></div>
+    <button type="submit">Ajouter le POI</button>
+  </form>
+
+  <div id="poiList"></div>
+  <button id="exportBtn">Exporter le circuit</button>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+  <script>
+    const poiForm = document.getElementById('poiForm');
+    const poiList = document.getElementById('poiList');
+    const exportBtn = document.getElementById('exportBtn');
+    let pois = [];
+
+    // Conversion image -> JPEG compressé
+    async function compressImage(file) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_SIZE = 1600;
+          let width = img.width;
+          let height = img.height;
+          if (width > height && width > MAX_SIZE) {
+            height *= MAX_SIZE / width;
+            width = MAX_SIZE;
+          } else if (height > MAX_SIZE) {
+            width *= MAX_SIZE / height;
+            height = MAX_SIZE;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => {
+            resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }));
+          }, 'image/jpeg', 0.8);
+        };
+        img.src = url;
+      });
+    }
+
+    poiForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('poiName').value;
+      const desc = document.getElementById('poiDescription').value;
+      const lat = document.getElementById('poiLat').value;
+      const lon = document.getElementById('poiLon').value;
+      const mediaInput = document.getElementById('poiMedia');
+      const audioInput = document.getElementById('poiAudio');
+
+      let mediaFile = mediaInput.files[0] ? await compressImage(mediaInput.files[0]) : null;
+      let audioFile = audioInput.files[0] || null;
+
+      const poi = {
+        id: 'poi-' + (pois.length + 1),
+        name,
+        desc,
+        lat,
+        lon,
+        mediaFile,
+        audioFile
+      };
+      pois.push(poi);
+      renderPois();
+      poiForm.reset();
+    });
+
+    function renderPois(){
+      poiList.innerHTML = '';
+      pois.forEach((poi, idx) => {
+        const div = document.createElement('div');
+        div.className = 'poi-item';
+        div.innerHTML = `<strong>${idx + 1}. ${poi.name}</strong> - ${poi.desc}`;
+        poiList.appendChild(div);
+      });
+    }
+
+    exportBtn.addEventListener('click', async () => {
+      if(pois.length === 0){ alert('Aucun POI ajouté.'); return; }
+      const zip = new JSZip();
+      const manifest = [];
+      for (const poi of pois){
+        const poiDir = zip.folder(poi.id);
+        if(poi.mediaFile){
+          poiDir.file(poi.mediaFile.name, poi.mediaFile);
+        }
+        if(poi.audioFile){
+          poiDir.file(poi.audioFile.name, poi.audioFile);
+        }
+        manifest.push({
+          id: poi.id,
+          name: poi.name,
+          desc: poi.desc,
+          lat: poi.lat,
+          lon: poi.lon,
+          media: poi.mediaFile ? poi.mediaFile.name : null,
+          audio: poi.audioFile ? poi.audioFile.name : null
+        });
+      }
+      zip.file('pois.json', JSON.stringify(manifest, null, 2));
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'circuit.zip';
+      a.click();
+    });
+
+    // Activation PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
+</body>
+</html>
