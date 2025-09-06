@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Éditeur de visite</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+        header { background: #2c3e50; color: white; padding: 10px; text-align: center; }
+        #map { height: 300px; margin: 10px; border: 1px solid #ccc; }
+        .point { border: 1px solid #aaa; padding: 10px; margin: 10px; border-radius: 8px; }
+        .media-preview img, .media-preview video { max-width: 100%; margin-top: 8px; border-radius: 6px; }
+        button { padding: 6px 12px; margin: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Éditeur de visite</h1>
+    <label>Titre du site : <input type="text" id="siteTitle" placeholder="Nom du site" /></label>
+</header>
+<div id="pointsContainer"></div>
+<button id="addPoint">Ajouter un point</button>
+<button id="exportBtn">Exporter la visite</button>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<script>
+let siteTitle = "";
+let points = [];
+const container = document.getElementById("pointsContainer");
+const addBtn = document.getElementById("addPoint");
+const exportBtn = document.getElementById("exportBtn");
+
+// Initialisation de la carte OSM
+const map = L.map('map').setView([44, 6], 8);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap',
+    maxZoom: 19
+}).addTo(map);
+
+document.getElementById("siteTitle").addEventListener("input", (e) => {
+    siteTitle = e.target.value;
+});
+
+function renderPoints() {
+    container.innerHTML = "";
+    points.forEach((p, idx) => {
+        const div = document.createElement("div");
+        div.className = "point";
+        div.innerHTML = `
+            <h3>Point ${idx + 1}</h3>
+            <label>Titre : <input type="text" value="${p.title}" onchange="updateTitle(${idx}, this.value)" /></label><br>
+            <label>Commentaire : <textarea onchange="updateComment(${idx}, this.value)">${p.comment}</textarea></label><br>
+            <label>Média : <input type="file" accept="image/*,video/*" onchange="loadMedia(${idx}, this.files[0])" /></label>
+            <div class="media-preview" id="preview-${idx}"></div>
+            <p>Latitude : <span id="lat-${idx}">${p.lat || "?"}</span> | Longitude : <span id="lng-${idx}">${p.lng || "?"}</span></p>
+            <button onclick="deletePoint(${idx})">Supprimer ce point</button>
+        `;
+        container.appendChild(div);
+        if (p.media && p.mediaType) {
+            const previewDiv = document.getElementById(`preview-${idx}`);
+            if (p.mediaType.startsWith("image")) {
+                previewDiv.innerHTML = `<img src="${p.media}" alt="aperçu" />`;
+            } else if (p.mediaType.startsWith("video")) {
+                previewDiv.innerHTML = `<video controls><source src="${p.media}" type="${p.mediaType}"></video>`;
+            }
+        }
+    });
+}
+
+window.updateTitle = (idx, val) => points[idx].title = val;
+window.updateComment = (idx, val) => points[idx].comment = val;
+
+window.loadMedia = (idx, file) => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        points[idx].media = e.target.result;
+        points[idx].mediaType = file.type;
+
+        // Lecture des coordonnées EXIF si image
+        if (file.type.startsWith("image")) {
+            EXIF.getData(file, function() {
+                const lat = EXIF.getTag(this, "GPSLatitude");
+                const lon = EXIF.getTag(this, "GPSLongitude");
+                const latRef = EXIF.getTag(this, "GPSLatitudeRef") || "N";
+                const lonRef = EXIF.getTag(this, "GPSLongitudeRef") || "E";
+                if (lat && lon) {
+                    const latDeg = lat[0] + lat[1]/60 + lat[2]/3600;
+                    const lonDeg = lon[0] + lon[1]/60 + lon[2]/3600;
+                    points[idx].lat = latRef === "S" ? -latDeg : latDeg;
+                    points[idx].lng = lonRef === "W" ? -lonDeg : lonDeg;
+                    document.getElementById(`lat-${idx}`).innerText = points[idx].lat.toFixed(5);
+                    document.getElementById(`lng-${idx}`).innerText = points[idx].lng.toFixed(5);
+                    L.marker([points[idx].lat, points[idx].lng]).addTo(map);
+                } else {
+                    alert("Pas de géolocalisation EXIF : déplacez le marqueur manuellement.");
+                }
+            });
+        }
+        renderPoints();
+    };
+    reader.readAsDataURL(file);
+};
+
+function deletePoint(idx) {
+    points.splice(idx, 1);
+    renderPoints();
+}
+
+addBtn.addEventListener("click", () => {
+    points.push({ title: "", comment: "", media: null, mediaType: null, lat: null, lng: null });
+    renderPoints();
+});
+
+exportBtn.addEventListener("click", async () => {
+    if (!siteTitle) {
+        alert("Veuillez saisir un titre pour le site.");
+        return;
+    }
+    const zip = new JSZip();
+    zip.file("project.json", JSON.stringify({ siteTitle, points }));
+    const mediasFolder = zip.folder("medias");
+    points.forEach((p, idx) => {
+        if (p.media && p.mediaType) {
+            let ext = p.mediaType.split("/")[1] || "bin";
+            mediasFolder.file(`media_${idx}.${ext}`, p.media.split(",")[1], {base64: true});
+        }
+    });
+    const blob = await zip.generateAsync({type:"blob"});
+    saveAs(blob, "Projet_" + siteTitle + ".zip");
+});
+
+</script>
+</body>
+</html>
