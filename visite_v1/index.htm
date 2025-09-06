@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visite de sites</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<style>
+body { font-family: Arial, sans-serif; margin: 0; }
+header { background: #2c3e50; color: #fff; padding: 8px; display: flex; gap: 8px; align-items: center; }
+#map { height: 320px; margin: 8px; border: 1px solid #ccc; }
+#point { padding: 8px; }
+.media-preview img, .media-preview video, .media-preview audio { max-width: 100%; display: block; margin-top: 8px; }
+button { padding: 8px 12px; margin: 6px; }
+</style>
+</head>
+<body>
+<header>
+<h2 style="margin:0 8px 0 0">Visite</h2>
+<input id="file" type="file" accept=".zip">
+<span id="status" style="color:#ffd;font-weight:600"></span>
+</header>
+<div id="map"></div>
+<div id="point"></div>
+<div style="padding:8px">
+<button id="prev">Précédent</button>
+<button id="next">Suivant</button>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script>
+const input = document.getElementById('file');
+const status = document.getElementById('status');
+const pointDiv = document.getElementById('point');
+let project = null;
+let mediaMap = {};
+let current = 0;
+let map = L.map('map').setView([44,6],6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+let markersLayer = L.layerGroup().addTo(map);
+
+input.addEventListener('change', async e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  status.textContent = 'Lecture du zip...';
+  mediaMap = {};
+  project = null;
+  current = 0;
+  markersLayer.clearLayers();
+  try {
+    const zip = await JSZip.loadAsync(f);
+    if(!zip.file('project.json')) { status.textContent='project.json introuvable'; return; }
+    const pjText = await zip.file('project.json').async('string');
+    project = JSON.parse(pjText);
+    status.textContent = 'Projet chargé: ' + (project.siteTitle||'sans nom');
+
+    const files = Object.keys(zip.files).filter(p=>p.startsWith('medias/'));
+    for(const p of files){
+      const entry = zip.file(p);
+      if(!entry) continue;
+      const blob = await entry.async('blob');
+      const mime = blob.type || (p.endsWith('.jpg')||p.endsWith('.jpeg')?'image/jpeg':
+                  p.endsWith('.png')?'image/png':
+                  p.endsWith('.gif')?'image/gif':
+                  p.endsWith('.mp4')?'video/mp4':
+                  p.endsWith('.webm')?'video/webm':
+                  p.endsWith('.mp3')?'audio/mpeg':
+                  p.endsWith('.wav')?'audio/wav':'application/octet-stream');
+      mediaMap[p.replace(/^medias\//,'')] = URL.createObjectURL(new Blob([blob], {type:mime}));
+    }
+
+    if(Array.isArray(project.points)){
+      project.points.forEach((pt, idx)=>{
+        if(pt.lat && pt.lng){
+          L.marker([pt.lat, pt.lng]).addTo(markersLayer).bindPopup(pt.title||('Point '+(idx+1)));
+        }
+      });
+      if(markersLayer.getLayers().length) map.fitBounds(markersLayer.getBounds().pad(0.5));
+    }
+    showPoint(0);
+  } catch(err){ console.error(err); status.textContent='Erreur: '+err.message; }
+});
+
+function showPoint(i){
+  if(!project || !Array.isArray(project.points)) return;
+  if(i<0 || i>=project.points.length) return;
+  current = i;
+  const p = project.points[i];
+  const title = p.title || ('Point '+(i+1));
+  const comment = p.comment || '';
+  let photoSrc=null, videoSrc=null, audioSrc=null;
+
+  const types={photo:['jpg','jpeg','png','gif'], video:['mp4','webm'], audio:['mp3','wav','ogg','m4a']};
+  const tryLoad = (base, exts)=>{for(const ext of exts){const n=base+'.'+ext;if(mediaMap[n]) return mediaMap[n];} return null;};
+
+  photoSrc = p.photo && p.photo.startsWith('data:')?p.photo:tryLoad('photo_'+i, types.photo);
+  videoSrc = p.video && p.video.startsWith('data:')?p.video:tryLoad('video_'+i, types.video);
+  audioSrc = p.audio && p.audio.startsWith('data:')?p.audio:tryLoad('audio_'+i, types.audio);
+
+  let html = `<h3>${escapeHtml(title)}</h3><div>${escapeHtml(comment)}</div><div class="media-preview">`;
+  if(photoSrc) html += `<img src="${photoSrc}" alt="photo">`;
+  if(videoSrc) html += `<video controls><source src="${videoSrc}"></video>`;
+  if(audioSrc) html += `<audio controls src="${audioSrc}"></audio>`;
+  html += `</div>`;
+  if(p.lat && p.lng) html += `<p>Coord: ${Number(p.lat).toFixed(6)}, ${Number(p.lng).toFixed(6)}</p>`;
+  pointDiv.innerHTML = html;
+  if(p.lat && p.lng) map.setView([p.lat,p.lng],14);
+}
+
+document.getElementById('prev').addEventListener('click',()=>{if(current>0) showPoint(current-1);});
+document.getElementById('next').addEventListener('click',()=>{if(current<project.points.length-1) showPoint(current+1);});
+
+function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);}
+</script>
+</body>
+</html>
