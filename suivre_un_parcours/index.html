@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivre un parcours</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #carte {
+            height: 400px;
+            margin: 20px 0;
+        }
+        #points {
+            margin: 20px 0;
+        }
+        .point {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #fff;
+            cursor: pointer;
+        }
+        #detailPoint img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Suivre un parcours</h1>
+    <input type="file" id="import" accept=".zip">
+    <div id="parcours"></div>
+    <div id="carte"></div>
+    <div id="detailPoint"></div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        let parcours = null;
+        let carte = null;
+        let markers = [];
+
+        document.getElementById('import').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    JSZip.loadAsync(event.target.result).then(function(zip) {
+                        zip.file("parcours.json").async('text').then(function(json) {
+                            parcours = JSON.parse(json);
+                            afficherParcours();
+                            afficherCarte();
+                        }).catch(() => {
+                            alert("Fichier ZIP invalide : parcours.json manquant.");
+                        });
+                    }).catch(() => {
+                        alert("Impossible de lire le fichier ZIP.");
+                    });
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        });
+
+        function afficherParcours() {
+            const container = document.getElementById('parcours');
+            container.innerHTML = `
+                <h2>${parcours.titre}</h2>
+                <div id="listePoints">
+                    ${parcours.points.map((p, index) =>
+                        `<div class="point" onclick="afficherPoint(${index})">
+                            <h4>${p.titre}</h4>
+                        </div>`
+                    ).join('')}
+                </div>
+            `;
+        }
+
+        function afficherPoint(index) {
+            const point = parcours.points[index];
+            const container = document.getElementById('detailPoint');
+            container.innerHTML = `<h3>${point.titre}</h3>`;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                JSZip.loadAsync(event.target.result).then(function(zip) {
+                    zip.file(point.photo).async('blob').then(function(photoBlob) {
+                        const photoUrl = URL.createObjectURL(photoBlob);
+                        container.innerHTML += `<img src="${photoUrl}">`;
+                    });
+
+                    zip.file(point.commentaire).async('text').then(function(commentaire) {
+                        container.innerHTML += `<p>${commentaire}</p>`;
+                    });
+
+                    zip.file(point.coords).async('text').then(function(coords) {
+                        container.innerHTML += `<p><strong>Coordonnées :</strong> ${coords}</p>`;
+                        if (carte) {
+                            const [lat, lon] = coords.replace('Lat: ', '').replace('Lon: ', '').split(', ');
+                            carte.setView([parseFloat(lat), parseFloat(lon)], 17);
+                        }
+                    });
+                });
+            };
+            reader.readAsArrayBuffer(document.getElementById('import').files[0]);
+        }
+
+        function afficherCarte() {
+            if (!carte) {
+                carte = L.map('carte').setView([48.8566, 2.3522], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap'
+                }).addTo(carte);
+            }
+
+            // Effacer les anciens marqueurs
+            markers.forEach(marker => carte.removeLayer(marker));
+            markers = [];
+
+            parcours.points.forEach((p, index) => {
+                JSZip.loadAsync(document.getElementById('import').files[0]).then(function(zip) {
+                    zip.file(p.coords).async('text').then(function(coords) {
+                        const [lat, lon] = coords.replace('Lat: ', '').replace('Lon: ', '').split(', ');
+                        const marker = L.marker([parseFloat(lat), parseFloat(lon)]).addTo(carte)
+                            .bindPopup(`<b>${p.titre}</b><br>Lat: ${lat}, Lon: ${lon}`)
+                            .on('click', () => afficherPoint(index));
+                        markers.push(marker);
+                    });
+                });
+            });
+        }
+
+        // Enregistrement du Service Worker pour la PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/Suivre_Parcours/sw.js');
+            });
+        }
+    </script>
+</body>
+</html>
