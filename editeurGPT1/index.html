@@ -1,0 +1,158 @@
+
+<!doctype html>
+<html lang="fr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Editeur — Visite</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<style>
+body{font-family:Arial,Helvetica,sans-serif;margin:0} header{background:#2c3e50;color:#fff;padding:8px} #map{height:300px;margin:8px;border:1px solid #ccc} .point{border:1px solid #ddd;padding:8px;margin:8px;border-radius:6px}
+.media-preview img,.media-preview video,.media-preview audio{max-width:100%;display:block;margin-top:8px}
+button{padding:6px 10px;margin:6px}
+</style>
+</head>
+<body>
+<header><strong>Editeur</strong></header>
+<div style="padding:8px">
+  <label>Titre du site: <input id="siteTitle" placeholder="Nom du site" style="width:70%"></label>
+  <button id="addPoint">Ajouter point</button>
+  <button id="export">Exporter (.zip)</button>
+  <span id="status" style="margin-left:8px;color:crimson"></span>
+</div>
+<div id="points"></div>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<script>
+let points = [];
+const map = L.map('map').setView([44,6],6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+const container = document.getElementById('points');
+const status = document.getElementById('status');
+document.getElementById('addPoint').addEventListener('click', ()=>{ const i=points.length; points.push({title:'Point '+(i+1),text:'',lat:null,lng:null,photo:null,video:null,audio:null}); render(); });
+
+function render(){
+  container.innerHTML='';
+  points.forEach((p,i)=>{
+    const d=document.createElement('div'); d.className='point';
+    d.innerHTML=`<h4>${p.title}</h4>
+      Titre: <input value="${p.title}" onchange="setTitle(${i},this.value)"><br>
+      Commentaire:<br><textarea onchange="setText(${i},this.value)" rows="2" style="width:100%">${p.text || ''}</textarea><br>
+      Photo: <input type="file" accept="image/*" onchange="loadFile(${i},this.files[0],'photo')"><div id="photo-preview-${i}" class="media-preview"></div>
+      Vidéo: <input type="file" accept="video/*" onchange="loadFile(${i},this.files[0],'video')"><div id="video-preview-${i}" class="media-preview"></div>
+      Son: <input type="file" accept="audio/*" onchange="loadFile(${i},this.files[0],'audio')"><div id="audio-preview-${i}" class="media-preview"></div>
+      <div>Lat: <span id="lat-${i}">${p.lat===null?'?':p.lat.toFixed(6)}</span> Lng: <span id="lng-${i}">${p.lng===null?'?':p.lng.toFixed(6)}</span></div>
+      <div id="notice-${i}" style="color:crimson"></div>
+      <button onclick="removePoint(${i})">Supprimer</button>`;
+    container.appendChild(d);
+    if(p.photo) document.getElementById('photo-preview-'+i).innerHTML=`<img src="${p.photo}">`;
+    if(p.video) document.getElementById('video-preview-'+i).innerHTML=`<video controls src="${p.video}"></video>`;
+    if(p.audio) document.getElementById('audio-preview-'+i).innerHTML=`<audio controls src="${p.audio}"></audio>`;
+  });
+}
+
+window.setTitle=(i,v)=>{ points[i].title=v; render(); }
+window.setText=(i,v)=>{ points[i].text=v; }
+
+function addDraggableMarker(i, lat, lng){
+  if(points[i].marker){ map.removeLayer(points[i].marker); }
+  const m = L.marker([lat,lng], {draggable:true}).addTo(map);
+  points[i].marker = m;
+  m.on('dragend', e=>{
+    const pos=e.target.getLatLng();
+    points[i].lat = pos.lat; points[i].lng=pos.lng;
+    document.getElementById('lat-'+i).innerText = pos.lat.toFixed(6);
+    document.getElementById('lng-'+i).innerText = pos.lng.toFixed(6);
+  });
+  map.panTo([lat,lng]);
+}
+
+window.loadFile = (i, file, kind) => {
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    // store dataURL for preview; but export will save file itself into medias/
+    points[i][kind] = e.target.result;
+    points[i][kind+"FileName"] = file.name;
+    // EXIF for photo
+    if(kind==='photo' && file.type.startsWith('image/')){
+      try{
+        EXIF.getData(file, function(){
+          const lat = EXIF.getTag(this,'GPSLatitude');
+          const lon = EXIF.getTag(this,'GPSLongitude');
+          const latRef = EXIF.getTag(this,'GPSLatitudeRef')||'N';
+          const lonRef = EXIF.getTag(this,'GPSLongitudeRef')||'E';
+          if(lat && lon){
+            function dmsToDec(dms){ return dms[0]+dms[1]/60+dms[2]/3600 }
+            const la = dmsToDec(lat); const lo = dmsToDec(lon);
+            points[i].lat = (latRef==='S')?-la:la; points[i].lng = (lonRef==='W')?-lo:lo;
+            document.getElementById('lat-'+i).innerText = points[i].lat.toFixed(6);
+            document.getElementById('lng-'+i).innerText = points[i].lng.toFixed(6);
+            addDraggableMarker(i, points[i].lat, points[i].lng);
+            document.getElementById('notice-'+i).innerText='';
+          } else {
+            // no exif: place marker at center and allow drag
+            document.getElementById('notice-'+i).innerText='Image sans EXIF — déplacez le marqueur pour définir la position.';
+            const c = map.getCenter();
+            points[i].lat = c.lat; points[i].lng = c.lng;
+            document.getElementById('lat-'+i).innerText = points[i].lat.toFixed(6);
+            document.getElementById('lng-'+i).innerText = points[i].lng.toFixed(6);
+            addDraggableMarker(i, points[i].lat, points[i].lng);
+          }
+        });
+      }catch(err){ console.warn(err); }
+    }
+    render();
+  };
+  reader.readAsDataURL(file);
+  // store the actual File object for export using a temporary property _fileObj
+  points[i][kind+"_file_obj"] = file;
+};
+
+function removePoint(i){
+  if(points[i].marker) map.removeLayer(points[i].marker);
+  points.splice(i,1);
+  render();
+}
+
+document.getElementById('export').addEventListener('click', async ()=>{
+  const site = document.getElementById('siteTitle').value || 'SansNom';
+  const zip = new JSZip();
+  const proj = {siteTitle: site, points: []};
+  for(let i=0;i<points.length;i++){
+    const p = points[i];
+    const out = {title:p.title, text:p.text, lat:p.lat, lng:p.lng, photo:null, video:null, audio:null};
+    if(p.photo && p.photo_file_obj){
+      const ext = (p.photo_file_obj.name.split('.').pop()||'jpg');
+      const fname = 'photo_'+i+'.'+ext;
+      zip.file('medias/'+fname, p.photo_file_obj);
+      out.photo = 'medias/'+fname;
+    } else if(p.photo && p.photoFileName){
+      // fallback: use provided filename
+      const fname = 'photo_'+i+'.'+(p.photoFileName.split('.').pop()||'jpg');
+      out.photo = 'medias/'+fname;
+    }
+    if(p.video && p.video_file_obj){
+      const ext = (p.video_file_obj.name.split('.').pop()||'mp4');
+      const fname = 'video_'+i+'.'+ext;
+      zip.file('medias/'+fname, p.video_file_obj);
+      out.video = 'medias/'+fname;
+    }
+    if(p.audio && p.audio_file_obj){
+      const ext = (p.audio_file_obj.name.split('.').pop()||'mp3');
+      const fname = 'audio_'+i+'.'+ext;
+      zip.file('medias/'+fname, p.audio_file_obj);
+      out.audio = 'medias/'+fname;
+    }
+    proj.points.push(out);
+  }
+  zip.file('project.json', JSON.stringify(proj, null, 2));
+  const blob = await zip.generateAsync({type:'blob'});
+  saveAs(blob, 'Projet_'+site+'.zip');
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+</body>
+</html>
