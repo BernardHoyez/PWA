@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivre un parcours</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <style>
+        /* Styles inchangés */
+        body { font-family: Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; }
+        /* ... autres styles ... */
+        #debug { background: #f8f9fa; padding: 15px; margin: 20px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Suivre un parcours</h1>
+
+    <input type="file" id="import-input" accept=".zip">
+    <div id="debug"></div>
+
+    <!-- Reste de l'interface -->
+    <div id="map"></div>
+    <!-- ... -->
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        let map;
+        let currentZip;
+        let currentParcours;
+        let photoUrls = [];
+
+        // Initialiser la carte
+        function initMap() {
+            map = L.map('map').setView([48.8566, 2.3522], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+        }
+
+        // Charger le ZIP avec vérifications étendues
+        document.getElementById('import-input').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            document.getElementById('debug').innerHTML = `<p>Chargement du fichier ${file.name}...</p>`;
+
+            try {
+                // Vérifier que c'est bien un ZIP valide
+                if (!file.name.endsWith('.zip')) {
+                    throw new Error('Le fichier doit être un ZIP (.zip)');
+                }
+
+                // Charger le ZIP avec vérification d'intégrité
+                currentZip = await JSZip.loadAsync(file, {
+                    checkCRC32: true,  // Vérifier l'intégrité des fichiers
+                    createFolders: true
+                });
+
+                document.getElementById('debug').innerHTML += `<p>ZIP chargé avec succès.</p>`;
+
+                // Vérifier la présence de parcours.json
+                if (!currentZip.files["parcours.json"]) {
+                    throw new Error("Fichier parcours.json manquant dans le ZIP");
+                }
+
+                // Lire et parser le JSON
+                const jsonContent = await currentZip.file("parcours.json").async("text");
+                document.getElementById('debug').innerHTML += `<p>Contenu JSON: ${jsonContent.substring(0, 100)}...</p>`;
+
+                try {
+                    currentParcours = JSON.parse(jsonContent);
+                    document.getElementById('debug').innerHTML += `<p>JSON parsé: ${JSON.stringify(currentParcours, null, 2)}</p>`;
+
+                    // Afficher les points
+                    displayPoints();
+                    if (!map) initMap();
+                    await displayPointsOnMap();
+
+                } catch (jsonError) {
+                    throw new Error(`Erreur JSON: ${jsonError.message}\nContenu brut: ${jsonContent.substring(0, 200)}`);
+                }
+
+            } catch (error) {
+                console.error("Erreur complète:", error);
+                document.getElementById('debug').innerHTML += `<p class="error">ERREUR: ${error.message}</p>`;
+                alert(`Erreur: ${error.message}\nVoir les détails ci-dessous.`);
+            }
+        });
+
+        // Afficher les points (version simplifiée)
+        function displayPoints() {
+            // Implémentation simplifiée pour la clarté
+            const container = document.getElementById('points-list');
+            container.innerHTML = currentParcours.points.map((p, i) =>
+                `<div class="point" onclick="selectPoint(${i})">
+                    <h3>${p.title || 'Point sans titre'}</h3>
+                    <p>${p.coords || 'Coordonnées non disponibles'}</p>
+                </div>`
+            ).join('');
+        }
+
+        // Autres fonctions...
+        // ...
+    </script>
+</body>
+</html>
