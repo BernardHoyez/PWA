@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Créer un parcours</title>
+    <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        /* Styles inchangés (utilisez ceux de votre version actuelle) */
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        /* ... autres styles ... */
+    </style>
+</head>
+<body>
+    <h1>Créer un parcours</h1>
+    <!-- Interface inchangée -->
+    <button onclick="showForm()" class="btn-primary">➕ Ajouter un point</button>
+    <!-- ... reste de l'interface ... -->
+
+    <script>
+        let points = [];
+        let currentEditIndex = null;
+        let currentPhotoFile = null;
+
+        // Fonctions d'interface inchangées (showForm, hideForm, etc.)
+        // ...
+
+        // Fonction d'export corrigée pour générer un ZIP valide
+        async function exportParcours() {
+            if (points.length === 0) {
+                alert('Ajoutez au moins un point avant d\'exporter.');
+                return;
+            }
+
+            const zip = new JSZip();
+            const parcoursTitle = document.querySelector('input[type="text"]')?.value.trim() || "Mon_Parcours";
+
+            try {
+                // Créer d'abord tous les fichiers
+                for (let i = 0; i < points.length; i++) {
+                    const point = points[i];
+                    const folder = `point_${i+1}`;
+
+                    // Ajouter la photo
+                    const photoArrayBuffer = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsArrayBuffer(point.photo);
+                    });
+                    zip.file(`${folder}/photo.jpg`, photoArrayBuffer, { binary: true });
+
+                    // Ajouter les autres fichiers
+                    zip.file(`${folder}/description.txt`, point.description || '');
+                    zip.file(`${folder}/coords.txt`, point.coords || 'Coordonnées non disponibles');
+                }
+
+                // Créer le fichier JSON avec une structure simple
+                const parcoursData = {
+                    title: parcoursTitle,
+                    points: points.map((point, index) => ({
+                        id: index+1,
+                        title: point.title,
+                        photo: `point_${index+1}/photo.jpg`,
+                        description: `point_${index+1}/description.txt`,
+                        coords: `point_${index+1}/coords.txt`
+                    }))
+                };
+                zip.file("parcours.json", JSON.stringify(parcoursData, null, 2));
+
+                // Générer le ZIP avec des options pour éviter la corruption
+                const content = await zip.generateAsync({
+                    type: "blob",
+                    compression: "DEFLATE",
+                    compressionOptions: {
+                        level: 6
+                    }
+                });
+
+                saveAs(content, `${parcoursTitle.replace(/\s+/g, '_')}.zip`);
+                alert('Parcours exporté avec succès !');
+
+            } catch (error) {
+                console.error("Erreur détaillée:", error);
+                alert(`Erreur lors de l'export: ${error.message}\nVoir la console pour plus de détails.`);
+            }
+        }
+
+        // Autres fonctions inchangées...
+        // ...
+    </script>
+</body>
+</html>
