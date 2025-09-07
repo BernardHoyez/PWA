@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Créer un parcours</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #formulaire {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none; /* Masqué par défaut */
+        }
+        #points {
+            margin: 20px 0;
+        }
+        .point {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .point h4 {
+            margin-top: 0;
+            color: #333;
+        }
+        .actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .ajouter-point-btn {
+            background: #28a745;
+            color: white;
+            margin-bottom: 20px;
+            padding: 12px 20px;
+            font-size: 16px;
+        }
+        .supprimer {
+            background: #dc3545;
+            color: white;
+        }
+        .modifier {
+            background: #007bff;
+            color: white;
+        }
+        .valider {
+            background: #28a745;
+            color: white;
+        }
+        #exportParcours {
+            background: #6c757d;
+            color: white;
+            padding: 12px 20px;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        #titreParcours {
+            font-size: 18px;
+            padding: 12px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Créer un parcours</h1>
+
+    <input type="text" id="titreParcours" placeholder="Titre de votre parcours">
+
+    <button class="ajouter-point-btn" onclick="afficherFormulaire()">➕ Ajouter un nouveau point</button>
+
+    <div id="formulaire">
+        <h3>Nouveau point</h3>
+        <input type="text" id="titrePoint" placeholder="Titre du point">
+        <input type="file" id="photoPoint" accept="image/jpeg,image/png">
+        <textarea id="commentairePoint" placeholder="Description du point..." rows="4"></textarea>
+        <div class="actions">
+            <button class="valider" onclick="validerPoint()">Valider</button>
+            <button class="supprimer" onclick="annulerPoint()">Annuler</button>
+        </div>
+    </div>
+
+    <h2>Points du parcours</h2>
+    <div id="points"></div>
+
+    <button id="exportParcours">Exporter le parcours</button>
+
+    <script>
+        let points = [];
+        let pointEnCoursDeModification = null;
+
+        // Afficher le formulaire pour ajouter un point
+        function afficherFormulaire() {
+            document.getElementById('formulaire').style.display = 'block';
+            document.getElementById('titrePoint').value = '';
+            document.getElementById('commentairePoint').value = '';
+            document.getElementById('photoPoint').value = '';
+            pointEnCoursDeModification = null;
+        }
+
+        // Annuler l'ajout/modification
+        function annulerPoint() {
+            document.getElementById('formulaire').style.display = 'none';
+        }
+
+        // Valider l'ajout/modification d'un point
+        function validerPoint() {
+            const titre = document.getElementById('titrePoint').value;
+            const commentaire = document.getElementById('commentairePoint').value;
+            const photoInput = document.getElementById('photoPoint');
+
+            if (!titre || !photoInput.files[0]) {
+                alert("Veuillez remplir le titre et ajouter une photo.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    EXIF.getData(img, function() {
+                        const latitude = EXIF.getTag(this, "GPSLatitude");
+                        const longitude = EXIF.getTag(this, "GPSLongitude");
+                        const latRef = EXIF.getTag(this, "GPSLatitudeRef") || "N";
+                        const lonRef = EXIF.getTag(this, "GPSLongitudeRef") || "E";
+                        let lat = latitude ? convertDMSToDD(latitude, latRef) : null;
+                        let lon = longitude ? convertDMSToDD(longitude, lonRef) : null;
+                        let coords = lat && lon ? `Lat: ${lat.toFixed(6)}, Lon: ${lon.toFixed(6)}` : "Coordonnées non disponibles";
+
+                        const point = {
+                            titre: titre,
+                            photo: photoInput.files[0],
+                            commentaire: commentaire,
+                            coords: coords
+                        };
+
+                        if (pointEnCoursDeModification !== null) {
+                            points[pointEnCoursDeModification] = point;
+                        } else {
+                            points.push(point);
+                        }
+
+                        afficherPoints();
+                        annulerPoint();
+                    });
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(photoInput.files[0]);
+            };
+        }
+
+        // Modifier un point
+        function modifierPoint(index) {
+            const point = points[index];
+            document.getElementById('titrePoint').value = point.titre;
+            document.getElementById('commentairePoint').value = point.commentaire;
+            document.getElementById('formulaire').style.display = 'block';
+            pointEnCoursDeModification = index;
+        }
+
+        // Supprimer un point
+        function supprimerPoint(index) {
+            if (confirm("Voulez-vous vraiment supprimer ce point ?")) {
+                points.splice(index, 1);
+                afficherPoints();
+            }
+        }
+
+        // Afficher la liste des points
+        function afficherPoints() {
+            const container = document.getElementById('points');
+            if (points.length === 0) {
+                container.innerHTML = '<p>Aucun point ajouté pour le moment.</p>';
+                return;
+            }
+
+            container.innerHTML = points.map((p, index) =>
+                `<div class="point">
+                    <h4>${p.titre}</h4>
+                    <p><strong>Coordonnées:</strong> ${p.coords}</p>
+                    <p>${p.commentaire}</p>
+                    <div class="actions">
+                        <button class="modifier" onclick="modifierPoint(${index})">Modifier</button>
+                        <button class="supprimer" onclick="supprimerPoint(${index})">Supprimer</button>
+                    </div>
+                </div>`
+            ).join('');
+        }
+
+        // Exporter le parcours
+        document.getElementById('exportParcours').addEventListener('click', async function() {
+            if (points.length === 0) {
+                alert("Ajoutez au moins un point avant d'exporter.");
+                return;
+            }
+
+            const zip = new JSZip();
+            const titreParcours = document.getElementById('titreParcours').value || "Mon Parcours";
+            const parcoursData = { titre: titreParcours, points: [] };
+
+            // Ajouter chaque point au ZIP
+            for (let i = 0; i < points.length; i++) {
+                const point = points[i];
+                const dossier = `point_${i+1}`;
+
+                // Ajouter la photo
+                const photoBlob = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(new Blob([reader.result]));
+                    reader.readAsArrayBuffer(point.photo);
+                });
+                zip.file(`${dossier}/photo.jpg`, photoBlob);
+
+                // Ajouter les autres fichiers
+                zip.file(`${dossier}/commentaire.txt`, point.commentaire);
+                zip.file(`${dossier}/coords.txt`, point.coords);
+
+                parcoursData.points.push({
+                    id: i+1,
+                    titre: point.titre,
+                    photo: `${dossier}/photo.jpg`,
+                    commentaire: `${dossier}/commentaire.txt`,
+                    coords: `${dossier}/coords.txt`
+                });
+            }
+
+            // Ajouter le JSON et générer le ZIP
+            zip.file("parcours.json", JSON.stringify(parcoursData));
+            zip.generateAsync({type: "blob"}).then(function(content) {
+                saveAs(content, `${titreParcours.replace(/\s+/g, '_')}.zip`);
+            });
+        });
+
+        // Conversion DMS vers DD
+        function convertDMSToDD(dms, ref) {
+            let degrees = dms[0];
+            let minutes = dms[1];
+            let seconds = dms[2];
+            let dd = degrees + minutes/60 + seconds/3600;
+            if (ref === "S" || ref === "W") dd *= -1;
+            return dd;
+        }
+
+        // Service Worker pour PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/Creer_Parcours/sw.js');
+            });
+        }
+    </script>
+</body>
+</html>
