@@ -1,0 +1,66 @@
+
+<!doctype html>
+<html lang="fr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Visite</title>
+<link rel="manifest" href="manifest.json"><link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<style>body{font-family:Arial,Helvetica,sans-serif;margin:0} header{background:#2c3e50;color:#fff;padding:8px} #map{height:300px;margin:8px;border:1px solid #ccc} .media-preview img,.media-preview video,.media-preview audio{max-width:100%;display:block;margin-top:8px} button{padding:6px 10px;margin:6px}</style>
+</head>
+<body>
+<header><strong>Visite</strong> <input id="file" type="file" accept=".zip" style="margin-left:12px"><span id="status" style="margin-left:8px;color:crimson"></span></header>
+<div id="map"></div>
+<div id="point"></div>
+<div style="padding:8px"><button id="prev">Précédent</button><button id="next">Suivant</button></div>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script>
+const input = document.getElementById('file'), status=document.getElementById('status'), pointDiv=document.getElementById('point');
+let project=null, mediaMap={}, current=0;
+const map = L.map('map').setView([44,6],6); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map); const markers = L.layerGroup().addTo(map);
+input.addEventListener('change', async e=>{
+  const f=e.target.files[0]; if(!f) return; status.textContent='Lecture du zip...'; mediaMap={}; project=null; current=0; markers.clearLayers();
+  try{
+    const zip = await JSZip.loadAsync(f);
+    if(!zip.file('project.json')){ status.textContent='project.json introuvable'; return; }
+    const pj = JSON.parse(await zip.file('project.json').async('string'));
+    project = pj;
+    status.textContent = 'Projet: '+(pj.siteTitle||'sans nom');
+    // extract medias
+    const files = Object.keys(zip.files).filter(p=>p.startsWith('medias/'));
+    for(const p of files){
+      const b = await zip.file(p).async('blob');
+      const name = p.replace(/^medias\//,'');
+      // create objectURL with correct type
+      const url = URL.createObjectURL(new Blob([b], {type: b.type || 'application/octet-stream'}));
+      mediaMap[name]=url;
+    }
+    if(Array.isArray(project.points)){
+      project.points.forEach((pt,idx)=>{ if(pt.lat&&pt.lng) L.marker([pt.lat,pt.lng]).addTo(markers).bindPopup(pt.title||('Point '+(idx+1))); });
+      if(markers.getLayers().length) map.fitBounds(markers.getBounds().pad(0.5));
+    }
+    showPoint(0);
+  }catch(err){ console.error(err); status.textContent='Erreur: '+err.message; }
+});
+
+function showPoint(i){
+  if(!project||!Array.isArray(project.points)) return; if(i<0||i>=project.points.length) return; current=i;
+  const p = project.points[i];
+  const title = p.title||('Point '+(i+1)), text = p.text||p.comment||'';
+  let photo=null, video=null, audio=null;
+  if(p.photo && mediaMap[p.photo]) photo=mediaMap[p.photo];
+  if(p.video && mediaMap[p.video]) video=mediaMap[p.video];
+  if(p.audio && mediaMap[p.audio]) audio=mediaMap[p.audio];
+  let html = `<h3>${title}</h3><div>${text}</div><div class="media-preview">`;
+  if(photo) html += `<img src="${photo}">`;
+  if(video) html += `<video controls src="${video}"></video>`;
+  if(audio) html += `<audio controls src="${audio}"></audio>`;
+  html += `</div>`;
+  if(p.lat&&p.lng) html += `<p>Coord: ${Number(p.lat).toFixed(6)}, ${Number(p.lng).toFixed(6)}</p>`;
+  pointDiv.innerHTML = html;
+  if(p.lat&&p.lng) map.setView([p.lat,p.lng],14);
+}
+
+document.getElementById('prev').addEventListener('click', ()=>{ if(current>0) showPoint(current-1); });
+document.getElementById('next').addEventListener('click', ()=>{ if(project && current<project.points.length-1) showPoint(current+1); });
+</script>
+</body>
+</html>
