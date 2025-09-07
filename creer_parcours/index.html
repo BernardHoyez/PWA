@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Créer un parcours</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .point-form {
+            background: #f5f5f5;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        #points-list {
+            margin: 20px 0;
+        }
+        .point-item {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            background: white;
+        }
+        button {
+            padding: 8px 15px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        #add-point-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        #export-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Créer un parcours</h1>
+
+    <button id="add-point-btn" onclick="showAddForm()">➕ Ajouter un point</button>
+
+    <div id="point-form" class="point-form" style="display: none;">
+        <h3>Nouveau point</h3>
+        <div>
+            <input type="text" id="point-title" placeholder="Titre du point" style="width: 100%; padding: 8px; margin-bottom: 10px;">
+            <div id="title-error" class="error" style="display: none;">Le titre est obligatoire</div>
+        </div>
+        <div>
+            <input type="file" id="point-photo" accept="image/*" style="margin-bottom: 10px;">
+            <div id="photo-error" class="error" style="display: none;">Une photo est obligatoire</div>
+        </div>
+        <div>
+            <textarea id="point-description" placeholder="Description..." style="width: 100%; padding: 8px; min-height: 80px; margin-bottom: 10px;"></textarea>
+        </div>
+        <div>
+            <button onclick="savePoint()" style="background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 4px;">Enregistrer</button>
+            <button onclick="hideAddForm()" style="background: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 4px;">Annuler</button>
+        </div>
+    </div>
+
+    <h2>Liste des points</h2>
+    <div id="points-list"></div>
+
+    <button id="export-btn" onclick="exportParcours()">Exporter le parcours</button>
+
+    <script>
+        let points = [];
+
+        // Afficher le formulaire d'ajout
+        function showAddForm() {
+            document.getElementById('point-form').style.display = 'block';
+            document.getElementById('point-title').value = '';
+            document.getElementById('point-description').value = '';
+            document.getElementById('point-photo').value = '';
+            document.getElementById('title-error').style.display = 'none';
+            document.getElementById('photo-error').style.display = 'none';
+        }
+
+        // Masquer le formulaire
+        function hideAddForm() {
+            document.getElementById('point-form').style.display = 'none';
+        }
+
+        // Enregistrer un point
+        function savePoint() {
+            // Réinitialiser les erreurs
+            document.getElementById('title-error').style.display = 'none';
+            document.getElementById('photo-error').style.display = 'none';
+
+            const title = document.getElementById('point-title').value.trim();
+            const photoInput = document.getElementById('point-photo');
+            const description = document.getElementById('point-description').value.trim();
+
+            let isValid = true;
+
+            // Validation
+            if (!title) {
+                document.getElementById('title-error').style.display = 'block';
+                isValid = false;
+            }
+
+            if (!photoInput.files[0]) {
+                document.getElementById('photo-error').style.display = 'block';
+                isValid = false;
+            }
+
+            if (!isValid) return;
+
+            // Créer le point
+            const newPoint = {
+                title: title,
+                photo: photoInput.files[0],
+                description: description,
+                coords: "Coordonnées non disponibles" // Simplifié pour l'exemple
+            };
+
+            // Ajouter à la liste
+            points.push(newPoint);
+            updatePointsList();
+            hideAddForm();
+        }
+
+        // Mettre à jour la liste des points
+        function updatePointsList() {
+            const container = document.getElementById('points-list');
+
+            if (points.length === 0) {
+                container.innerHTML = '<p>Aucun point ajouté.</p>';
+                return;
+            }
+
+            container.innerHTML = points.map((point, index) => `
+                <div class="point-item">
+                    <h3>${point.title}</h3>
+                    <p>${point.description || 'Aucune description'}</p>
+                    <p><small>${point.coords}</small></p>
+                    <div style="margin-top: 10px;">
+                        <button onclick="editPoint(${index})" style="background: #007bff; color: white; border: none; padding: 5px 10px; margin-right: 5px; border-radius: 3px;">Modifier</button>
+                        <button onclick="deletePoint(${index})" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px;">Supprimer</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Modifier un point
+        function editPoint(index) {
+            const point = points[index];
+            document.getElementById('point-title').value = point.title;
+            document.getElementById('point-description').value = point.description;
+            document.getElementById('point-form').style.display = 'block';
+
+            // Stocker l'index pour la mise à jour
+            document.getElementById('point-form').dataset.editIndex = index;
+            document.querySelector('#point-form button:first-child').onclick = function() {
+                updatePoint(index);
+            };
+        }
+
+        // Mettre à jour un point
+        function updatePoint(index) {
+            const title = document.getElementById('point-title').value.trim();
+            const photoInput = document.getElementById('point-photo');
+            const description = document.getElementById('point-description').value.trim();
+
+            let isValid = true;
+
+            // Validation
+            if (!title) {
+                document.getElementById('title-error').style.display = 'block';
+                isValid = false;
+            }
+
+            if (!photoInput.files[0] && !points[index].photo) {
+                document.getElementById('photo-error').style.display = 'block';
+                isValid = false;
+            }
+
+            if (!isValid) return;
+
+            // Mettre à jour le point
+            points[index].title = title;
+            points[index].description = description;
+            if (photoInput.files[0]) {
+                points[index].photo = photoInput.files[0];
+            }
+
+            updatePointsList();
+            hideAddForm();
+        }
+
+        // Supprimer un point
+        function deletePoint(index) {
+            if (confirm('Voulez-vous vraiment supprimer ce point ?')) {
+                points.splice(index, 1);
+                updatePointsList();
+            }
+        }
+
+        // Exporter le parcours
+        async function exportParcours() {
+            if (points.length === 0) {
+                alert('Ajoutez au moins un point avant d\'exporter.');
+                return;
+            }
+
+            const zip = new JSZip();
+            const parcoursData = { title: "Mon Parcours", points: [] };
+
+            try {
+                for (let i = 0; i < points.length; i++) {
+                    const point = points[i];
+                    const dossier = `point_${i+1}`;
+
+                    // Ajouter la photo
+                    const photoArrayBuffer = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result);
+                        reader.readAsArrayBuffer(point.photo);
+                    });
+                    zip.file(`${dossier}/photo.jpg`, photoArrayBuffer, { binary: true });
+
+                    // Ajouter les autres fichiers
+                    zip.file(`${dossier}/description.txt`, point.description);
+                    zip.file(`${dossier}/coords.txt`, point.coords);
+
+                    parcoursData.points.push({
+                        id: i+1,
+                        title: point.title,
+                        photo: `${dossier}/photo.jpg`,
+                        description: `${dossier}/description.txt`,
+                        coords: `${dossier}/coords.txt`
+                    });
+                }
+
+                // Ajouter le fichier JSON
+                zip.file("parcours.json", JSON.stringify(parcoursData));
+
+                // Générer et télécharger le ZIP
+                const content = await zip.generateAsync({ type: "blob" });
+                saveAs(content, "mon_parcours.zip");
+
+            } catch (error) {
+                console.error("Erreur lors de l'export:", error);
+                alert("Une erreur est survenue lors de l'export. Voir la console pour plus de détails.");
+            }
+        }
+    </script>
+</body>
+</html>
