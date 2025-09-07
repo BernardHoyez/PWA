@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivre un parcours</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; }
+        #map { height: 400px; margin: 20px 0; border: 1px solid #ddd; border-radius: 4px; }
+        #debug-info { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; display: none; }
+        .error { color: red; }
+        .success { color: green; }
+        #point-details { margin: 20px 0; display: none; }
+        #point-photo { max-width: 100%; max-height: 300px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Suivre un parcours</h1>
+
+    <input type="file" id="import-input" accept=".zip" style="display: none;">
+    <button onclick="document.getElementById('import-input').click()">Importer un parcours</button>
+
+    <div id="debug-info">
+        <h3>Informations de débogage</h3>
+        <div id="debug-content"></div>
+    </div>
+
+    <div id="parcours-info" style="display: none;">
+        <h2 id="parcours-title"></h2>
+    </div>
+
+    <div id="points-list"></div>
+
+    <div id="point-details">
+        <h3 id="detail-title"></h3>
+        <img id="point-photo" alt="Photo du point">
+        <p id="point-coords"></p>
+        <p id="point-description"></p>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        let map;
+        let markers = [];
+        let currentZip = null;
+        let currentParcours = null;
+        let activePointIndex = null;
+        let photoUrls = [];
+
+        // Initialiser la carte
+        function initMap() {
+            map = L.map('map').setView([48.8566, 2.3522], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+        }
+
+        // Ajouter un message de débogage
+        function logDebug(message, isError = false) {
+            const debugContent = document.getElementById('debug-content');
+            const messageElement = document.createElement('p');
+            messageElement.textContent = message;
+            messageElement.style.color = isError ? 'red' : 'black';
+            debugContent.appendChild(messageElement);
+            document.getElementById('debug-info').style.display = 'block';
+        }
+
+        // Charger le fichier ZIP avec débogage détaillé
+        document.getElementById('import-input').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            document.getElementById('debug-content').innerHTML = '';
+            logDebug(`Fichier sélectionné: ${file.name} (${Math.round(file.size/1024)} Ko)`);
+
+            try {
+                // Charger le ZIP
+                logDebug("Chargement du fichier ZIP...");
+                currentZip = await JSZip.loadAsync(file);
+                logDebug("ZIP chargé avec succès.");
+
+                // Vérifier la présence de parcours.json
+                if (!currentZip.files["parcours.json"]) {
+                    throw new Error("Fichier parcours.json introuvable dans le ZIP.");
+                }
+
+                // Lire le fichier JSON
+                logDebug("Lecture de parcours.json...");
+                const jsonContent = await currentZip.file("parcours.json").async("text");
+                logDebug("Contenu de parcours.json:", jsonContent.substring(0, 200) + "...");
+
+                try {
+                    currentParcours = JSON.parse(jsonContent);
+                    logDebug("JSON parsé avec succès:", JSON.stringify(currentParcours, null, 2));
+
+                    // Afficher le titre du parcours
+                    document.getElementById('parcours-title').textContent =
+                        currentParcours.title || 'Mon parcours';
+                    document.getElementById('parcours-info').style.display = 'block';
+
+                    // Afficher la liste des points
+                    displayPointsList();
+
+                    // Initialiser et afficher la carte
+                    if (!map) initMap();
+                    await displayPointsOnMap();
+
+                } catch (jsonError) {
+                    logDebug(`Erreur de parsing JSON: ${jsonError.message}`, true);
+                    throw new Error(`Erreur dans le fichier JSON: ${jsonError.message}`);
+                }
+
+            } catch (error) {
+                console.error("Erreur complète:", error);
+                logDebug(`ERREUR: ${error.message}`, true);
+
+                // Afficher un message d'erreur utilisateur
+                alert(`Erreur lors du chargement: ${error.message}\n\nVoir les détails dans la section de débogage ci-dessous.`);
+            }
+        });
+
+        // Afficher la liste des points
+        function displayPointsList() {
+            const container = document.getElementById('points-list');
+            container.innerHTML = '';
+
+            if (!currentParcours?.points || currentParcours.points.length === 0) {
+                container.innerHTML = '<p>Aucun point dans ce parcours.</p>';
+                return;
+            }
+
+            logDebug(`Affichage de ${currentParcours.points.length} points...`);
+
+            container.innerHTML = currentParcours.points.map((point, index) => `
+                <div class="point-item" onclick="selectPoint(${index})">
+                    <h3>${point.title || 'Point sans titre'}</h3>
+                    <p>${point.coords || 'Coordonnées non disponibles'}</p>
+                </div>
+            `).join('');
+        }
+
+        // Sélectionner un point
+        async function selectPoint(index) {
+            activePointIndex = index;
+            logDebug(`Sélection du point ${index}: ${currentParcours.points[index].title}`);
+
+            if (!currentParcours?.points[index]) return;
+
+            const point = currentParcours.points[index];
+            document.getElementById('detail-title').textContent = point.title || 'Point sans titre';
+            document.getElementById('point-coords').textContent = point.coords || 'Coordonnées non disponibles';
+            document.getElementById('point-description').textContent = point.description || 'Aucune description';
+
+            try {
+                // Charger et afficher la photo
+                logDebug(`Chargement de la photo: ${point.photo}`);
+                const photoBlob = await currentZip.file(point.photo).async("blob");
+                const photoUrl = URL.createObjectURL(photoBlob);
+                document.getElementById('point-photo').src = photoUrl;
+                photoUrls.push(photoUrl);
+                document.getElementById('point-details').style.display = 'block';
+                logDebug("Photo chargée avec succès.");
+            } catch (error) {
+                console.error("Erreur photo:", error);
+                logDebug(`ERREUR photo: ${error.message}`, true);
+                document.getElementById('point-photo').src = '';
+            }
+
+            // Centrer la carte sur ce point si des coordonnées sont disponibles
+            if (point.coords && point.coords.includes('Lat:')) {
+                const parts = point.coords.split(',');
+                const lat = parseFloat(parts[0].replace('Lat:', '').trim());
+                const lon = parseFloat(parts[1].replace('Lon:', '').trim());
+
+                if (!isNaN(lat) && !isNaN(lon)) {
+                    map.setView([lat, lon], 17);
+                    logDebug(`Carte centrée sur: ${lat}, ${lon}`);
+                } else {
+                    logDebug(`Coordonnées invalides: ${point.coords}`, true);
+                }
+            } else {
+                logDebug("Aucune coordonnée valide trouvée.");
+            }
+        }
+
+        // Afficher les points sur la carte
+        async function displayPointsOnMap() {
+            if (!currentParcours?.points || !currentZip) return;
+
+            logDebug("Affichage des points sur la carte...");
+
+            // Effacer les anciens marqueurs
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+
+            // Libérer les URLs des photos précédentes
+            photoUrls.forEach(url => URL.revokeObjectURL(url));
+            photoUrls = [];
+
+            for (let i = 0; i < currentParcours.points.length; i++) {
+                const point = currentParcours.points[i];
+                logDebug(`Traitement du point ${i}: ${point.title}`);
+
+                try {
+                    // Lire les coordonnées depuis le fichier
+                    logDebug(`Lecture des coordonnées: ${point.coords}`);
+                    const coordsContent = await currentZip.file(point.coords).async("text");
+                    logDebug(`Contenu coordonnées: ${coordsContent}`);
+
+                    const parts = coordsContent.replace('Lat: ', '').replace('Lon: ', '').split(', ');
+                    if (parts.length < 2) {
+                        logDebug(`Format de coordonnées invalide: ${coordsContent}`, true);
+                        continue;
+                    }
+
+                    const lat = parseFloat(parts[0]);
+                    const lon = parseFloat(parts[1]);
+
+                    if (isNaN(lat) || isNaN(lon)) {
+                        logDebug(`Coordonnées invalides: ${lat}, ${lon}`, true);
+                        continue;
+                    }
+
+                    logDebug(`Ajout marqueur: ${lat}, ${lon}`);
+                    const marker = L.marker([lat, lon]).addTo(map)
+                        .bindPopup(`<b>${point.title || 'Point sans titre'}</b><br>Lat: ${lat}, Lon: ${lon}`)
+                        .on('click', () => selectPoint(i));
+                    markers.push(marker);
+
+                } catch (error) {
+                    console.error(`Erreur point ${i}:`, error);
+                    logDebug(`ERREUR point ${i}: ${error.message}`, true);
+                }
+            }
+        }
+
+        // Initialiser la carte au chargement
+        window.onload = initMap;
+
+        // Libérer les ressources quand on quitte la page
+        window.addEventListener('beforeunload', () => {
+            photoUrls.forEach(url => URL.revokeObjectURL(url));
+        });
+    </script>
+</body>
+</html>
