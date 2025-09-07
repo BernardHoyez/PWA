@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editeur de Visites</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 20px; }
+        #map { height: 400px; width: 100%; margin-top: 20px; }
+        input, textarea { width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box; }
+        button { padding: 10px 15px; cursor: pointer; }
+        .point-container { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/piexifjs@1.0.6/piexif.js"></script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(
+                    registration => { console.log('SW enregistré:', registration); },
+                    err => { console.log('SW échec:', err); }
+                );
+            });
+        }
+    </script>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Fonction pour convertir les degrés/minutes/secondes en décimal
+        const toDeg = (rational) => {
+            if (!rational) return null;
+            return rational[0] / rational[1];
+        };
+
+        const convertDMSToDeg = (dms, ref) => {
+            const degrees = toDeg(dms[0]);
+            const minutes = toDeg(dms[1]);
+            const seconds = toDeg(dms[2]);
+            
+            if (degrees === null || minutes === null || seconds === null) return null;
+            
+            let decimalDeg = degrees + minutes / 60 + seconds / 3600;
+            if (ref === "S" || ref === "W") {
+                decimalDeg = -decimalDeg;
+            }
+            return decimalDeg;
+        };
+
+        function App() {
+            const [points, setPoints] = useState([]);
+            const [siteTitle, setSiteTitle] = useState('');
+            const mapRef = useRef(null);
+            const markerRef = useRef(null);
+            const [currentPointId, setCurrentPointId] = useState(null);
+            const [errorMessage, setErrorMessage] = useState('');
+
+            useEffect(() => {
+                if (!mapRef.current) {
+                    mapRef.current = L.map('map').setView([43.5, 6.1], 10);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    }).addTo(mapRef.current);
+                    mapRef.current.on('click', onMapClick);
+                }
+            }, []);
+
+            const onMapClick = (e) => {
+                const { lat, lng } = e.latlng;
+                if (!currentPointId) return;
+                
+                if (markerRef.current) {
+                    mapRef.current.removeLayer(markerRef.current);
+                }
+                markerRef.current = L.marker([lat, lng], { draggable: true }).addTo(mapRef.current);
+                markerRef.current.on('dragend', (e) => {
+                    const newPos = e.target.getLatLng();
+                    handleUpdatePoint(currentPointId, 'lat', newPos.lat);
+                    handleUpdatePoint(currentPointId, 'lng', newPos.lng);
+                });
+                handleUpdatePoint(currentPointId, 'lat', lat);
+                handleUpdatePoint(currentPointId, 'lng', lng);
+            };
+
+            const handleAddPoint = () => {
+                const newPoint = {
+                    id: Date.now(),
+                    title: '',
+                    text: '',
+                    media: null,
+                    audio: null,
+                    lat: null,
+                    lng: null
+                };
+                setPoints([...points, newPoint]);
+            };
+
+            const handleUpdatePoint = (id, field, value) => {
+                setPoints(points.map(p => p.id === id ? { ...p, [field]: value } : p));
+                if (field === 'lat' || field === 'lng') {
+                    const point = points.find(p => p.id === id);
+                    if (point && point.lat && point.lng) {
+                        if (markerRef.current) {
+                            markerRef.current.setLatLng([point.lat, point.lng]);
+                        }
+                    }
+                }
+            };
+
+            const handleFileChange = (e, id) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                handleUpdatePoint(id, 'media', file);
+                setErrorMessage('');
+
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        try {
+                            const exifObj = piexifjs.load(event.target.result);
+                            if (exifObj && exifObj.GPS) {
+                                const lat = convertDMSToDeg(exifObj.GPS[piexifjs.GPSIFD.GPSLatitude], exifObj.GPS[piexifjs.GPSIFD.GPSLatitudeRef]);
+                                const lng = convertDMSToDeg(exifObj.GPS[piexifjs.GPSIFD.GPSLongitude], exifObj.GPS[piexifjs.GPSIFD.GPSLongitudeRef]);
+
+                                if (lat !== null && lng !== null) {
+                                    handleUpdatePoint(id, 'lat', lat);
+                                    handleUpdatePoint(id, 'lng', lng);
+                                    handleSelectPoint(id, lat, lng);
+                                    return;
+                                }
+                            }
+                        } catch (err) {
+                            console.error('Erreur de lecture EXIF:', err);
+                        }
+                        
+                        setErrorMessage('Cette photo ne contient pas de données GPS. Veuillez placer le marqueur sur la carte.');
+                        handleUpdatePoint(id, 'lat', null);
+                        handleUpdatePoint(id, 'lng', null);
+                        handleSelectPoint(id);
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    handleUpdatePoint(id, 'lat', null);
+                    handleUpdatePoint(id, 'lng', null);
+                }
+            };
+
+            const handleDeletePoint = (id) => {
+                setPoints(points.filter(p => p.id !== id));
+            };
+
+            const handleSelectPoint = (id, lat = null, lng = null) => {
+                setCurrentPointId(id);
+                if (markerRef.current) {
+                    mapRef.current.removeLayer(markerRef.current);
+                    markerRef.current = null;
+                }
+                const point = points.find(p => p.id === id);
+                
+                const finalLat = lat || (point && point.lat);
+                const finalLng = lng || (point && point.lng);
+
+                if (finalLat && finalLng) {
+                    markerRef.current = L.marker([finalLat, finalLng], { draggable: true }).addTo(mapRef.current);
+                    markerRef.current.on('dragend', (e) => {
+                        const newPos = e.target.getLatLng();
+                        handleUpdatePoint(id, 'lat', newPos.lat);
+                        handleUpdatePoint(id, 'lng', newPos.lng);
+                    });
+                    mapRef.current.setView([finalLat, finalLng], 13);
+                }
+            };
+            
+            const handleExport = async () => {
+                if (!siteTitle) {
+                    alert("Veuillez donner un titre au site.");
+                    return;
+                }
+                const zip = new JSZip();
+                const projectData = { siteTitle, points: [] };
+                
+                for (const point of points) {
+                    const pointData = {
+                        title: point.title,
+                        text: point.text,
+                        lat: point.lat,
+                        lng: point.lng,
+                        mediaFileName: point.media ? point.media.name : null,
+                        audioFileName: point.audio ? point.audio.name : null,
+                    };
+                    projectData.points.push(pointData);
+                    
+                    if (point.media) {
+                        zip.folder('medias').file(point.media.name, point.media);
+                    }
+                    if (point.audio) {
+                        zip.folder('medias').file(point.audio.name, point.audio);
+                    }
+                }
+                
+                zip.file('data.json', JSON.stringify(projectData));
+
+                const content = await zip.generateAsync({ type: 'blob' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(content);
+                a.download = `Projet_${siteTitle.replace(/\s/g, '_')}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            };
+
+            return (
+                <div>
+                    <h1>Editeur de Visites - Bienvenue John</h1>
+                    <label>Titre du site : <input type="text" value={siteTitle} onChange={(e) => setSiteTitle(e.target.value)} /></label>
+                    <button onClick={handleAddPoint}>Ajouter un point d'arrêt</button>
+
+                    {points.map((point, index) => (
+                        <div key={point.id} className="point-container">
+                            <h2>Point {index + 1}</h2>
+                            <label>Titre: <input type="text" value={point.title} onChange={(e) => handleUpdatePoint(point.id, 'title', e.target.value)} /></label>
+                            <label>Description: <textarea value={point.text} onChange={(e) => handleUpdatePoint(point.id, 'text', e.target.value)}></textarea></label>
+                            <label>Photo/Vidéo: <input type="file" accept="image/*,video/*" onChange={(e) => handleFileChange(e, point.id)} /></label>
+                            <label>Audio: <input type="file" accept="audio/*" onChange={(e) => handleUpdatePoint(point.id, 'audio', e.target.files[0])} /></label>
+                            <p>Latitude: {point.lat ? point.lat.toFixed(6) : 'Non définie'}</p>
+                            <p>Longitude: {point.lng ? point.lng.toFixed(6) : 'Non définie'}</p>
+                            <button onClick={() => handleSelectPoint(point.id)}>Placer sur la carte</button>
+                            <button onClick={() => handleDeletePoint(point.id)}>Supprimer ce point</button>
+                            {currentPointId === point.id && errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
+                        </div>
+                    ))}
+                    {currentPointId && <p>Déplacez le marqueur sur la carte pour définir la position du point sélectionné.</p>}
+                    <div id="map"></div>
+                    <button onClick={handleExport}>Exporter la visite</button>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>et je chan
