@@ -1,0 +1,5 @@
+{
+  "name": "Visite de Site - Voyageur",
+  "description": "Application pour visualiser les points d'une visite exportée depuis l'application Éditeur.",
+  "requestFramePermissions": []
+}
