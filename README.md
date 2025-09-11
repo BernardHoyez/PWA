@@ -1,4 +1,4 @@
-Projets PWA
+<H1>Projets PWA</H1>
 
 On trouve ici plusieurs applications :
 
