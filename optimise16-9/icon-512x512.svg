@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512"
+     xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Appareil photo bleu avec ciseaux rouges">
+  <title>Camera blue + red scissors 512</title>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- Appareil photo (bleu) -->
+    <rect x="48" y="128" width="416" height="256" rx="28"
+          stroke="#1565c0" stroke-width="28"/>
+    <rect x="88" y="80" width="96" height="56" rx="10"
+          stroke="#1565c0" stroke-width="28"/>
+    <circle cx="256" cy="256" r="88"
+          stroke="#1565c0" stroke-width="28"/>
+    <circle cx="256" cy="256" r="44"
+          stroke="#1565c0" stroke-width="20"/>
+    <circle cx="364" cy="164" r="12" fill="#1565c0" stroke="none"/>
+
+    <!-- Ciseaux (rouges) -->
+    <!-- Pivot -->
+    <circle cx="300" cy="232" r="18"
+            fill="#c62828" stroke="#c62828" stroke-width="10"/>
+
+    <!-- Lames -->
+    <path d="M300 232 L460 100" stroke="#c62828" stroke-width="28"/>
+    <path d="M300 232 L460 364" stroke="#c62828" stroke-width="28"/>
+
+    <!-- Branches -->
+    <path d="M300 232 Q240 200 160 160" stroke="#c62828" stroke-width="24"/>
+    <path d="M300 232 Q240 264 160 352" stroke="#c62828" stroke-width="24"/>
+
+    <!-- Poignées -->
+    <ellipse cx="152" cy="160" rx="44" ry="36"
+             stroke="#c62828" stroke-width="20"/>
+    <ellipse cx="152" cy="352" rx="44" ry="36"
+             stroke="#c62828" stroke-width="20"/>
+  </g>
+</svg>
