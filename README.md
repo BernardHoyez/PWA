@@ -2,7 +2,7 @@ Projets PWA
 
 On trouve ici plusieurs applications :
 
-<BR>tagmoi
+<BR>tagmoi<BR>
 cette application tague les images en bas à gauche avec les coordonnées GPS
 
 <BR>Allez-y
