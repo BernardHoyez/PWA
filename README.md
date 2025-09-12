@@ -12,6 +12,7 @@ Elle affiche la distance en mètres au point de destination,
 ainsi que l'azimut à suivre pour l'atteindre
 
 <BR>editeur_V7G<BR>
+<A HREF "https://bernardhoyez.github.io/PWA/editeur_V7G/">Editeur</A>
 C'est un editeur de visite. 
 Elle construit un certain nombre de point d'intérêt (POI).
 Ces POI comportent des photos JPEG, des vidéos MP4, des commentaires audio MP3,
