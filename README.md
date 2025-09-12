@@ -23,7 +23,9 @@ Elle produit en sortie un fichier Zip avec une structure qui pourra être utilis
 par une application de visualisation cartographique.
 
 <BR>suivons le guide_V8G<BR>
-Guide de terrain
+Guide de terrain<BR>
+<A href="https://bernardhoyez.github.io/PWA/editeur_V7G">Editeur de visite</A>
+<BR>
 Le fichier Zip produit par l'éditeur sert à guider l'utilisateur sur le terrain. 
 Elle affiche les POI avec tous les médias associés sur une carte OSM.
 La position de l'utilisateur est symbolisée par un marqueur mobile avec l'utilisateur.
