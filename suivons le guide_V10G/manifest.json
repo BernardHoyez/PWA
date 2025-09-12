@@ -1,0 +1,21 @@
+{
+  "name": "Suivons le guide V9",
+  "short_name": "Guide V9",
+  "description": "Un visualiseur de visite interactif.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f5f5f5",
+  "theme_color": "#3367D6",
+  "icons": [
+    {
+      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
