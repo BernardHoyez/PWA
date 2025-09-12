@@ -12,7 +12,7 @@ Elle affiche la distance en mètres au point de destination,
 ainsi que l'azimut à suivre pour l'atteindre
 
 <BR>editeur_V7G<BR>
-https://bernardhoyez.github.io/PWA/editeur_V7G
+<A href="https://bernardhoyez.github.io/PWA/editeur_V7G">Editeur de visite</A>
 
 <BR>C'est un editeur de visite. 
 Elle construit un certain nombre de point d'intérêt (POI).
