@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivons le guide V5</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; }
+        #map { height: 100vh; width: 100%; }
+        #load-btn { position: absolute; top: 10px; left: 10px; z-index: 1000; background: white; padding: 10px; border: 1px solid #ccc; }
+        .poi-icon div { background: red; color: white; border-radius: 50%; width: 20px; height: 20px; text-align: center; line-height: 20px; font-size: 12px; font-weight: bold; }
+        .media img, .media video { max-width: 200px; max-height: 150px; margin: 5px; display: block; }
+        .media audio { width: 200px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <button id="load-btn">Charger les données</button>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+
+        let map;
+        let poisData = [];
+        let currentPos = null;
+        let userMarker = null;
+        const R = 6371000; // Earth radius in meters
+
+        // Haversine distance
+        function haversine(p1, p2) {
+            const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+            const dLon = (p2.lng - p1.lng) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        // Bearing calculation (0 = North, clockwise)
+        function calculateBearing(p1, p2) {
+            const lat1 = p1.lat * Math.PI / 180;
+            const lon1 = p1.lng * Math.PI / 180;
+            const lat2 = p2.lat * Math.PI / 180;
+            const lon2 = p2.lng * Math.PI / 180;
+            const y = Math.sin(lon2 - lon1) * Math.cos(lat2);
+            const x = Math.cos(lat1) * Math.sin(lat2) -
+                      Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
+            let brng = Math.atan2(y, x) * 180 / Math.PI;
+            return (brng + 360) % 360;
+        }
+
+        // Create popup content
+        function createPopupContent(poi, extra = '') {
+            let html = `<h3>${poi.title}</h3>
+                        <p><strong>Localisation:</strong> ${poi.locationStr}</p>
+                        ${extra}
+                        <p><strong>Commentaire:</strong> ${poi.comment.replace(/\n/g, '<br>')}</p>`;
+            let hasMedia = false;
+            if (poi.images && poi.images.length > 0) {
+                hasMedia = true;
+                html += '<div class="media">';
+                poi.images.forEach(img => {
+                    html += `<img src="${img.url}" alt="${img.name}">`;
+                });
+                html += '</div>';
+            }
+            if (poi.video) {
+                hasMedia = true;
+                html += `<div class="media"><video controls><source src="${poi.video.url}" type="video/mp4"></video></div>`;
+            }
+            if (poi.audio) {
+                hasMedia = true;
+                html += `<div class="media"><audio controls><source src="${poi.audio.url}" type="audio/mpeg"></audio></div>`;
+            }
+            if (!hasMedia) {
+                html += '<p>Aucun média disponible.</p>';
+            }
+            return html;
+        }
+
+        // Load data from directory
+        async function loadData(dirHandle) {
+            try {
+                const dataDir = await dirHandle.getDirectoryHandle('data');
+                const visitFileHandle = await dirHandle.getFileHandle('visit.json');
+                const visitFile = await visitFileHandle.getFile();
+                const visitText = await visitFile.text();
+                const pois = JSON.parse(visitText);
+
+                poisData = [];
+                for (let poi of pois) {
+                    const folderHandle = await dataDir.getDirectoryHandle(poi.folder.toString());
+
+                    // Read text files
+                    const titleHandle = await folderHandle.getFileHandle(poi.titleFile);
+                    const titleFile = await titleHandle.getFile();
+                    const title = await titleFile.text();
+
+                    const commentHandle = await folderHandle.getFileHandle(poi.commentFile);
+                    const commentFile = await commentHandle.getFile();
+                    const comment = await commentFile.text();
+
+                    const locHandle = await folderHandle.getFileHandle(poi.locationFile);
+                    const locFile = await locHandle.getFile();
+                    const locationStr = await locFile.text().then(t => t.trim());
+
+                    // Parse lat/lon
+                    const parts = locationStr.split(',');
+                    let latStr = parts[0].trim();
+                    let latDir = latStr.slice(-1);
+                    let lat = parseFloat(latStr.slice(0, -1));
+                    if (latDir === 'S') lat = -lat;
+
+                    let lonStr = parts[1].trim();
+                    let lonDir = lonStr.slice(-1);
+                    let lon = parseFloat(lonStr.slice(0, -1));
+                    if (lonDir === 'W') lon = -lon;
+
+                    // Read media files
+                    const images = [];
+                    let video = null;
+                    let audio = null;
+                    for await (const [name, handle] of folderHandle.entries()) {
+                        if (handle.kind !== 'file' || name.endsWith('.txt')) continue;
+                        const file = await handle.getFile();
+                        const url = URL.createObjectURL(file);
+                        const ext = name.split('.').pop().toLowerCase();
+                        if (ext === 'jpg' || ext === 'jpeg') {
+                            images.push({ url, name });
+                        } else if (ext === 'mp4') {
+                            video = { url, name };
+                        } else if (ext === 'mp3') {
+                            audio = { url, name };
+                        }
+                    }
+
+                    poisData.push({
+                        id: poi.id,
+                        lat,
+                        lon,
+                        locationStr,
+                        title: title.trim(),
+                        comment: comment.trim(),
+                        images,
+                        video,
+                        audio
+                    });
+                }
+
+                // Init map if not already
+                if (!map) {
+                    initMap();
+                }
+
+                // Add markers
+                addMarkers();
+
+                // Calculate center
+                if (poisData.length > 0) {
+                    const avgLat = poisData.reduce((sum, p) => sum + p.lat, 0) / poisData.length;
+                    const avgLon = poisData.reduce((sum, p) => sum + p.lon, 0) / poisData.length;
+                    map.setView([avgLat, avgLon], 15);
+                }
+
+                alert('Données chargées avec succès !');
+            } catch (err) {
+                console.error(err);
+                alert('Erreur lors du chargement : ' + err.message);
+            }
+        }
+
+        // Init map
+        function initMap() {
+            map = L.map('map').setView([43.5, 6.2], 13); // Default view, adjust if needed
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+        }
+
+        // Add POI markers
+        function addMarkers() {
+            poisData.forEach(poi => {
+                const latlng = L.latLng(poi.lat, poi.lon);
+                const marker = L.marker(latlng, {
+                    icon: L.divIcon({
+                        className: 'poi-icon',
+                        html: `<div>${poi.id}</div>`,
+                        iconSize: [20, 20],
+                        iconAnchor: [10, 10]
+                    })
+                }).addTo(map);
+
+                marker.on('click', (e) => {
+                    const targetLatLng = e.latlng;
+                    let extra = '';
+                    if (currentPos) {
+                        const dist = haversine(currentPos, targetLatLng);
+                        const bearing = calculateBearing(currentPos, targetLatLng);
+                        extra = `<p><strong>Distance:</strong> ${Math.round(dist)} m</p>
+                                 <p><strong>Azimut:</strong> Nord ${Math.round(bearing)}°</p>`;
+                    }
+                    const content = createPopupContent(poi, extra);
+                    L.popup({ maxWidth: 400 }).setLatLng(targetLatLng).setContent(content).openOn(map);
+                });
+            });
+        }
+
+        // Watch GPS
+        function startGPS() {
+            if (!navigator.geolocation) {
+                alert('Géolocalisation non supportée.');
+                return;
+            }
+            const watchId = navigator.geolocation.watchPosition(
+                (pos) => {
+                    const { latitude, longitude } = pos.coords;
+                    currentPos = L.latLng(latitude, longitude);
+                    if (userMarker) {
+                        userMarker.setLatLng(currentPos);
+                    } else {
+                        userMarker = L.marker(currentPos, {
+                            icon: L.icon({
+                                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+                                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                                iconSize: [25, 41],
+                                iconAnchor: [12, 41],
+                                popupAnchor: [1, -34],
+                                shadowSize: [41, 41]
+                            })
+                        }).addTo(map);
+                    }
+                },
+                (err) => {
+                    console.error('GPS error:', err);
+                    alert('Erreur GPS : ' + err.message);
+                },
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 10000 }
+            );
+        }
+
+        // Event listeners
+        document.getElementById('load-btn').addEventListener('click', async () => {
+            if ('showDirectoryPicker' in window) {
+                try {
+                    const dirHandle = await window.showDirectoryPicker();
+                    await loadData(dirHandle);
+                    startGPS();
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        alert('Erreur lors de la sélection du dossier : ' + err.message);
+                    }
+                }
+            } else {
+                alert('File System Access API non supportée. Utilisez Chrome sur Android ou un navigateur compatible.');
+            }
+        });
+
+        // Auto-start GPS if data loaded (for PWA launch)
+        window.addEventListener('load', () => {
+            if ('launchQueue' in window && 'files' in LaunchParams.prototype) {
+                launchQueue.setConsumer((launchParams) => {
+                    if (!launchParams.files.length) return;
+                    const dirHandle = launchParams.files[0];
+                    loadData(dirHandle).then(() => startGPS());
+                });
+            }
+        });
+    </script>
+</body>
+</html>
