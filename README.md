@@ -13,7 +13,7 @@ ainsi que l'azimut à suivre pour l'atteindre
 
 <BR>editeur_V7G<BR>
 https://bernardhoyez.github.io/PWA/editeur_V7G
-C'est un editeur de visite. 
+<BR>C'est un editeur de visite. 
 Elle construit un certain nombre de point d'intérêt (POI).
 Ces POI comportent des photos JPEG, des vidéos MP4, des commentaires audio MP3,
 ainsi qu'un titre, une géolocalisation et un commentaire textuel.
