@@ -1,6 +1,6 @@
 {
-  "name": "Suivons le guide V9",
-  "short_name": "Guide V9",
+  "name": "Suivons le guide V10",
+  "short_name": "Guide V10",
   "description": "Un visualiseur de visite interactif.",
   "start_url": ".",
   "display": "standalone",

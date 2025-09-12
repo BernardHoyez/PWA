@@ -1,8 +1,8 @@
-const CACHE_NAME = 'guide-v9-cache-v1';
+const CACHE_NAME = 'guide-v10-cache-v1';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json'
+  './',
+  './index.html',
+  './manifest.json'
 ];
 
 self.addEventListener('install', event => {

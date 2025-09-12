@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Suivons le guide V9</title>
+  <title>Suivons le guide V10</title>
   <meta name="theme-color" content="#3367D6">
   <meta name="description" content="Un visualiseur de visite interactif.">
   
@@ -564,7 +564,7 @@ const UserMarker: React.FC<{ position: L.LatLng; isPoiSelected: boolean }> = ({ 
     }, [position, map, isPoiSelected]);
 
     const userIcon = new L.Icon({
-        iconUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAABWSURBVEhL7c1BCgAwDANQy/m/cwcjGgckISGkhfW/Fw+hCg3A8eUjxwH2sDweABw/gqOQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkLBVfQEj3gA4KTwZAAAAAElFTkSuQmCC',
+        iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iIzQyODVGNCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMyIgZmlsbD0id2hpdGUiLz48L3N2Zz4=',
         iconSize: [24, 24], iconAnchor: [12, 12],
     });
     return <Marker position={position} icon={userIcon} />;
@@ -599,10 +599,8 @@ const MapView: React.FC<{
   const markerRefs = useRef<{ [key: number]: L.Marker | null }>({});
   
   const poiIcon = (id: number) => new L.Icon({
-    iconUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAApCAYAAADAk4LOAAAFgUlEQVRYR71Xa0xTVxR+++MSLoxhMCIxYRjMxsxY3iQxEZMpkxKjECGkQZJpoyZpxsYkSVrSNDFApQZSFoQpE2kEGUlaYvIYRCEyG0gEIZGAsiCgoCwsK2y7mH2sfe/d/e89yvtC6A9s/5N/p7v33Pvec+855xYC/58B/j/yH+c/AbxI/E98fTwRzM/PV2w2+wS63W6r3+8n11LpdP1Kfn7+K1Eslr8fGhp6bXR09A34+d8APjY2NupWq3U0Nzc7LxcWFrY6Ozu/A6PRaBAKhcKPgYGBm5dYLP4AtVqt3W63R+R1udxWOBx+kGUymWw0GoU8Ho9P0el0e/v7+4eFhYVdRLFY/BP4CbFY/B84HA6/ubm5w1ar1a/v7+8TfX19w8rKynA0Gv1+dHT0N3g8Hj+Wl5dfR6vV/gX+8/l8bm5uDoIgCAiCgFQq9XZ2dvaPjIyM5Ozs7Nn19fUvoqKiVq+trd0/NTX1D2ZmZuYyMzNzk5qaev+FhYXTp0+f9gX/GfjY27dvN11dXb1pMpm+WlpaepOamlrm5eX1bWlp6TU4OHg3k8n02djYmK+srLyYnp6eOzg4uGZxcfFuZmZm29bW1u3l5eVnVVVVP4D/AzB8+PDh05ubm9M9PT332traDmZmZjaZmZnV1dXVPTU1NTbZ2dmz09LSIggCtVqtRqMR8fHxoVQqlc1m+7a0tHSk0+kbT09P31xcXDx4aGjoi5OTk8tLS0v/A+bzeXp6ep7g4OB1ubm5xVwut81isSwzMzPz1tbW+rW1tXk2m21+cXHxTklJSadSqfSPjo4eFBcXt8hkMtvNzc3T4eHhB6ampn6MjIx8lZeX/y9Qq9VOT0/vSktLO2EymZ5btVoNhMHgHRwc5Gq1uomJiYVLSkpaU1NTI56ens+ur68/k52dfaGuro4LgqD/e/ToUavV6v3q6+v/A5qbm4/k5eUdsG27ubCwcJmZmZmJiYlJ6+vrC3p6ejo6Ojr+5enpiUql2tjYuGhtbX0+Pj5+Q1VV1X14ePjl5uamEa/XP5iamvq5uLj4N/D3d3R0PHl4eLjMrq6uR0tLS7OlpSWtsLBwjYyMfAcHB5+ZmZnVubm5U0tLS7O5ubnR3Nzc6JubmxM8Hp/7+/sfhYeHv45Go78B/wH4+OOPP4JyuXx+dHT00NDQ0E2ampqunZ2dm56env+fn5+P6Ojol5OTk/P7+/v309PTm+vr6+uTk5P/Afz0dHZ2NllZWXmsVCqXm5qaPh4eHt2ZmZl92dnZmba2tpVLp/QzNTX15uTk5M0A/gL87Ozs/F5bW/vy9/f33NDQ0F+RkZGvAwMDv7u7u7/y8/PXpaWlvykpKV/9/f3X5+fnNzc3N1eVUn8D/iH86e/v36Ojo28mJydfnZ6e/gI+Ab8M/Bv4/+/vb9fX149lZWW/AP81+A/4a9LS0lYkEvkv+PuPjoyMvGZmZt6YmZkZEhIS/gR+Ab/c3t6+NjU1/S/4++H+/v5Zfn7+L0ql0h/gXwM/A3/6+vrW9fX1zydOnPgf8M/A3wZ+Ab8BfgN+Bvwz8K9LSkr27u7uj8+fP/+v5OTkr1paWj4B/g38Z2Vl5T8Bfwn8h/l/AP8/bW1tFz8/P/8B/gP834C/AQMAAAAA//8DAEgJv4HkRIsAAAAASUVORK5CYII=',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
+    iconUrl: `data:image/svg+xml;base64,${btoa(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="36" height="36"><path fill="#C53929" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/><text x="12" y="12" font-size="10" font-weight="bold" fill="white" text-anchor="middle" dy=".3em">${id}</text></svg>`)}`,
+    iconSize: [36, 36], iconAnchor: [18, 36], popupAnchor: [0, -36],
   });
 
   const MapController: React.FC = () => {
@@ -650,7 +648,7 @@ const App: React.FC = () => {
   
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js');
+      navigator.serviceWorker.register('./sw.js');
     }
     const watchId = navigator.geolocation?.watchPosition(
       pos => setUserPosition(L.latLng(pos.coords.latitude, pos.coords.longitude)),
@@ -767,7 +765,7 @@ const App: React.FC = () => {
       
       {!visitData && !isLoading ? (
         <div className="file-loader">
-          <h1>Suivons le guide V9</h1>
+          <h1>Suivons le guide V10</h1>
           <p>Chargez un fichier de visite (.zip) pour commencer.</p>
           <label htmlFor="zip-upload">Choisir un fichier</label>
           <input id="zip-upload" type="file" accept=".zip,.ZIP" onChange={handleFileChange} />
