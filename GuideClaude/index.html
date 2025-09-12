@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivons le Guide V5</title>
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#2196F3">
+    <link rel="apple-touch-icon" href="./icons/icon-192.png">
+    <link rel="icon" type="image/x-icon" href="./icons/favicon.ico">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 1000;
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .controls {
+            background: white;
+            padding: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+            z-index: 1000;
+            position: relative;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+        
+        .file-input-label {
+            background: #4CAF50;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        
+        .file-input-label:hover {
+            background: #45a049;
+        }
+        
+        .status {
+            flex: 1;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .gps-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #666;
+        }
+        
+        .gps-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ccc;
+            transition: background 0.3s;
+        }
+        
+        .gps-indicator.active {
+            background: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        #map {
+            height: calc(100vh - 160px);
+            width: 100%;
+            z-index: 1;
+        }
+        
+        .popup-content {
+            max-width: 300px;
+        }
+        
+        .popup-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2196F3;
+            margin-bottom: 0.5rem;
+        }
+        
+        .popup-location {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .popup-comment {
+            margin-bottom: 1rem;
+            line-height: 1.4;
+        }
+        
+        .popup-media {
+            margin-top: 1rem;
+        }
+        
+        .popup-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .popup-video {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .popup-audio {
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+        
+        .navigation-info {
+            background: #E3F2FD;
+            border: 2px solid #2196F3;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .distance {
+            color: #1976D2;
+            font-size: 1.1rem;
+        }
+        
+        .azimuth {
+            color: #388E3C;
+            font-size: 1rem;
+        }
+        
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            z-index: 2000;
+            text-align: center;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2196F3;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem;
+            border-left: 4px solid #f44336;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .popup-content {
+                max-width: 250px;
+            }
+            
+            #map {
+                height: calc(100vh - 200px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Suivons le Guide V5</h1>
+    </div>
+    
+    <div class="controls">
+        <div class="file-input-wrapper">
+            <input type="file" id="zipFile" accept=".zip" />
+            <label for="zipFile" class="file-input-label">📁 Charger le fichier ZIP</label>
+        </div>
+        <div class="status" id="status">Aucun fichier chargé</div>
+        <div class="gps-status">
+            <div class="gps-indicator" id="gpsIndicator"></div>
+            <span id="gpsStatus">GPS inactif</span>
+        </div>
+    </div>
+    
+    <div id="map"></div>
+    
+    <div class="loading" id="loading" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>Chargement en cours...</p>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
+    <script>
+        class VisitGuideApp {
+            constructor() {
+                this.map = null;
+                this.userMarker = null;
+                this.poiMarkers = [];
+                this.visitData = [];
+                this.zipData = null;
+                this.userPosition = null;
+                this.watchId = null;
+                
+                this.initMap();
+                this.initEventListeners();
+                this.startGeolocation();
+                this.registerServiceWorker();
+            }
+            
+            initMap() {
+                this.map = L.map('map').setView([46.6034, 1.8883], 6);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(this.map);
+            }
+            
+            initEventListeners() {
+                document.getElementById('zipFile').addEventListener('change', (e) => {
+                    this.handleZipFile(e.target.files[0]);
+                });
+            }
+            
+            showLoading(show = true) {
+                document.getElementById('loading').style.display = show ? 'block' : 'none';
+            }
+            
+            updateStatus(message) {
+                document.getElementById('status').textContent = message;
+            }
+            
+            showError(message) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error';
+                errorDiv.textContent = message;
+                document.body.appendChild(errorDiv);
+                
+                setTimeout(() => {
+                    document.body.removeChild(errorDiv);
+                }, 5000);
+            }
+            
+            async handleZipFile(file) {
+                if (!file) return;
+                
+                this.showLoading(true);
+                this.updateStatus('Lecture du fichier ZIP...');
+                
+                try {
+                    const zip = new JSZip();
+                    this.zipData = await zip.loadAsync(file);
+                    
+                    const visitJsonFile = this.zipData.file('visit.json');
+                    if (!visitJsonFile) {
+                        throw new Error('Fichier visit.json non trouvé');
+                    }
+                    
+                    const visitJsonContent = await visitJsonFile.async('string');
+                    this.visitData = JSON.parse(visitJsonContent);
+                    
+                    this.updateStatus(`${this.visitData.length} points d'intérêt trouvés`);
+                    await this.loadPointsOfInterest();
+                    
+                } catch (error) {
+                    console.error('Erreur lors du chargement du fichier ZIP:', error);
+                    this.showError('Erreur lors du chargement: ' + error.message);
+                    this.updateStatus('Erreur lors du chargement');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+            
+            async loadPointsOfInterest() {
+                this.poiMarkers.forEach(marker => this.map.removeLayer(marker));
+                this.poiMarkers = [];
+                
+                const bounds = [];
+                
+                for (const poi of this.visitData) {
+                    try {
+                        const poiData = await this.loadPOIData(poi);
+                        
+                        if (poiData.location) {
+                            const marker = L.marker([poiData.location.lat, poiData.location.lng])
+                                .addTo(this.map);
+                            
+                            marker.bindPopup(() => this.createPopupContent(poiData));
+                            marker.on('click', () => this.handlePOIClick(poiData));
+                            
+                            this.poiMarkers.push(marker);
+                            bounds.push([poiData.location.lat, poiData.location.lng]);
+                        }
+                    } catch (error) {
+                        console.error(`Erreur lors du chargement du POI ${poi.id}:`, error);
+                    }
+                }
+                
+                if (bounds.length > 0) {
+                    this.map.fitBounds(bounds, { padding: [20, 20] });
+                }
+            }
+            
+            async loadPOIData(poi) {
+                const poiData = { ...poi };
+                
+                try {
+                    if (poi.titleFile) {
+                        const titleFile = this.zipData.file(`data/${poi.folder}/${poi.titleFile}`);
+                        if (titleFile) {
+                            poiData.title = await titleFile.async('string');
+                        }
+                    }
+                    
+                    if (poi.locationFile) {
+                        const locationFile = this.zipData.file(`data/${poi.folder}/${poi.locationFile}`);
+                        if (locationFile) {
+                            const locationStr = await locationFile.async('string');
+                            poiData.location = this.parseLocation(locationStr.trim());
+                        }
+                    }
+                    
+                    if (poi.commentFile) {
+                        const commentFile = this.zipData.file(`data/${poi.folder}/${poi.commentFile}`);
+                        if (commentFile) {
+                            poiData.comment = await commentFile.async('string');
+                        }
+                    }
+                    
+                    if (poi.image) {
+                        const imageFile = this.zipData.file(`data/${poi.folder}/${poi.image}`);
+                        if (imageFile) {
+                            const imageBlob = await imageFile.async('blob');
+                            poiData.imageUrl = URL.createObjectURL(imageBlob);
+                        }
+                    }
+                    
+                    if (poi.video) {
+                        const videoFile = this.zipData.file(`data/${poi.folder}/${poi.video}`);
+                        if (videoFile) {
+                            const videoBlob = await videoFile.async('blob');
+                            poiData.videoUrl = URL.createObjectURL(videoBlob);
+                        }
+                    }
+                    
+                    if (poi.audio) {
+                        const audioFile = this.zipData.file(`data/${poi.folder}/${poi.audio}`);
+                        if (audioFile) {
+                            const audioBlob = await audioFile.async('blob');
+                            poiData.audioUrl = URL.createObjectURL(audioBlob);
+                        }
+                    }
+                    
+                } catch (error) {
+                    console.error(`Erreur lors du chargement des données pour le POI ${poi.id}:`, error);
+                }
+                
+                return poiData;
+            }
+            
+            parseLocation(locationStr) {
+                try {
+                    const [latStr, lngStr] = locationStr.split(',').map(s => s.trim());
+                    
+                    const lat = parseFloat(latStr.replace('N', '').replace('S', ''));
+                    const latSign = latStr.includes('S') ? -1 : 1;
+                    
+                    const lng = parseFloat(lngStr.replace('E', '').replace('W', ''));
+                    const lngSign = lngStr.includes('W') ? -1 : 1;
+                    
+                    return {
+                        lat: lat * latSign,
+                        lng: lng * lngSign
+                    };
+                } catch (error) {
+                    console.error('Erreur lors du parsing de la localisation:', locationStr, error);
+                    return null;
+                }
+            }
+            
+            createPopupContent(poiData) {
+                const container = document.createElement('div');
+                container.className = 'popup-content';
+                
+                if (this.userPosition && poiData.location) {
+                    const navInfo = this.calculateNavigationInfo(poiData.location);
+                    container.appendChild(navInfo);
+                }
+                
+                if (poiData.title) {
+                    const title = document.createElement('div');
+                    title.className = 'popup-title';
+                    title.textContent = poiData.title;
+                    container.appendChild(title);
+                }
+                
+                if (poiData.location) {
+                    const location = document.createElement('div');
+                    location.className = 'popup-location';
+                    location.textContent = `📍 ${poiData.location.lat.toFixed(5)}°, ${poiData.location.lng.toFixed(5)}°`;
+                    container.appendChild(location);
+                }
+                
+                if (poiData.comment) {
+                    const comment = document.createElement('div');
+                    comment.className = 'popup-comment';
+                    comment.textContent = poiData.comment;
+                    container.appendChild(comment);
+                }
+                
+                const mediaContainer = document.createElement('div');
+                mediaContainer.className = 'popup-media';
+                
+                if (poiData.imageUrl) {
+                    const img = document.createElement('img');
+                    img.src = poiData.imageUrl;
+                    img.className = 'popup-image';
+                    img.alt = poiData.title || 'Image';
+                    mediaContainer.appendChild(img);
+                }
+                
+                if (poiData.videoUrl) {
+                    const video = document.createElement('video');
+                    video.src = poiData.videoUrl;
+                    video.className = 'popup-video';
+                    video.controls = true;
+                    mediaContainer.appendChild(video);
+                }
+                
+                if (poiData.audioUrl) {
+                    const audio = document.createElement('audio');
+                    audio.src = poiData.audioUrl;
+                    audio.className = 'popup-audio';
+                    audio.controls = true;
+                    mediaContainer.appendChild(audio);
+                }
+                
+                if (mediaContainer.children.length > 0) {
+                    container.appendChild(mediaContainer);
+                }
+                
+                return container;
+            }
+            
+            calculateNavigationInfo(targetLocation) {
+                const container = document.createElement('div');
+                container.className = 'navigation-info';
+                
+                const distance = this.calculateDistance(
+                    this.userPosition.lat, this.userPosition.lng,
+                    targetLocation.lat, targetLocation.lng
+                );
+                
+                const azimuth = this.calculateAzimuth(
+                    this.userPosition.lat, this.userPosition.lng,
+                    targetLocation.lat, targetLocation.lng
+                );
+                
+                const distanceDiv = document.createElement('div');
+                distanceDiv.className = 'distance';
+                distanceDiv.textContent = `Distance: ${Math.round(distance)} m`;
+                container.appendChild(distanceDiv);
+                
+                const azimuthDiv = document.createElement('div');
+                azimuthDiv.className = 'azimuth';
+                azimuthDiv.textContent = `Azimut: Nord ${Math.round(azimuth)}°`;
+                container.appendChild(azimuthDiv);
+                
+                return container;
+            }
+            
+            calculateDistance(lat1, lng1, lat2, lng2) {
+                const R = 6371000;
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLng = (lng2 - lng1) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                        Math.sin(dLng/2) * Math.sin(dLng/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return R * c;
+            }
+            
+            calculateAzimuth(lat1, lng1, lat2, lng2) {
+                const dLng = (lng2 - lng1) * Math.PI / 180;
+                const lat1Rad = lat1 * Math.PI / 180;
+                const lat2Rad = lat2 * Math.PI / 180;
+                
+                const y = Math.sin(dLng) * Math.cos(lat2Rad);
+                const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) -
+                        Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLng);
+                
+                let azimuth = Math.atan2(y, x) * 180 / Math.PI;
+                return (azimuth + 360) % 360;
+            }
+            
+            handlePOIClick(poiData) {
+                // Popup handled automatically by Leaflet
+            }
+            
+            startGeolocation() {
+                if (!navigator.geolocation) {
+                    this.updateGpsStatus('GPS non disponible', false);
+                    return;
+                }
+                
+                const options = {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 60000
+                };
+                
+                this.watchId = navigator.geolocation.watchPosition(
+                    (position) => this.onGeolocationSuccess(position),
+                    (error) => this.onGeolocationError(error),
+                    options
+                );
+            }
+            
+            onGeolocationSuccess(position) {
+                this.userPosition = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                
+                if (this.userMarker) {
+                    this.userMarker.setLatLng([this.userPosition.lat, this.userPosition.lng]);
+                } else {
+                    this.userMarker = L.marker([this.userPosition.lat, this.userPosition.lng], {
+                        icon: L.divIcon({
+                            className: 'user-marker',
+                            html: '📍',
+                            iconSize: [25, 25],
+                            iconAnchor: [12, 12]
+                        })
+                    }).addTo(this.map);
+                    
+                    this.userMarker.bindPopup('Votre position');
+                }
+                
+                this.updateGpsStatus(`GPS actif (±${Math.round(position.coords.accuracy)}m)`, true);
+            }
+            
+            onGeolocationError(error) {
+                let message = 'Erreur GPS';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        message = 'Permission GPS refusée';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        message = 'Position indisponible';
+                        break;
+                    case error.TIMEOUT:
+                        message = 'Timeout GPS';
+                        break;
+                }
+                this.updateGpsStatus(message, false);
+            }
+            
+            updateGpsStatus(message, active) {
+                document.getElementById('gpsStatus').textContent = message;
+                const indicator = document.getElementById('gpsIndicator');
+                if (active) {
+                    indicator.classList.add('active');
+                } else {
+                    indicator.classList.remove('active');
+                }
+            }
+            
+            registerServiceWorker() {
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register('./sw.js')
+                        .then((registration) => {
+                            console.log('Service Worker enregistré avec succès:', registration.scope);
+                        })
+                        .catch((error) => {
+                            console.log('Échec de l\'enregistrement du Service Worker:', error);
+                        });
+                }
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            new VisitGuideApp();
+        });
+    </script>
+</body>
+</html>
