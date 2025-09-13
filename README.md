@@ -34,7 +34,7 @@ Guide de terrain<BR>
 Le fichier Zip produit par l'éditeur sert à guider l'utilisateur sur le terrain. 
 Elle affiche les POI avec tous les médias associés sur une carte OSM.
 La position de l'utilisateur est symbolisée par un marqueur mobile avec l'utilisateur.
-La distance en mètres et l'azimut pour l'atteindre sont affichés.
+La distance en mètres et l'azimut pour l'atteindre sont affichés.<P>
 ________________________________________
 GuideClaude2
 <A HREF="https://bernardhoyez.github.io/PWA/GuideClaude2/">GuideClaude2</A>
