@@ -3,6 +3,7 @@
 On trouve ici plusieurs applications :
 
 <BR>tagmoi<BR>
+<A href="https://bernardhoyez.github.io/PWA/Allez-y/">tagmoi</A>
 cette application tague les images en bas à gauche avec les coordonnées GPS.
 ________________________________________________
 
