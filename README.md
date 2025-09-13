@@ -21,6 +21,7 @@ ainsi qu'un titre, une géolocalisation et un commentaire textuel.
 Elle accepte également des photos de détail.
 Elle produit en sortie un fichier Zip avec une structure qui pourra être utilisée
 par une application de visualisation cartographique.
+__________________________________________________
 
 <BR>suivons le guide_V8G<BR>
 Guide de terrain<BR>
@@ -30,3 +31,49 @@ Le fichier Zip produit par l'éditeur sert à guider l'utilisateur sur le terrai
 Elle affiche les POI avec tous les médias associés sur une carte OSM.
 La position de l'utilisateur est symbolisée par un marqueur mobile avec l'utilisateur.
 La distance en mètres et l'azimut pour l'atteindre sont affichés.
+________________________________________
+GuideClaude2<BR>
+Guide de terrain, version Claude<BR>
+1. Chargement des données ZIP
+
+Interface pour sélectionner un fichier ZIP depuis le smartphone.
+Lecture automatique du fichier visit.json et des dossiers de données.
+Parsing intelligent des fichiers texte (Titre, Commentaire, Localisation).
+Support des médias (JPEG, MP4, MP3).
+
+2. Carte interactive avec OpenStreetMap
+
+Affichage des points d'intérêt sur une carte OSM avec Leaflet.
+Marqueurs numérotés selon les IDs des points.
+Zoom automatique pour englober tous les points.
+Interface responsive adaptée aux mobiles.
+
+3. Géolocalisation temps réel
+
+Marqueur GPS en temps réel (rouge, pulsant).
+Indicateur visuel du statut GPS avec animation.
+Précision de la position affichée.
+Gestion des erreurs de géolocalisation.
+
+4. Interaction avancée
+
+Distance calculée entre la position réelle et chaque point d'intérêt.
+Azimut affiché au format "Nord XXX°".
+Popups riches avec toutes les données :
+Largeur : 85% de l'écran
+Marges réduites : padding de 0.5rem 
+Responsive : padding  réduit (0.25rem) sur mobile
+Styles personnalisés : coins arrondis et ombre portée améliorée.
+Avec :
+Titre du point
+Coordonnées GPS
+Commentaires détaillés
+Images, vidéos et audio intégrés
+
+5. PWA (Progressive Web App)
+
+Installable sur l'écran d'accueil.
+Fonctionne hors ligne (cache intelligent).
+Design natif mobile.
+Service Worker intégré.
+
