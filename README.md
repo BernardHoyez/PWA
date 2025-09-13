@@ -36,7 +36,9 @@ Elle affiche les POI avec tous les médias associés sur une carte OSM.
 La position de l'utilisateur est symbolisée par un marqueur mobile avec l'utilisateur.
 La distance en mètres et l'azimut pour l'atteindre sont affichés.
 ________________________________________
-GuideClaude2<BR>
+GuideClaude2
+<A HREF="https://bernardhoyez.github.io/PWA/GuideClaude2/">GuideClaude2</A>
+<BR>
 Guide de terrain, version Claude<BR>
 1. Chargement des données ZIP
 
