@@ -9,7 +9,8 @@ cette application tague les images en bas à gauche avec les coordonnées GPS
 cette application prend en entrée un point de destination. 
 Elle affiche sur une carte OSM la position actuelle de l'utilisateur du smartphone.
 Elle affiche la distance en mètres au point de destination,
-ainsi que l'azimut à suivre pour l'atteindre
+ainsi que l'azimut à suivre pour l'atteindre.
+_________________________________________________
 
 <BR>editeur_V7G<BR>
 <A href="https://bernardhoyez.github.io/PWA/editeur_V7G">Editeur de visite</A>
