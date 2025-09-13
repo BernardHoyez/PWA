@@ -3,7 +3,8 @@
 On trouve ici plusieurs applications :
 
 <BR>tagmoi<BR>
-cette application tague les images en bas à gauche avec les coordonnées GPS
+cette application tague les images en bas à gauche avec les coordonnées GPS.
+________________________________________________
 
 <BR>Allez-y<BR>
 cette application prend en entrée un point de destination. 
