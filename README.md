@@ -8,6 +8,7 @@ On trouve ici plusieurs applications :
 ________________________________________________
 
 <BR>Allez-y<BR>
+<A href="https://bernardhoyez.github.io/PWA/Allez-y/">Allez-y</A>
 cette application prend en entrée un point de destination. 
 Elle affiche sur une carte OSM la position actuelle de l'utilisateur du smartphone.
 Elle affiche la distance en mètres au point de destination,
