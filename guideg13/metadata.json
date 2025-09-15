@@ -1,5 +1,0 @@
-{
-  "name": "GuideG13",
-  "description": "Un visualiseur de visite PWA qui charge des données depuis un fichier ZIP et affiche des points d'intérêt sur une carte interactive.",
-  "requestFramePermissions": []
-}
