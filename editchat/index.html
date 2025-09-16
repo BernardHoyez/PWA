@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>editchat — Éditeur de visite</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+</head>
+<body>
+  <h1>editchat PWA</h1>
+  <p>Application prête. Contenu complet à intégrer.</p>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .catch(err => console.error('SW registration failed', err));
+    }
+  </script>
+</body>
+</html>
