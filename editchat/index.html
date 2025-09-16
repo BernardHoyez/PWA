@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>editchat — Éditeur de visite</title>
+
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/favicon.ico">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+/* Styles simples pour la mise en page */
+body{font-family:sans-serif;margin:0;padding:0}
+header{background:#0b74de;color:#fff;padding:10px}
+main{padding:1em}
+#map{height:300px;margin-top:1em;border:1px solid #ccc}
+.poi{border:1px solid #ddd;margin:4px 0;padding:4px;border-radius:4px}
+input,textarea,button{margin:4px 0;padding:4px;width:100%}
+button{background:#0b74de;color:#fff;border:none;cursor:pointer}
+button.secondary{background:#eee;color:#000}
+</style>
+</head>
+<body>
+<header><h1>editchat — Éditeur de visite</h1></header>
+
+<main>
+  <label>Nom de la visite
+    <input id="visitName" placeholder="Ex : Visite du port">
+  </label>
+
+  <h2>Points d’intérêt</h2>
+  <div id="poiList"></div>
+  <button id="addPoi">+ Ajouter un POI</button>
+
+  <h2>Édition du POI</h2>
+  <div id="editor"></div>
+
+  <h2>Carte</h2>
+  <div id="map"></div>
+
+  <button id="downloadZip">Télécharger la visite (ZIP)</button>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exifreader@5.0.3/dist/exif-reader.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+const pois = [];
+let activeIndex = null;
+
+// ----- Carte Leaflet -----
+const map = L.map('map').setView([48.85,2.35],5);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  {attribution:'© OSM'}).addTo(map);
+map.on('click',e=>{
+  if(activeIndex===null)return;
+  pois[activeIndex].location=`${e.latlng.lat.toFixed(5)}N, ${e.latlng.lng.toFixed(5)}E`;
+  updateEditor();
+});
+
+// ----- Interface -----
+const poiList=document.getElementById('poiList');
+const editor=document.getElementById('editor');
+
+function renderList(){
+  poiList.innerHTML='';
+  pois.forEach((p,i)=>{
+    const d=document.createElement('div');
+    d.className='poi';
+    d.textContent=(i+1)+'. '+(p.title||'Sans titre');
+    d.onclick=()=>{activeIndex=i;updateEditor();};
+    poiList.appendChild(d);
+  });
+}
+
+function updateEditor(){
+  if(activeIndex===null){editor.textContent='Sélectionnez un POI';return;}
+  const p=pois[activeIndex];
+  const imgURL = p.img ? URL.createObjectURL(p.img) : '';
+  const vidURL = p.vid ? URL.createObjectURL(p.vid) : '';
+  const audURL = p.aud ? URL.createObjectURL(p.aud) : '';
+
+  editor.innerHTML=`
+    <label>Titre<input id="poiTitle" value="${p.title}"></label>
+    <label>Localisation<input id="poiLoc" value="${p.location||''}"></label>
+    <label>Commentaire<textarea id="poiCom">${p.comment||''}</textarea></label>
+    <label>Image JPEG<input type="file" id="poiImg" accept="image/jpeg"></label>
+    ${imgURL ? `<img src="${imgURL}" style="max-width:100%;margin-top:4px">` : ''}
+    <label>Vidéo MP4<input type="file" id="poiVid" accept="video/mp4"></label>
+    ${vidURL ? `<video controls style="max-width:100%;margin-top:4px"><source src="${vidURL}" type="video/mp4"></video>` : ''}
+    <label>Audio MP3<input type="file" id="poiAud" accept="audio/mpeg"></label>
+    ${audURL ? `<audio controls style="width:100%;margin-top:4px"><source src="${audURL}" type="audio/mpeg"></audio>` : ''}
+    <button id="delPoi" class="secondary">Supprimer ce POI</button>
+  `;
+
+  document.getElementById('poiTitle').oninput=e=>p.title=e.target.value;
+  document.getElementById('poiLoc').oninput=e=>p.location=e.target.value;
+  document.getElementById('poiCom').oninput=e=>p.comment=e.target.value;
+  document.getElementById('delPoi').onclick=()=>{
+    pois.splice(activeIndex,1);
+    activeIndex=null;
+    renderList();updateEditor();
+  };
+
+  // Gestion des fichiers + lecture EXIF
+  ['Img','Vid','Aud'].forEach(kind=>{
+    document.getElementById('poi'+kind).onchange=async e=>{
+      const f=e.target.files[0];
+      if(!f) return;
+      if(kind==='Img'){
+        const arrayBuf = await f.arrayBuffer();
+        const exif = EXIF.readFromBinaryFile(arrayBuf);
+        if(exif && exif.GPSLatitude && exif.GPSLongitude){
+          p.location = `${exif.GPSLatitude.toFixed(5)}N, ${exif.GPSLongitude.toFixed(5)}E`;
+        }
+      }
+      p[kind.toLowerCase()] = f;
+      updateEditor(); // rafraîchit les prévisualisations
+    };
+  });
+}
+
+document.getElementById('addPoi').onclick=()=>{
+  pois.push({title:''});
+  activeIndex=pois.length-1;
+  renderList();updateEditor();
+};
+
+document.getElementById('downloadZip').onclick=async()=>{
+  const visitName=document.getElementById('visitName').value.trim();
+  if(!visitName){alert('Nom de visite manquant');return;}
+  const zip=new JSZip();
+  const data=zip.folder('data');
+  const structure=[];
+  for(let i=0;i<pois.length;i++){
+    const p=pois[i];
+    if(!p.title||!p.location){alert(`POI ${i+1} incomplet`);return;}
+    const pf=data.folder(String(i+1));
+    pf.file('Titre.txt',p.title);
+    pf.file('Localisation.txt',p.location);
+    pf.file('Commentaire.txt',p.comment||'');
+    if(p.img)pf.file('Image.jpg',p.img);
+    if(p.vid)pf.file('Video.mp4',p.vid);
+    if(p.aud)pf.file('Audio.mp3',p.aud);
+    structure.push({id:i+1,title:p.title,location:p.location});
+  }
+  zip.file('visit.json',JSON.stringify({name:visitName,pois:structure},null,2));
+  const blob=await zip.generateAsync({type:'blob'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=visitName+'.zip';
+  a.click();
+};
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>
