@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Guide de visite — PWA</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="" crossorigin=""/>
+
+  <style>
+    :root{--popup-width:85vw;--popup-padding:0.5rem}
+    html,body,#map{height:100%;margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    #topbar{display:flex;gap:0.5rem;padding:0.5rem;background:#fff;align-items:center;box-shadow:0 1px 6px rgba(0,0,0,0.12)}
+    .btn{padding:0.5rem 0.75rem;border-radius:0.5rem;border:1px solid #ccc;background:#f7f7f7}
+    input[type=file]{display:none}
+    #map{position:relative}
+    .leaflet-container{touch-action:none}
+
+    /* GPS pulsing marker */
+    .gps-marker{width:18px;height:18px;border-radius:50%;background:#d00;box-shadow:0 0 0 4px rgba(255,0,0,0.25)}
+    @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,0,0,0.35)}70%{box-shadow:0 0 0 12px rgba(255,0,0,0)}100%{box-shadow:0 0 0 0 rgba(255,0,0,0)}}
+    .gps-marker.pulsing{animation:pulse 1.6s infinite}
+
+    /* Popup styling */
+    .poi-popup{width:var(--popup-width);padding:var(--popup-padding);border-radius:1rem;box-shadow:0 6px 18px rgba(0,0,0,0.25)}
+    @media(max-width:600px){:root{--popup-width:92vw;--popup-padding:0.25rem}}
+    .poi-title{font-weight:700;margin-bottom:0.25rem}
+    .poi-coords{font-size:0.85rem;color:#444;margin-bottom:0.25rem}
+    .poi-media{max-width:100%;border-radius:0.5rem;margin:0.25rem 0}
+    .poi-comment{white-space:pre-wrap}
+
+    /* Numbered marker */
+    .marker-number{background:#1976d2;color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:700;border:2px solid #fff}
+
+    /* small helper */
+    #status{margin-left:auto;font-size:0.9rem;color:#333}
+  </style>
+</head>
+<body>
+  <div id="topbar">
+    <label class="btn" for="zipinput">Charger ZIP</label>
+    <input id="zipinput" type="file" accept=".zip,application/zip" />
+    <button id="fitbtn" class="btn">Zoom sur tous</button>
+    <div id="status">GPS: <span id="gpsstatus">—</span></div>
+  </div>
+  <div id="map"></div>
+
+  <!-- Libraries -->
+  <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+// ------------------ Utilitaires ------------------
+function toRadians(d){return d*Math.PI/180}
+function toDegrees(r){return r*180/Math.PI}
+
+// Haversine distance (m)
+function haversine(lat1,lon1,lat2,lon2){
+  const R=6371000;
+  const dLat=toRadians(lat2-lat1);
+  const dLon=toRadians(lon2-lon1);
+  const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(toRadians(lat1))*Math.cos(toRadians(lat2))*Math.sin(dLon/2)*Math.sin(dLon/2);
+  const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  return R*c;
+}
+
+// Bearing from point A to B in degrees clockwise from North
+function bearing(lat1,lon1,lat2,lon2){
+  const phi1=toRadians(lat1), phi2=toRadians(lat2);
+  const lambda1=toRadians(lon1), lambda2=toRadians(lon2);
+  const y=Math.sin(lambda2-lambda1)*Math.cos(phi2);
+  const x=Math.cos(phi1)*Math.sin(phi2)-Math.sin(phi1)*Math.cos(phi2)*Math.cos(lambda2-lambda1);
+  let theta=Math.atan2(y,x);
+  theta=toDegrees(theta);
+  // convert to clockwise from North
+  const deg=(theta+360+90)%360; // because atan2 gives from East
+  return Math.round(deg);
+}
+
+// Parse various coordinate formats: decimal "48.8566,2.3522" or "N 48°51.396 E 2°21.132" or "48°51'23.0\"N 2°21'7.9\"E" or "48.8566 N, 2.3522 E"
+function parseLocation(text){
+  if(!text) return null;
+  text=text.trim();
+  // try simple decimal pairs
+  const decPair = text.match(/([+-]?\d+(?:[\.,]\d+)?)\s*[ ,;]\s*([+-]?\d+(?:[\.,]\d+)?)/);
+  if(decPair){
+    const lat=parseFloat(decPair[1].replace(',','.'));
+    const lon=parseFloat(decPair[2].replace(',','.'));
+    if(Math.abs(lat)<=90 && Math.abs(lon)<=180) return {lat,lon};
+  }
+  // try N/S E/W decimal
+  const nsPair = text.match(/([NS])\s*([0-9.+-]+)[^\dNS]*([EW])\s*([0-9.+-]+)/i);
+  if(nsPair){
+    let lat=parseFloat(nsPair[2].replace(',','.'));
+    let lon=parseFloat(nsPair[4].replace(',','.'));
+    if(/s/i.test(nsPair[1])) lat=-Math.abs(lat);
+    if(/w/i.test(nsPair[3])) lon=-Math.abs(lon);
+    return {lat,lon};
+  }
+  // DMS (basic)
+  const dms = text.match(/(\d{1,3})°?\s*(\d{1,2})?'?\s*(\d{1,2}(?:\.\d+)?)?"?\s*([NS])?.*?(\d{1,3})°?\s*(\d{1,2})?'?\s*(\d{1,2}(?:\.\d+)?)?"?\s*([EW])?/i);
+  if(dms){
+    let latD=Number(dms[1]), latM=Number(dms[2]||0), latS=Number(dms[3]||0);
+    let lonD=Number(dms[5]), lonM=Number(dms[6]||0), lonS=Number(dms[7]||0);
+    let lat=latD + latM/60 + latS/3600;
+    let lon=lonD + lonM/60 + lonS/3600;
+    if(dms[4] && /s/i.test(dms[4])) lat=-lat;
+    if(dms[8] && /w/i.test(dms[8])) lon=-lon;
+    return {lat,lon};
+  }
+  return null;
+}
+
+// format coords into human readable
+function formatCoords(lat,lon){
+  return lat.toFixed(6)+", "+lon.toFixed(6);
+}
+
+// ------------------ Application ------------------
+const map = L.map('map',{zoomControl:true}).setView([45,3],6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);
+
+const markerLayer = L.layerGroup().addTo(map);
+let poiList=[]; // will contain parsed POIs
+let gpsMarker=null; let gpsAccuracyCircle=null; let watchId=null;
+
+const zipInput = document.getElementById('zipinput');
+const gpsStatus = document.getElementById('gpsstatus');
+const fitBtn = document.getElementById('fitbtn');
+
+zipInput.addEventListener('change',async (e)=>{
+  const file=e.target.files[0];
+  if(!file) return;
+  try{
+    await loadZip(file);
+  }catch(err){
+    alert('Erreur lecture ZIP : '+err.message);
+    console.error(err);
+  }
+});
+
+async function loadZip(file){
+  const data = await file.arrayBuffer();
+  const zip = await JSZip.loadAsync(data);
+  // find visit.json in root
+  const vJsonEntry = zip.file(/visit\.json/i)[0] || zip.file('visit.json');
+  let visitObj=null;
+  if(vJsonEntry){
+    const txt = await vJsonEntry.async('string');
+    try{ visitObj = JSON.parse(txt); }catch(e){ throw new Error('visit.json invalide'); }
+  }else{
+    throw new Error('visit.json manquant dans l\'archive');
+  }
+
+  // parse each POI
+  poiList=[];
+  for(const entry of visitObj){
+    try{
+      const folder = (entry.folder||'').replace(/\/+$/,'');
+      const basePath = folder? folder + '/': '';
+      const titleFile = entry.titleFile || 'Titre.txt';
+      const locFile = entry.locationFile || 'Localisation.txt';
+      const commentFile = entry.commentFile || 'Commentaire.txt';
+
+      let title = '';
+      const t = zip.file(basePath + titleFile);
+      if(t) title = (await t.async('string')).trim();
+
+      let locationStr=''; let loc=null;
+      const l = zip.file(basePath + locFile);
+      if(l){ locationStr = (await l.async('string')).trim(); loc = parseLocation(locationStr); }
+
+      let comment='';
+      const c = zip.file(basePath + commentFile);
+      if(c) comment = (await c.async('string'));
+
+      // media - prefer image -> video -> audio but keep all
+      const imageEntry = entry.image ? zip.file(basePath + entry.image) : null;
+      const videoEntry = entry.video ? zip.file(basePath + entry.video) : null;
+      const audioEntry = entry.audio ? zip.file(basePath + entry.audio) : null;
+
+      // create blob URLs for media if present
+      async function blobUrlFor(eName){
+        if(!eName) return null;
+        const f = zip.file(basePath + eName);
+        if(!f) return null;
+        const arr = await f.async('uint8array');
+        const mime = guessMime(eName);
+        const blob = new Blob([arr],{type:mime});
+        return URL.createObjectURL(blob);
+      }
+
+      const image = entry.image ? await blobUrlFor(entry.image) : null;
+      const video = entry.video ? await blobUrlFor(entry.video) : null;
+      const audio = entry.audio ? await blobUrlFor(entry.audio) : null;
+
+      const poi = {
+        id: entry.id,
+        title: title || ('Point '+entry.id),
+        rawLocation: locationStr,
+        loc: loc,
+        comment: comment || '',
+        image, video, audio
+      };
+      poiList.push(poi);
+    }catch(err){ console.warn('POI parse erreur',err); }
+  }
+
+  // place markers
+  renderPOIs();
+}
+
+function guessMime(name){
+  const l=name.toLowerCase();
+  if(l.endsWith('.jpg')||l.endsWith('.jpeg')) return 'image/jpeg';
+  if(l.endsWith('.png')) return 'image/png';
+  if(l.endsWith('.mp4')) return 'video/mp4';
+  if(l.endsWith('.webm')) return 'video/webm';
+  if(l.endsWith('.mp3')) return 'audio/mpeg';
+  if(l.endsWith('.wav')) return 'audio/wav';
+  return 'application/octet-stream';
+}
+
+function renderPOIs(){
+  markerLayer.clearLayers();
+  // group by coords string to handle duplicates
+  const coordMap = new Map();
+  poiList.forEach(poi=>{
+    const key = poi.loc ? (poi.loc.lat.toFixed(6)+','+poi.loc.lon.toFixed(6)) : ('noloc_'+poi.id);
+    if(!coordMap.has(key)) coordMap.set(key,[]);
+    coordMap.get(key).push(poi);
+  });
+
+  const markers=[];
+  let i=1;
+  for(const [key, pois] of coordMap.entries()){
+    let marker;
+    if(key.startsWith('noloc_')){
+      // place at map center as placeholder
+      marker = L.marker(map.getCenter(), {icon: L.divIcon({className:'marker-number', html:'<div class="marker-number">'+i+'</div>', iconSize:[28,28], iconAnchor:[14,14]})});
+    }else{
+      const [lat,lon]=key.split(',').map(Number);
+      marker = L.marker([lat,lon], {icon: L.divIcon({className:'', html:'<div class="marker-number">'+i+'</div>', iconSize:[28,28], iconAnchor:[14,14]})});
+    }
+
+    marker.on('click',()=> onMarkerClick(pois));
+    markerLayer.addLayer(marker);
+    markers.push(marker);
+    i++;
+  }
+
+  if(markers.length) map.fitBounds(L.featureGroup(markers).getBounds().pad(0.15));
+}
+
+function onMarkerClick(pois){
+  if(pois.length>1){
+    // show selection list
+    const listHtml = '<div style="max-height:40vh;overflow:auto">'+pois.map((p,idx)=>`<div style="padding:0.4rem;border-bottom:1px solid #eee"><button class=\"btn\" data-idx=\"${idx}\">${p.title}</button></div>`).join('')+'</div>';
+    const popup = L.popup({maxWidth:600}).setLatLng(pois[0].loc? [pois[0].loc.lat,pois[0].loc.lon]:map.getCenter()).setContent('<div class="poi-popup">'+listHtml+'</div>').openOn(map);
+    // attach click handlers after DOM inserted
+    setTimeout(()=>{
+      document.querySelectorAll('[data-idx]').forEach(btn=>btn.addEventListener('click',()=>{
+        const idx=Number(btn.getAttribute('data-idx'));
+        map.closePopup();
+        showPoiPopup(pois[idx]);
+      }));
+    },50);
+  }else{
+    showPoiPopup(pois[0]);
+  }
+}
+
+function showPoiPopup(poi){
+  const latlon = poi.loc? [poi.loc.lat, poi.loc.lon] : map.getCenter();
+  // compute distance and bearing if we have gps
+  let distText='—'; let azText='—';
+  if(currentPosition){
+    const d = haversine(currentPosition.lat,currentPosition.lon, latlon[0],latlon[1]);
+    distText = Math.round(d)+' m';
+    azText = 'Nord '+bearing(currentPosition.lat,currentPosition.lon,latlon[0],latlon[1])+'°';
+  }
+
+  const mediaHtml = [];
+  if(poi.image) mediaHtml.push(`<img class="poi-media" src="${poi.image}" alt="${poi.title}"/>`);
+  if(poi.video) mediaHtml.push(`<video class="poi-media" controls playsinline src="${poi.video}"></video>`);
+  if(poi.audio) mediaHtml.push(`<audio class="poi-media" controls src="${poi.audio}"></audio>`);
+
+  const content = `
+    <div class="poi-popup">
+      <div class="poi-title">${escapeHtml(poi.title)}</div>
+      <div class="poi-coords">${poi.loc? formatCoords(poi.loc.lat,poi.loc.lon) : 'Localisation inconnue' } — Dist: ${distText} — ${azText}</div>
+      <div class="poi-media-area">${mediaHtml.join('')}</div>
+      <div class="poi-comment">${escapeHtml(poi.comment)}</div>
+    </div>
+  `;
+  L.popup({maxWidth:800}).setLatLng(latlon).setContent(content).openOn(map);
+}
+
+function escapeHtml(s){ if(!s) return ''; return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;'); }
+
+fitBtn.addEventListener('click',()=>{
+  map.fitBounds(markerLayer.getBounds().pad(0.15));
+});
+
+// ------------------ Geolocation ------------------
+let currentPosition=null;
+function startGeolocation(){
+  if(!('geolocation' in navigator)){ gpsStatus.textContent='Non supporté'; return; }
+  gpsStatus.textContent='Demande...';
+  watchId = navigator.geolocation.watchPosition(pos=>{
+    currentPosition={lat:pos.coords.latitude,lon:pos.coords.longitude,accuracy:pos.coords.accuracy};
+    gpsStatus.textContent='OK';
+    updateGpsMarker(currentPosition);
+  }, err=>{
+    gpsStatus.textContent='Erreur: '+err.message;
+    console.warn('geo err',err);
+  },{enableHighAccuracy:true,maximumAge:2000,timeout:10000});
+}
+
+function updateGpsMarker(pos){
+  if(!gpsMarker){
+    const el = L.divIcon({className:'', html:'<div class="gps-marker pulsing"></div>', iconSize:[18,18], iconAnchor:[9,9]});
+    gpsMarker = L.marker([pos.lat,pos.lon],{icon:el}).addTo(map);
+    gpsAccuracyCircle = L.circle([pos.lat,pos.lon],{radius:pos.accuracy}).addTo(map);
+  }else{
+    gpsMarker.setLatLng([pos.lat,pos.lon]);
+    gpsAccuracyCircle.setLatLng([pos.lat,pos.lon]);
+    gpsAccuracyCircle.setRadius(pos.accuracy);
+  }
+}
+
+startGeolocation();
+
+// ------------------ Offline / PWA hints (service worker registration) ------------------
+if('serviceWorker' in navigator){
+  // NOTE: you must provide sw.js and manifest.json at root for full PWA behavior. See comments below in HTML for content to save.
+  navigator.serviceWorker.register('/sw.js').then(()=>console.log('SW registered')).catch(err=>console.warn('SW register failed',err));
+}
+
+// ------------------ Helpers & polish ------------------
+// small UI improvement: prevent default touch zoom double-tap on map via fastclick behaviour is out of scope
+
+// ------------------ Globals for debugging ------------------
+window.__poiList = poiList;
+
+  </script>
+
+  <!--
+    === Service worker (save as /sw.js) ===
+
+    // sw.js (Example content) - save this file at your site root.
+
+    const CACHE_NAME = 'pwa-field-guide-v1';
+    const PRECACHE_URLS = [ '/', '/index.html' ];
+
+    self.addEventListener('install', event => {
+      self.skipWaiting();
+      event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE_URLS)));
+    });
+
+    self.addEventListener('activate', event => {
+      event.waitUntil(self.clients.claim());
+    });
+
+    // Cache-first for navigation and media. Network-first for visit.json when online.
+    self.addEventListener('fetch', event => {
+      const req = event.request;
+      if(req.method !== 'GET') return;
+      // try cache first for media and static assets
+      if(req.destination === 'image' || req.destination === 'video' || req.destination === 'audio' || req.mode === 'navigate' || req.url.endsWith('.js') || req.url.endsWith('.css') ){
+        event.respondWith(caches.match(req).then(resp=>resp || fetch(req).then(r=>{ const resClone=r.clone(); caches.open(CACHE_NAME).then(c=>c.put(req,resClone)); return r;})).catch(()=>caches.match('/offline.html')));
+      }else{
+        // default to network
+        event.respondWith(fetch(req).catch(()=>caches.match(req)));
+      }
+    });
+
+    // Note: for zips loaded from file input we don't need SW to cache them. If you want to permit offline installation of zip content, consider extracting and storing media in IndexedDB.
+
+    === Manifest (save as /manifest.json) ===
+    {
+      "name": "Guide de visite - PWA",
+      "short_name": "GuideVisite",
+      "start_url": "/",
+      "display": "standalone",
+      "background_color": "#ffffff",
+      "theme_color": "#1976d2",
+      "icons": [
+        { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+        { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+      ]
+    }
+
+    === Notes ===
+    - Pour un test local: servez le dossier avec un serveur HTTPS ou utilisez 'localhost'.
+    - Placez sw.js et manifest.json à la racine du site (ou adaptez les chemins dans le HTML).
+    - Le code lit le fichier ZIP depuis l'input file. Les médias sont accessibles via URL.createObjectURL et fonctionnent en session.
+    - Pour un cache permanent des médias (hors session), adaptez pour extraire les médias dans IndexedDB et les servir via un service worker.
+  -->
+
+</body>
+</html>
