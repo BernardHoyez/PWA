@@ -1,0 +1,1 @@
+/* service worker minimal - insérer contenu fourni précédemment */
