@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>editchat — Éditeur de visite (EXIF robust)</title>
+
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/favicon.ico">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<style>
+  body{font-family:Arial,Helvetica,sans-serif;margin:0}
+  header{background:#1976d2;color:#fff;padding:8px}
+  #main{display:flex;height:calc(100vh - 50px)}
+  #poiList{width:30%;padding:8px;border-right:1px solid #ddd;overflow:auto}
+  #editor{flex:1;padding:8px;overflow:auto}
+  #map{height:220px;border-top:1px solid #ddd}
+  label{display:block;margin-top:8px;font-weight:600}
+  input[type=text],textarea{width:100%;box-sizing:border-box;padding:6px}
+  button{margin-top:8px;padding:6px 10px}
+  img,video,audio{margin-top:6px;max-width:100%;border:1px solid #ccc}
+</style>
+</head>
+<body>
+<header><strong>editchat — Éditeur de visite</strong></header>
+
+<div id="main">
+  <div id="poiList">
+    <button id="addPoi">+ Ajouter un POI</button>
+    <ul id="list" style="padding-left:16px"></ul>
+    <div style="margin-top:12px">
+      <label>Nom de la visite</label>
+      <input id="visitName" type="text" placeholder="Nom...">
+      <button id="downloadZip">Télécharger Zip</button>
+    </div>
+  </div>
+
+  <div id="editor">Sélectionnez un POI</div>
+</div>
+
+<div id="map"></div>
+
+<!-- Bibliothèques -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exifreader@5.0.3/dist/exif-reader.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+<script>
+/* ====== État ====== */
+let pois = [];
+let activeIndex = null;
+
+/* ====== Carte ====== */
+const map = L.map('map').setView([48.8566,2.3522],5);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'© OpenStreetMap' }).addTo(map);
+let marker = null;
+
+map.on('click', e => {
+  if (activeIndex === null) return;
+  const lat = e.latlng.lat, lon = e.latlng.lng;
+  pois[activeIndex].location = formatLatLng(lat, lon);
+  updateEditor();
+  if (!marker) marker = L.marker(e.latlng).addTo(map);
+  marker.setLatLng(e.latlng);
+});
+
+/* ====== Helpers EXIF (robustes) ====== */
+function tagToDecimal(tag, refTag) {
+  if (!tag) return NaN;
+  const ref = refTag && (refTag.value || refTag.description || refTag);
+  const sign = ref && /S|W/i.test(String(ref)) ? -1 : 1;
+
+  // 1) tag.value tableau (ExifReader)
+  if (tag.value && Array.isArray(tag.value) && tag.value.length) {
+    const toNum = v => (typeof v === 'object' && v.numerator !== undefined ? v.numerator / v.denominator : Number(v));
+    if (tag.value.length >= 3) {
+      const [d,m,s] = tag.value.slice(0,3).map(toNum);
+      return sign * (d + m/60 + s/3600);
+    }
+    const v0 = toNum(tag.value[0]);
+    if (!isNaN(v0)) return sign * v0;
+  }
+
+  // 2) tag.description chaîne (ExifReader)
+  if (typeof tag.description === 'string') {
+    const desc = tag.description.trim();
+    const decCandidate = parseFloat(desc.replace(',', '.'));
+    if (!isNaN(decCandidate) && !desc.includes('°')) {
+      return sign * decCandidate;
+    }
+    const m = desc.match(/(\d+(?:\.\d+)?)\D+(\d+(?:\.\d+)?)\D+(\d+(?:\.\d+)?)/);
+    if (m) {
+      const d = parseFloat(m[1]), mm = parseFloat(m[2]), s = parseFloat(m[3]);
+      return sign * (d + mm/60 + s/3600);
+    }
+  }
+
+  // 3) Exif-js style (tableau simple)
+  if (Array.isArray(tag) && tag.length >= 1) {
+    // souvent [deg, min, sec]
+    const [d,m,s] = tag;
+    const dd = Number(d) + (Number(m)||0)/60 + (Number(s)||0)/3600;
+    return sign * dd;
+  }
+
+  // 4) valeur numérique simple
+  const v = (tag.value !== undefined) ? Number(tag.value) : Number(tag);
+  if (!isNaN(v)) return sign * v;
+
+  return NaN;
+}
+
+function extractGpsFromExifReader(tags) {
+  if (!tags) return null;
+  const latTag = tags.GPSLatitude || tags.GPSLatitude || tags['GPSLatitude'];
+  const lonTag = tags.GPSLongitude || tags.GPSLongitude || tags['GPSLongitude'];
+  const latRef = tags.GPSLatitudeRef;
+  const lonRef = tags.GPSLongitudeRef;
+  // ExifReader returns objects; pass them to tagToDecimal
+  const lat = tagToDecimal(latTag, latRef);
+  const lon = tagToDecimal(lonTag, lonRef);
+  if (!isFinite(lat) || !isFinite(lon)) return null;
+  return {lat, lon};
+}
+
+function extractGpsFromExifJs(tags) {
+  if (!tags) return null;
+  // exif-js returns properties like GPSLatitude, GPSLatitudeRef, ...
+  const latTag = tags.GPSLatitude;
+  const lonTag = tags.GPSLongitude;
+  const latRef = tags.GPSLatitudeRef;
+  const lonRef = tags.GPSLongitudeRef;
+  if (!latTag || !lonTag) return null;
+  // latTag may be an array [deg,min,sec] or a number
+  const toNum = v => (typeof v === 'object' && v.numerator !== undefined ? v.numerator / v.denominator : Number(v));
+  let lat = Array.isArray(latTag) ? (Number(latTag[0]) + (Number(latTag[1])||0)/60 + (Number(latTag[2])||0)/3600) : Number(latTag);
+  let lon = Array.isArray(lonTag) ? (Number(lonTag[0]) + (Number(lonTag[1])||0)/60 + (Number(lonTag[2])||0)/3600) : Number(lonTag);
+  if (latRef && /S/i.test(latRef)) lat = -lat;
+  if (lonRef && /W/i.test(lonRef)) lon = -lon;
+  if (!isFinite(lat) || !isFinite(lon)) return null;
+  return {lat, lon};
+}
+
+function formatLatLng(lat, lon) {
+  const la = Math.abs(lat).toFixed(5) + (lat >= 0 ? 'N' : 'S');
+  const lo = Math.abs(lon).toFixed(5) + (lon >= 0 ? 'E' : 'W');
+  return `${la}, ${lo}`;
+}
+
+/* ====== UI : liste et éditeur ====== */
+function renderList() {
+  const ul = document.getElementById('list');
+  ul.innerHTML = '';
+  pois.forEach((p,i) => {
+    const li = document.createElement('li');
+    li.textContent = `${i+1}. ${p.title || '(sans titre)'} ${p.location ? ' — ' + p.location : ''}`;
+    li.style.cursor = 'pointer';
+    li.onclick = ()=>{ activeIndex = i; updateEditor(); };
+    ul.appendChild(li);
+  });
+}
+
+function updateEditor() {
+  const ed = document.getElementById('editor');
+  if (activeIndex === null) { ed.textContent = 'Sélectionnez un POI'; return; }
+  const p = pois[activeIndex];
+
+  ed.innerHTML = `
+    <label>Titre<input id="poiTitle" value="${p.title||''}"></label>
+    <label>Localisation<input id="poiLoc" value="${p.location||''}" placeholder="49.55640N, 0.08857E"></label>
+    <label>Commentaire<textarea id="poiCom">${p.comment||''}</textarea></label>
+
+    <label>Image JPEG<input type="file" id="poiImg" accept="image/jpeg"></label>
+    ${p._imgUrl ? `<img id="previewImage" src="${p._imgUrl}">` : ''}
+
+    <label>Vidéo MP4<input type="file" id="poiVid" accept="video/mp4"></label>
+    ${p._vidUrl ? `<video controls id="previewVideo"><source src="${p._vidUrl}" type="video/mp4"></video>` : ''}
+
+    <label>Audio MP3<input type="file" id="poiAud" accept="audio/mpeg"></label>
+    ${p._audUrl ? `<audio controls id="previewAudio"><source src="${p._audUrl}" type="audio/mpeg"></audio>` : ''}
+
+    <div style="margin-top:10px">
+      <button id="delPoi" class="secondary">Supprimer ce POI</button>
+    </div>
+  `;
+
+  // champs texte
+  document.getElementById('poiTitle').oninput = e => { p.title = e.target.value; renderList(); };
+  document.getElementById('poiLoc').oninput  = e => { p.location = e.target.value; renderList(); };
+  document.getElementById('poiCom').oninput  = e => { p.comment = e.target.value; };
+
+  document.getElementById('delPoi').onclick = () => {
+    ['_imgUrl','_vidUrl','_audUrl'].forEach(k => { if (p[k]) { URL.revokeObjectURL(p[k]); p[k] = null; } });
+    pois.splice(activeIndex, 1); activeIndex = null;
+    renderList(); updateEditor();
+  };
+
+  /* ===== handlers fichiers avec EXIF robuste ===== */
+  document.getElementById('poiImg').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    // preview immédiate
+    if (p._imgUrl) { URL.revokeObjectURL(p._imgUrl); p._imgUrl =_
