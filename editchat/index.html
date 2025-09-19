@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>editchat — Éditeur de visite</title>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/favicon.ico">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+
+  <style>
+    body{margin:0;font-family:Arial,Helvetica,sans-serif}
+    header{background:#1976d2;color:#fff;padding:8px}
+    #main{display:flex;height:calc(100vh - 50px)}
+    #poiList{width:30%;padding:8px;border-right:1px solid #ddd;overflow:auto}
+    #editor{flex:1;padding:8px;overflow:auto}
+    #map{height:220px;border-top:1px solid #ddd}
+    label{display:block;margin-top:8px;font-weight:600}
+    input[type=text],textarea{width:100%;box-sizing:border-box;padding:6px}
+    button{margin-top:8px;padding:6px 10px}
+    img,video,audio{margin-top:6px;max-width:100%;border:1px solid #ccc}
+  </style>
+</head>
+<body>
+<header><strong>editchat — Éditeur de visite</strong></header>
+
+<div id="main">
+  <div id="poiList">
+    <button id="addPoi">+ Ajouter un POI</button>
+    <ul id="list" style="padding-left:16px"></ul>
+    <div style="margin-top:12px">
+      <label>Nom de la visite</label>
+      <input id="visitName" type="text" placeholder="Nom...">
+      <button id="downloadZip">Télécharger Zip</button>
+    </div>
+  </div>
+  <div id="editor">Sélectionnez un POI</div>
+</div>
+<div id="map"></div>
+
+<!-- Librairies externes -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exifreader@5.0.3/dist/exif-reader.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
+<script src="https://cd
