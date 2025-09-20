@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>editchat — Éditeur de visite</title>
+
+<!-- Chemins relatifs corrigés -->
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icons/favicon.ico">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<style>
+body{font-family:sans-serif;margin:0;padding:0;background:#f5f5f5}
+header{background:#1976d2;color:#fff;padding:1rem;text-align:center;font-weight:bold}
+#app{max-width:900px;margin:auto;padding:1rem}
+.poi-card{background:#fff;margin:1rem 0;padding:1rem;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.1)}
+label{display:block;margin-top:0.5rem}
+input[type=text],textarea{width:100%;padding:0.4rem;margin-top:0.2rem;border:1px solid #ccc;border-radius:4px}
+button{margin-top:0.8rem;padding:0.6rem 1rem;border:none;border-radius:4px;background:#1976d2;color:white;cursor:pointer}
+button:hover{background:#0f5ba7}
+#map{height:300px;margin-top:0.5rem}
+.preview{margin-top:0.5rem;max-width:100%;height:auto;border:1px solid #ddd}
+</style>
+</head>
+<body>
+<header>editchat — Éditeur de visite</header>
+<div id="app">
+  <div>
+    <label>Nom de la visite :
+      <input type="text" id="visitName" placeholder="Nom de la visite">
+    </label>
+    <button id="addPoiBtn">+ Ajouter un POI</button>
+    <button id="downloadBtn">Télécharger Zip</button>
+  </div>
+  <div id="poiList"></div>
+  <div id="map"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3/dist/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+
+<script>
+// ----- Service Worker en chemin relatif -----
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(console.warn);
+}
+
+// ----- Carte Leaflet -----
+const map = L.map('map').setView([48.8566, 2.3522], 5);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  { attribution: '© OpenStreetMap' }).addTo(map);
+
+let pois = [];
+let selectedMarker = null;
+
+// ----- Ajouter un POI -----
+document.getElementById('addPoiBtn').addEventListener('click', () => {
+  const idx = pois.length + 1;
+  const poi = { id: idx, title:'', location:'', comment:'', image:null, video:null, audio:null };
+  pois.push(poi);
+  renderPOIs();
+});
+
+// ----- Rendu des POI -----
+function renderPOIs() {
+  const list = document.getElementById('poiList');
+  list.innerHTML = '';
+  pois.forEach((poi, i) => {
+    const card = document.createElement('div');
+    card.className = 'poi-card';
+    card.innerHTML = `
+      <h3>POI ${i+1}</h3>
+      <label>Titre* <input type="text" value="${poi.title}" data-id="${poi.id}" data-field="title"></label>
+      <label>Localisation* <input type="text" value="${poi.location}" data-id="${poi.id}" data-field="location"></label>
+      <label>Commentaire <textarea data-id="${poi.id}" data-field="comment">${poi.comment}</textarea></label>
+      <label>Image JPEG <input type="file" accept="image/jpeg" data-id="${poi.id}" data-field="image"></label>
+      <img id="imgPreview-${poi.id}" class="preview" ${poi.image ? 'src="'+poi.image+'"' : 'style="display:none;"'}>
+      <label>Vidéo MP4 <input type="file" accept="video/mp4" data-id="${poi.id}" data-field="video"></label>
+      <video id="vidPreview-${poi.id}" class="preview" controls ${poi.video ? 'src="'+poi.video+'"' : 'style="display:none;"'}></video>
+      <label>Audio MP3 <input type="file" accept="audio/mp3" data-id="${poi.id}" data-field="audio"></label>
+      <audio id="audPreview-${poi.id}" class="preview" controls ${poi.audio ? 'src="'+poi.audio+'"' : 'style="display:none;"'}></audio>
+    `;
+    list.appendChild(card);
+  });
+  attachInputs();
+}
+
+// ----- Attacher les événements -----
+function attachInputs() {
+  document.querySelectorAll('#poiList input[type=text], #poiList textarea')
+    .forEach(el => el.addEventListener('input', e => {
+      const {id, field} = e.target.dataset;
+      const poi = pois.find(p => p.id == id);
+      poi[field] = e.target.value;
+    }));
+
+  document.querySelectorAll('#poiList input[type=file]').forEach(el => {
+    el.addEventListener('change', e => handleFile(e));
+  });
+}
+
+// ----- Gestion fichiers et EXIF -----
+function handleFile(e) {
+  const {id, field} = e.target.dataset;
+  const poi = pois.find(p => p.id == id);
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = evt => {
+    poi[field] = evt.target.result;
+    const preview = document.getElementById(
+      (field==='image'?'imgPreview-':field==='video'?'vidPreview-':'audPreview-') + id
+    );
+    preview.src = evt.target.result;
+    preview.style.display = 'block';
+
+    // Si image : lire EXIF
+    if (field === 'image') {
+      EXIF.getData(file, function() {
+        const lat = EXIF.getTag(this, "GPSLatitude");
+        const lon = EXIF.getTag(this, "GPSLongitude");
+        const latRef = EXIF.getTag(this, "GPSLatitudeRef") || "N";
+        const lonRef = EXIF.getTag(this, "GPSLongitudeRef") || "E";
+        if (lat && lon) {
+          const decLat = convertDMSToDD(lat, latRef);
+          const decLon = convertDMSToDD(lon, lonRef);
+          poi.location = `${decLat.toFixed(5)}N, ${decLon.toFixed(5)}E`;
+          // MAJ champ localisation
+          document.querySelector(`input[data-id="${id}"][data-field="location"]`).value = poi.location;
+          map.setView([decLat, decLon], 14);
+          if (selectedMarker) map.removeLayer(selectedMarker);
+          selectedMarker = L.marker([decLat, decLon], {draggable:true}).addTo(map);
+          selectedMarker.on('dragend', ev=>{
+            const {lat,lng} = ev.target.getLatLng();
+            poi.location = `${lat.toFixed(5)}N, ${lng.toFixed(5)}E`;
+            document.querySelector(`input[data-id="${id}"][data-field="location"]`).value = poi.location;
+          });
+        }
+      });
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+// Conversion DMS -> Décimal
+function convertDMSToDD(dms, ref) {
+  const [d,m,s] = dms;
+  let dd = d + m/60 + s/3600;
+  if (ref === "S" || ref === "W") dd = dd * -1;
+  return dd;
+}
+
+// ----- Télécharger le ZIP -----
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  const zip = new JSZip();
+  const folder = zip.folder('data');
+  pois.forEach((poi,i)=>{
+    if (!poi.title || !poi.location) return;
+    const poiFolder = folder.folder(`${i+1}`);
+    poiFolder.file('Titre.txt', poi.title);
+    poiFolder.file('Localisation.txt', poi.location);
+    poiFolder.file('Commentaire.txt', poi.comment || '');
+    if (poi.image) poiFolder.file('Image.jpg', poi.image.split(',')[1], {base64:true});
+    if (poi.video) poiFolder.file('Video.mp4', poi.video.split(',')[1], {base64:true});
+    if (poi.audio) poiFolder.file('Audio.mp3', poi.audio.split(',')[1], {base64:true});
+  });
+  zip.file('visit.json', JSON.stringify({visitName:document.getElementById('visitName').value, pois}, null, 2));
+  zip.generateAsync({type:'blob'}).then(blob => saveAs(blob, `${document.getElementById('visitName').value || 'visite'}.zip`));
+});
+</script>
+</body>
+</html>
