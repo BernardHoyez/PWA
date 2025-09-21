@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>editgrok</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./icons/favicon.ico">
+  <meta name="theme-color" content="#6200ea">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+  <div id="start-screen">
+    <h1>editgrok - Éditeur de Visite</h1>
+    <label for="visit-name">Nom de la visite :</label>
+    <input type="text" id="visit-name" placeholder="Entrez le nom de la visite">
+    <button onclick="console.log('Bouton Commencer cliqué'); startEditor()">Commencer</button>
+    <button onclick="document.getElementById('import-zip').click()">Importer une visite</button>
+    <input type="file" id="import-zip" accept=".zip" style="display: none;" onchange="importZip(event)">
+  </div>
+
+  <div id="editor" style="display: none;">
+    <h1 id="visit-title"></h1>
+    <div id="poi-form">
+      <h2>Ajouter/Modifier un POI</h2>
+      <input type="text" id="poi-title" placeholder="Titre (obligatoire)">
+      <input type="text" id="poi-location" placeholder="Localisation (ex: 49.55640N, 0.08857E)">
+      <button onclick="openMapModal()">Sélectionner sur la carte</button>
+      <textarea id="poi-comment" placeholder="Commentaire (facultatif)"></textarea>
+      <label>Image principale (JPEG) :</label>
+      <input type="file" id="poi-image" accept="image/jpeg">
+      <div id="image-container">
+        <img id="image-preview" style="max-width: 200px; display: none;">
+        <button id="remove-image" style="display: none;" onclick="removeFile('image')">Supprimer l'image</button>
+      </div>
+      <label>Photos de détail (JPEG, multiple) :</label>
+      <input type="file" id="poi-details" accept="image/jpeg" multiple>
+      <div id="details-preview"></div>
+      <button id="remove-details" style="display: none;" onclick="removeFile('details')">Supprimer les photos de détail</button>
+      <label>Vidéo (MP4) :</label>
+      <input type="file" id="poi-video" accept="video/mp4">
+      <div id="video-container">
+        <video id="video-preview" style="max-width: 200px; display: none;" controls></video>
+        <button id="remove-video" style="display: none;" onclick="removeFile('video')">Supprimer la vidéo</button>
+      </div>
+      <label>Audio (MP3) :</label>
+      <input type="file" id="poi-audio" accept="audio/mp3">
+      <div id="audio-container">
+        <audio id="audio-preview" controls style="display: none;"></audio>
+        <button id="remove-audio" style="display: none;" onclick="removeFile('audio')">Supprimer l'audio</button>
+      </div>
+      <button onclick="savePOI()">Valider POI</button>
+    </div>
+    <ul id="poi-list"></ul>
+    <button onclick="downloadZip()">Télécharger Zip</button>
+  </div>
+
+  <div id="map-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="background: white; margin: 10% auto; width: 80%; height: 80%;">
+      <div id="map" style="height: 90%;"></div>
+      <button onclick="closeMapModal()">Fermer</button>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="./app.js" onerror="console.error('Erreur de chargement de app.js')"></script>
+  <script>
+    console.log('Chargement de index.html');
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        console.log('Tentative d\'enregistrement du Service Worker');
+        navigator.serviceWorker.register('./sw.js', { scope: './' })
+          .then(reg => console.log('Service Worker enregistré !', reg))
+          .catch(err => console.log('Erreur Service Worker :', err));
+      });
+    } else {
+      console.log('Service Worker non supporté');
+    }
+  </script>
+</body>
+</html>
