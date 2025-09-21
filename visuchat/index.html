@@ -1,0 +1,53 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>visuchat</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+<link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+<header class="topbar">
+<h1 id="title">visuchat</h1>
+<div class="gps-controls">
+<button id="startGps">Démarrer GPS</button>
+<button id="stopGps">Arrêter GPS</button>
+<div id="gpsIndicator" class="gps-indicator idle" title="Statut GPS"></div>
+</div>
+</header>
+
+
+<main class="main">
+<section class="controls">
+<label class="filepicker">Charger ZIP
+<input id="zipInput" type="file" accept=".zip" />
+</label>
+<div id="status" class="status">Aucun ZIP chargé</div>
+</section>
+
+
+<section class="mapwrap">
+<div id="map" style="height:70vh"></div>
+</section>
+
+
+<template id="popup-template">
+<div class="popup-content">
+<div class="popup-header"><h3 class="poi-title"></h3></div>
+<div class="poi-coords"></div>
+<div class="poi-comment"></div>
+<div class="poi-distance"></div>
+<div class="poi-media"></div>
+</div>
+</template>
+
+
+</main>
+
+
+<footer class="footer">visuchat — PWA terrain</footer>
+
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>
