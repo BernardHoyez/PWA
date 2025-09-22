@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visite - PWA</title>
+    <link rel="stylesheet" href="lib/leaflet.css" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="manifest.json" />
+</head>
+<body>
+    <header>
+        <h1>Visite</h1>
+        <input type="file" id="zipFile" accept=".zip" />
+    </header>
+    <main>
+        <div id="map"></div>
+    </main>
+    <script src="lib/jszip.min.js"></script>
+    <script src="lib/leaflet.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
