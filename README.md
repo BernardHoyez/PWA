@@ -30,7 +30,7 @@ __________________________________________________
 editgrok<BR
  <A href="https://bernardhoyez.github.io/PWA/editgrok">Editeur de visite Grok</A>
 
-cet appli d'édition de visite fonctionne et génère un fichier zip en sortie
+Cette appli d'édition de visite fonctionne et génère un fichier zip en sortie
 <HR>
 
 
