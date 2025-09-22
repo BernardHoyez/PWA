@@ -26,6 +26,13 @@ Elle accepte également des photos de détail.
 Elle produit en sortie un fichier Zip avec une structure qui pourra être utilisée
 par une application de visualisation cartographique.
 __________________________________________________
+<BR>
+editgrok<BR
+ <A href="https://bernardhoyez.github.io/PWA/editgrok">Editeur de visite Grok</A>
+
+cet appli d'édition de visite fonctionne et génère un fichier zip en sortie
+<HR>
+
 
 <BR>suivons le guide_V8G<BR>
 Guide de terrain<BR>
