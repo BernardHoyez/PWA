@@ -1,0 +1,5 @@
+{
+  "name": "visugem",
+  "description": "A Progressive Web App (PWA) for visualizing Points of Interest (POIs) from a ZIP file. It features an interactive map with colored markers, media display, and is fully responsive and installable on any device.",
+  "requestFramePermissions": []
+}
