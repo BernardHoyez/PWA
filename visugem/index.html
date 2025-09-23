@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visugem - POI Visualizer</title>
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#1e293b">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    /* Leaflet popup customization */
+    .leaflet-popup-content-wrapper {
+      background-color: #1e293b; /* slate-800 */
+      color: #f8fafc; /* slate-50 */
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+    .leaflet-popup-content {
+      margin: 0;
+      width: 300px !important;
+    }
+    .leaflet-popup-tip {
+      background-color: #1e293b; /* slate-800 */
+    }
+    .leaflet-popup-close-button {
+      color: #f8fafc !important;
+    }
+    .leaflet-container a.leaflet-popup-close-button {
+      color: #cbd5e1;
+    }
+    .leaflet-container a.leaflet-popup-close-button:hover {
+      color: #fff;
+    }
+    
+    /* User Location Marker Styles */
+    @keyframes pulse-animation {
+      0% {
+        transform: scale(1);
+        opacity: 0.7;
+      }
+      100% {
+        transform: scale(2.5);
+        opacity: 0;
+      }
+    }
+    .user-location-marker {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .user-location-marker .dot {
+      width: 16px;
+      height: 16px;
+      background-color: #38bdf8; /* sky-400 */
+      border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    }
+    .user-location-marker .pulse {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background-color: #38bdf8; /* sky-400 */
+      border-radius: 50%;
+      animation: pulse-animation 2s infinite;
+    }
+  </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/"
+  }
+}
+</script>
+</head>
+<body class="bg-slate-900 text-slate-100">
+  <div id="root"></div>
+  <script type="module" src="./index.tsx"></script>
+</body>
+</html>
