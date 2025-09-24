@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carte Interactive POI - Upload ZIP</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Application interactive pour visualiser des points d'intérêt sur carte avec médias intégrés">
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="POI Map">
+    <meta name="msapplication-TileColor" content="#2c3e50">
+    <meta name="msapplication-config" content="browserconfig.xml">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/PWA/carte-interactive-poi/manifest.json">
+    
+    <!-- Favicons et Apple Touch Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="https://via.placeholder.com/32x32/2c3e50/ffffff?text=POI">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://via.placeholder.com/16x16/2c3e50/ffffff?text=POI">
+    <link rel="apple-touch-icon" href="https://via.placeholder.com/180x180/2c3e50/ffffff?text=POI">
+    <link rel="apple-touch-icon" sizes="152x152" href="https://via.placeholder.com/152x152/2c3e50/ffffff?text=POI">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://via.placeholder.com/180x180/2c3e50/ffffff?text=POI">
+    <link rel="apple-touch-icon" sizes="167x167" href="https://via.placeholder.com/167x167/2c3e50/ffffff?text=POI">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-map-marked-alt"></i> Carte Interactive POI</h1>
+                <p>Visualisez vos points d'intérêt avec médias intégrés</p>
+                
+                <!-- Install PWA Button -->
+                <div id="install-container" class="install-container" style="display: none;">
+                    <button id="install-btn" class="install-btn">
+                        <i class="fas fa-download"></i> Installer l'Application
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Upload Section -->
+        <div id="upload-section" class="upload-section">
+            <div class="upload-container">
+                <div class="upload-icon">
+                    <i class="fas fa-file-archive"></i>
+                </div>
+                <h2>Charger votre fichier ZIP</h2>
+                <p class="upload-description">
+                    Sélectionnez un fichier ZIP contenant :<br>
+                    • <code>visit.json</code> (données des POI)<br>
+                    • Dossier <code>data/</code> (médias des POI)
+                </p>
+                
+                <div class="upload-area" id="upload-area">
+                    <input type="file" id="zip-input" accept=".zip" hidden>
+                    <div class="upload-content">
+                        <i class="fas fa-cloud-upload-alt upload-icon-large"></i>
+                        <p>Glissez-déposez votre fichier ZIP ici</p>
+                        <p class="upload-or">ou</p>
+                        <button class="upload-btn" onclick="document.getElementById('zip-input').click()">
+                            <i class="fas fa-folder-open"></i> Choisir un fichier
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="upload-progress" class="upload-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <p id="progress-text">Extraction en cours...</p>
+                </div>
+                
+                <div id="upload-error" class="upload-error" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Main Content (hidden initially) -->
+        <div id="main-content" class="main-content" style="display: none;">
+            <!-- Info Panel -->
+            <div class="info-panel">
+                <div class="visit-info" id="visit-info">
+                    <h2 id="visit-name">Visite</h2>
+                    <p id="poi-count">0 POI chargés</p>
+                </div>
+                
+                <div class="legend">
+                    <h3><i class="fas fa-info-circle"></i> Légende</h3>
+                    <div class="legend-items">
+                        <div class="legend-item">
+                            <span class="legend-color" style="background: #3498db;"></span>
+                            <span>Photos disponibles</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background: #e74c3c;"></span>
+                            <span>Vidéos disponibles</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background: #2ecc71;"></span>
+                            <span>Audio disponible</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background: #9b59b6;"></span>
+                            <span>Multi-médias</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map and Sidebar Container -->
+            <div class="map-container">
+                <!-- Sidebar -->
+                <div class="sidebar">
+                    <h3><i class="fas fa-list"></i> Points d'Intérêt</h3>
+                    <div id="poi-list" class="poi-list"></div>
+                </div>
+
+                <!-- Map -->
+                <div id="map" class="map"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- JSZip for ZIP extraction -->
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    
+    <!-- PWA JavaScript -->
+    <script src="js/pwa-handler.js"></script>
+    
+    <!-- Main JavaScript -->
+    <script src="js/main.js"></script>
+</body>
+</html>

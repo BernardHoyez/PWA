@@ -1,0 +1,65 @@
+{
+  "name": "Visite Géologique Clermont - Exemple",
+  "pois": [
+    {
+      "id": 1,
+      "title": "Mesnil",
+      "location": "50.04525N, 1.32983E",
+      "comment": "Falaise de craie avec fossiles du Crétacé supérieur. Point d'observation géologique remarquable.",
+      "image": true,
+      "video": false,
+      "audio": true,
+      "details": 0
+    },
+    {
+      "id": 2,
+      "title": "Mesnil Détail",
+      "location": "50.04525N, 1.32983E",
+      "comment": "Vue détaillée des couches sédimentaires et stratifications.",
+      "image": true,
+      "video": false,
+      "audio": true,
+      "details": 0
+    },
+    {
+      "id": 3,
+      "title": "Fossile de Bélemnite",
+      "location": "50.08298N, 1.42903E",
+      "comment": "Découverte d'un fossile de bélemnite parfaitement conservé dans la roche calcaire.",
+      "image": false,
+      "video": true,
+      "audio": false,
+      "details": 0
+    },
+    {
+      "id": 4,
+      "title": "Coupe Stratigraphique A",
+      "location": "50.04562N, 1.33030E",
+      "comment": "Coupe géologique montrant la succession des couches sédimentaires.",
+      "image": true,
+      "video": false,
+      "audio": true,
+      "details": 0
+    },
+    {
+      "id": 5,
+      "title": "Site d'Extraction",
+      "location": "50.03688N, 1.32214E",
+      "comment": "Ancienne carrière montrant les techniques d'extraction de la craie.",
+      "image": false,
+      "video": true,
+      "audio": false,
+      "details": 0
+    },
+    {
+      "id": 6,
+      "title": "Panorama Géologique",
+      "location": "50.05120N, 1.33500E",
+      "comment": "Vue d'ensemble du paysage géologique avec explication des formations.",
+      "image": true,
+      "video": true,
+      "audio": true,
+      "details": 0
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Génération Icônes Base64</title>
+</head>
+<body>
+    <h2>Génération des icônes base64 pour PWA</h2>
+    <button onclick="generateIcons()">Générer les icônes</button>
+    <div id="output"></div>
+
+    <script>
+    function generateIcon(size) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = size;
+        canvas.height = size;
+
+        // Background gradient
+        const gradient = ctx.createLinearGradient(0, 0, size, size);
+        gradient.addColorStop(0, '#2c3e50');
+        gradient.addColorStop(1, '#3498db');
+        
+        // Draw background with rounded corners
+        ctx.fillStyle = gradient;
+        const cornerRadius = size * 0.15;
+        ctx.beginPath();
+        ctx.roundRect(0, 0, size, size, cornerRadius);
+        ctx.fill();
+
+        // Draw map area
+        const mapX = size * 0.125;
+        const mapY = size * 0.1875;
+        const mapW = size * 0.75;
+        const mapH = size * 0.625;
+        const mapRadius = size * 0.047;
+        
+        ctx.fillStyle = 'rgba(46, 204, 113, 0.9)';
+        ctx.beginPath();
+        ctx.roundRect(mapX, mapY, mapW, mapH, mapRadius);
+        ctx.fill();
+
+        // Draw POI markers
+        const markerRadius = size * 0.039;
+        const strokeWidth = size * 0.008;
+        
+        // Marker 1 (red)
+        ctx.fillStyle = '#e74c3c';
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = strokeWidth;
+        ctx.beginPath();
+        ctx.arc(size * 0.3125, size * 0.35, markerRadius, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+
+        // Marker 2 (blue)
+        ctx.fillStyle = '#3498db';
+        ctx.beginPath();
+        ctx.arc(size * 0.547, size * 0.43, markerRadius, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+
+        // Marker 3 (purple)
+        ctx.fillStyle = '#9b59b6';
+        ctx.beginPath();
+        ctx.arc(size * 0.664, size * 0.35, markerRadius, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+
+        // Draw numbers on markers
+        ctx.fillStyle = 'white';
+        ctx.font = `bold ${size * 0.027}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        ctx.fillText('1', size * 0.3125, size * 0.35);
+        ctx.fillText('2', size * 0.547, size * 0.43);
+        ctx.fillText('3', size * 0.664, size * 0.35);
+
+        // Upload/ZIP indicator
+        const uploadX = size * 0.742;
+        const uploadY = size * 0.098;
+        const uploadW = size * 0.156;
+        const uploadH = size * 0.117;
+        
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.beginPath();
+        ctx.roundRect(uploadX, uploadY, uploadW, uploadH, size * 0.016);
+        ctx.fill();
+
+        // ZIP text
+        ctx.fillStyle = '#2c3e50';
+        ctx.font = `bold ${size * 0.02}px Arial`;
+        ctx.fillText('ZIP', size * 0.82, size * 0.244);
+
+        return canvas.toDataURL('image/png');
+    }
+
+    function generateIcons() {
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        const output = document.getElementById('output');
+        output.innerHTML = '<h3>Icônes générées (copier-coller les données base64) :</h3>';
+
+        sizes.forEach(size => {
+            const dataUrl = generateIcon(size);
+            const div = document.createElement('div');
+            div.innerHTML = `
+                <h4>Icône ${size}x${size}px:</h4>
+                <img src="${dataUrl}" width="64" height="64" style="border: 1px solid #ccc;">
+                <br>
+                <textarea rows="3" cols="100" readonly onclick="this.select()">${dataUrl}</textarea>
+                <br><br>
+            `;
+            output.appendChild(div);
+            
+            // Also create download link
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = `icon-${size}x${size}.png`;
+            link.textContent = `Télécharger ${size}x${size}`;
+            link.style.display = 'inline-block';
+            link.style.margin = '5px 10px';
+            link.style.padding = '5px 10px';
+            link.style.background = '#3498db';
+            link.style.color = 'white';
+            link.style.textDecoration = 'none';
+            link.style.borderRadius = '3px';
+            div.appendChild(link);
+        });
+    }
+    </script>
+</body>
+</html>
