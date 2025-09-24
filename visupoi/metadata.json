@@ -1,6 +1,0 @@
-
-{
-  "name": "visupoi",
-  "description": "A Progressive Web App (PWA) to visualize Points of Interest (POIs) from a ZIP file on an interactive map. Designed for offline use on the field, it allows users to upload a data package and explore locations with associated media like photos, videos, and audio.",
-  "requestFramePermissions": []
-}
