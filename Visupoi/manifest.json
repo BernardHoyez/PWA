@@ -1,0 +1,22 @@
+{
+  "name": "Visupoi",
+  "short_name": "Visupoi",
+  "description": "Visualisation interactive de Points d'Intérêt (POI) hors-ligne",
+  "start_url": "/PWA/visupoi/index.html",
+  "scope": "/PWA/visupoi/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1976d2",
+  "icons": [
+    {
+      "src": "icons/icon192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icons/icon512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
