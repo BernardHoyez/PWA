@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>editpoi — éditeur de visites</title>
+  <link rel="manifest" href="/PWA/editpoi/manifest.json">
+  <meta name="theme-color" content="#2b7a78">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="/PWA/editpoi/styles.css">
+  <style>
+    /* petit ajout CSS nécessaire pour l'extrait de carte */
+    #mapExcerpt{height:200px;border:1px solid #ccc;border-radius:6px;margin-top:8px}
+    .media-preview video, .media-preview audio { max-width:100%; display:block; margin-top:6px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>editpoi</h1>
+
+    <!-- Nom de la visite -->
+    <label style="color:#fff; margin-left:12px;">
+      Visite :
+      <input id="visitTitle" placeholder="Nom de la visite" style="padding:6px;border-radius:4px;border:none;margin-left:6px">
+    </label>
+
+    <div id="mode-select" style="margin-left:12px">
+      <label style="color:#fff"><input type="radio" name="refmode" value="fixed" checked> Point fixe (lat=0, lon=0)</label>
+      <label style="color:#fff;margin-left:8px"><input type="radio" name="refmode" value="gps"> Point mobile (GPS)</label>
+      <button id="getpos" title="Obtenir position GPS">Obtenir GPS</button>
+    </div>
+
+    <!-- Import dès le démarrage -->
+    <div id="import-start" style="margin-left:12px">
+      <label style="color:#fff">Importer visite (ZIP): <input type="file" id="startupImport" accept=".zip"></label>
+    </div>
+  </header>
+
+  <main>
+    <section id="left">
+      <div id="map" aria-label="Carte" style="height:420px;border:1px solid #ccc;border-radius:6px"></div>
+
+      <div id="addpoi">
+        <h2>Créer / Modifier POI</h2>
+        <form id="poiForm">
+          <input type="hidden" id="poiId">
+          <label>Titre *<br><input id="title" required></label>
+          <label>Latitude *<br><input id="lat" required pattern="-?\d+(\.\d+)?"></label>
+          <label>Longitude *<br><input id="lon" required pattern="-?\d+(\.\d+)?"></label>
+
+          <label>Superposition (ordre)<br><input id="zIndex" type="number" value="0"></label>
+          <label>Commentaire<br><textarea id="comment"></textarea></label>
+
+          <label>Image JPEG (EXIF possible)<br><input id="image" type="file" accept="image/jpeg"></label>
+          <div id="thumbPreview" class="media-preview"></div>
+
+          <!-- Extrait de carte pour vérifier / corriger la position du POI -->
+          <div id="mapExcerpt" title="Déplacez le marqueur pour corriger la position"></div>
+
+          <label>Vidéo MP4<br><input id="video" type="file" accept="video/mp4"></label>
+          <div id="videoPreview" class="media-preview"></div>
+
+          <label>Audio MP3<br><input id="audio" type="file" accept="audio/mpeg"></label>
+          <div id="audioPreview" class="media-preview"></div>
+
+          <div class="coords-info">
+            <div>Distance: <span id="distance">-</span> m</div>
+            <div>Azimut: <span id="bearing">-</span></div>
+          </div>
+
+          <div class="actions">
+            <button type="submit">Ajouter / Enregistrer</button>
+            <button type="button" id="cancelEdit">Annuler</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="right">
+      <h2>POI de la visite</h2>
+      <div id="poiList" aria-live="polite"></div>
+
+      <div class="export" style="margin-top:8px">
+        <button id="validateVisit">Valider et exporter (ZIP)</button>
+        <input type="file" id="importZip" accept=".zip">
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <small>editpoi — PWA statique. Déployez sur GitHub Pages. Icons dans /icons/.</small>
+  </footer>
+
+  <!-- libs -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.0/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+
+  <script src="/PWA/editpoi/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/PWA/editpoi/sw.js').catch(e => console.warn('sw register failed', e));
+    }
+  </script>
+</body>
+</html>
