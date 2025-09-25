@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>editpoi — éditeur de visites</title>
+<link rel="manifest" href="/PWA/editpoi/manifest.json">
+<meta name="theme-color" content="#2b7a78">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="/PWA/editpoi/styles.css">
+</head>
+<body>
+<header>
+<h1>editpoi</h1>
+<div id="mode-select">
+<label><input type="radio" name="refmode" value="fixed" checked> Point fixe (lat=0, lon=0)</label>
+<label><input type="radio" name="refmode" value="gps"> Point mobile (position GPS du smartphone)</label>
+<button id="getpos">Obtenir GPS</button>
+</div>
+<div id="import-start">
+<label>Importer une visite (ZIP): <input type="file" id="startupImport" accept=".zip"></label>
+</div>
+</header>
+
+
+<main>
+<section id="left">
+<div id="map"></div>
+<div id="addpoi">
+<h2>Créer / Modifier POI</h2>
+<form id="poiForm">
+<input type="hidden" id="poiId">
+<label>Titre *<br><input id="title" required></label>
+<label>Latitude *<br><input id="lat" required pattern="-?\d+(\.\d+)?"></label>
+<label>Longitude *<br><input id="lon" required pattern="-?\d+(\.\d+)?"></label>
+<label>Superposition (ordre)<br><input id="zIndex" type="number" value="0"></label>
+<label>Commentaire<br><textarea id="comment"></textarea></label>
+<label>Image JPEG<br><input id="image" type="file" accept="image/jpeg"></label>
+<div id="thumbPreview"></div>
+<label>Vidéo MP4<br><input id="video" type="file" accept="video/mp4"></label>
+<div id="videoPreview"></div>
+<label>Audio MP3<br><input id="audio" type="file" accept="audio/mpeg"></label>
+<div id="audioPreview"></div>
+
+
+<div class="coords-info">
+<div>Distance: <span id="distance">-</span> m</div>
+<div>Azimut: <span id="bearing">-</span></div>
+</div>
+
+
+<div class="actions">
+<button type="submit">Ajouter / Enregistrer</button>
+<button type="button" id="cancelEdit">Annuler</button>
+</div>
+</form>
+</div>
+</section>
+
+
+<section id="right">
+<h2>POI de la visite</h2>
+<div id="poiList" aria-live="polite"></div>
+
+
+<div class="export">
+</html>
