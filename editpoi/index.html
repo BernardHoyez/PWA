@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#2c3e50" />
+  <title>editpoi</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/exif-js"></script>
+</head>
+<body>
+  <header>
+    <h1>Éditeur de Visite (editpoi)</h1>
+  </header>
+  
+  <main>
+    <section id="visit-info">
+      <h2>Nouvelle visite</h2>
+      <label>Titre de la visite : <input id="visitTitle" type="text" /></label>
+      <label>Importer une visite existante (ZIP) : <input id="importZip" type="file" accept=".zip" /></label>
+    </section>
+
+    <section id="poi-editor">
+      <h2>Ajouter / Modifier un POI</h2>
+      <label>Titre du POI : <input id="poiTitle" type="text" required /></label>
+      <label>Commentaire : <textarea id="poiComment"></textarea></label>
+
+      <div class="media-inputs">
+        <label>Image (JPEG) : <input id="poiImage" type="file" accept="image/jpeg" /></label>
+        <img id="previewImage" alt="Prévisualisation image" />
+        <label>Audio (MP3) : <input id="poiAudio" type="file" accept="audio/mpeg" /></label>
+        <audio id="previewAudio" controls></audio>
+        <label>Vidéo (MP4) : <input id="poiVideo" type="file" accept="video/mp4" /></label>
+        <video id="previewVideo" controls width="320"></video>
+      </div>
+
+      <div id="map" style="height:300px;margin-top:1em;"></div>
+      <label>Latitude : <input id="lat" type="text" /></label>
+      <label>Longitude : <input id="lng" type="text" /></label>
+      
+      <button id="addPoi">Ajouter / Mettre à jour le POI</button>
+    </section>
+
+    <aside id="poi-list">
+      <h2>Liste des POI</h2>
+      <ul id="poiItems"></ul>
+      <button id="exportVisit">Exporter la visite (ZIP)</button>
+    </aside>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
