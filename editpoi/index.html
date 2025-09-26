@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>editpoi — éditeur de visites</title>
+
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2b7a78">
+
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+<h1>editpoi — éditeur de visites</h1>
+<div class="top-controls">
+<input id="visitTitle" placeholder="Titre de la visite" />
+<input id="loadZipInput" type="file" accept=".zip" />
+<button id="startNew">Nouveau</button>
+<button id="clearDraft">Effacer brouillon</button>
+<button id="exportZip">Exporter (.zip)</button>
+</div>
+</header>
+
+
+<main>
+<section id="left">
+<div id="map"></div>
+
+
+<form id="poiForm">
+<h2>POI courant</h2>
+<label>Titre (obligatoire)<br>
+<input id="poiTitle" required />
+</label>
+<label>Latitude<br>
+<input id="lat" type="number" step="any" />
+</label>
+<label>Longitude<br>
+<input id="lng" type="number" step="any" />
+</label>
+<label>Commentaire<br>
+<textarea id="comment"></textarea>
+</label>
+
+
+<label>Image JPEG<br>
+<input id="imgInput" type="file" accept="image/jpeg" />
+</label>
+<div id="imgPreview"></div>
+
+
+<label>Audio MP3<br>
+<input id="audioInput" type="file" accept="audio/mpeg" />
+</label>
+<div id="audioPreview"></div>
+
+
+<label>Vidéo MP4<br>
+<input id="videoInput" type="file" accept="video/mp4" />
+</label>
+<div id="videoPreview"></div>
+
+
+<div class="form-actions">
+<button id="savePoi" type="button">Ajouter / Mettre à jour POI</button>
+<button id="cancelPoi" type="button">Annuler</button>
+</html>
