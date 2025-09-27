@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>editpoid – Editeur de Visites</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="css/leaflet.css">
+  <link rel="icon" href="icons/icon192.png" sizes="192x192">
+  <meta name="theme-color" content="#1976d2" />
+</head>
+<body>
+  <header>
+    <h1>Éditeur de visites – editpoid</h1>
+    <button id="install-btn" style="display:none;">Installer l'application</button>
+  </header>
+  <main>
+    <section id="visit-info">
+      <label>Titre de la visite : <input type="text" id="visit-title" required></label>
+      <label>Importer une visite (zip) :
+        <input type="file" id="import-visit" accept=".zip">
+        <button id="import-btn">Importer</button>
+      </label>
+    </section>
+    <div id="editor-container">
+      <section id="poi-editor">
+        <h2>Ajouter / Modifier un POI</h2>
+        <form id="poi-form">
+          <label>Titre du POI : <input type="text" id="poi-title" required></label>
+          <label>Latitude : <input type="number" id="poi-lat" step="any" required></label>
+          <label>Longitude : <input type="number" id="poi-lon" step="any" required></label>
+          <label>Commentaire : <textarea id="poi-comment"></textarea></label>
+          <label>Image (JPEG, EXIF): <input type="file" id="poi-img" accept="image/jpeg"></label>
+          <div id="img-preview"></div>
+          <label>Audio (MP3): <input type="file" id="poi-audio" accept="audio/mp3"></label>
+          <div id="audio-preview"></div>
+          <label>Vidéo (MP4): <input type="file" id="poi-video" accept="video/mp4"></label>
+          <div id="video-preview"></div>
+          <button type="button" id="map-btn">Choisir sur carte</button>
+          <button type="submit">Ajouter / Mettre à jour POI</button>
+        </form>
+        <div id="map-modal" class="modal">
+          <div class="modal-content">
+            <span class="close" id="close-map">&times;</span>
+            <div id="map" style="height: 300px;"></div>
+          </div>
+        </div>
+      </section>
+      <aside id="poi-list-container">
+        <h2>Liste des POI</h2>
+        <ul id="poi-list"></ul>
+      </aside>
+    </div>
+    <section id="export-section">
+      <button id="validate-btn">Valider la visite et exporter (zip)</button>
+      <a id="download-link" style="display:none;">Télécharger la visite</a>
+    </section>
+  </main>
+  <footer>
+    <small>© 2025 editpoid – BernardHoyez.io</small>
+  </footer>
+  <script src="js/leaflet.js"></script>
+  <script src="js/exif.js"></script>
+  <script src="js/jszip.min.js"></script>
+  <script src="js/sortable.min.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
