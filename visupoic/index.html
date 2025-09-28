@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visupoic - Visualiseur de Visite</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#2196F3">
+    <meta name="description" content="Visualiseur de points d'intérêt géolocalisés">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>Visupoic</h1>
+            <div class="controls">
+                <label for="zipFile" class="file-label">📁 Sélectionner ZIP</label>
+                <input type="file" id="zipFile" accept=".zip" style="display: none;">
+                <button id="centerMap" disabled>📍 Me localiser</button>
+            </div>
+            <div class="file-info" id="fileInfo"></div>
+        </header>
+        
+        <main>
+            <div id="map"></div>
+            <div id="status">
+                <h3>📋 Instructions d'utilisation :</h3>
+                <ol>
+                    <li>Cliquez sur "📁 Sélectionner ZIP" pour choisir votre fichier de visite</li>
+                    <li>Autorisez la géolocalisation pour calculer distances et directions</li>
+                    <li>Explorez les POI en cliquant sur les marqueurs numérotés</li>
+                    <li>Utilisez "📍 Me localiser" pour centrer la carte sur votre position</li>
+                </ol>
+                <p><small>💡 Le fichier ZIP doit contenir visit.json et un dossier data/ avec les médias</small></p>
+            </div>
+        </main>
+        
+        <!-- Popup pour POI simple -->
+        <div id="poiPopup" class="popup hidden">
+            <div class="popup-content">
+                <div class="popup-header">
+                    <span class="popup-close">&times;</span>
+                </div>
+                <div class="popup-body" id="poiContent">
+                    <!-- Contenu dynamique -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Popup pour POI complexe -->
+        <div id="complexPoiPopup" class="popup hidden">
+            <div class="popup-content">
+                <div class="popup-header">
+                    <h3>POI à cette position</h3>
+                    <span class="popup-close">&times;</span>
+                </div>
+                <div class="popup-body">
+                    <ul id="complexPoiList">
+                        <!-- Liste dynamique -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then((registration) => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch((registrationError) => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+    </script>
+    
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
