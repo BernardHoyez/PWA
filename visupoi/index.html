@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>visupoi</title>
+
+  <!-- ✅ Viewport modifié pour autoriser le zoom tactile -->
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, minimum-scale=0.5, maximum-scale=3, user-scalable=yes">
+
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Feuilles de style -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+  <!-- Scripts Leaflet et appli -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="js/utils.js" defer></script>
+  <script src="js/zip-handler.js" defer></script>
+  <script src="js/map.js" defer></script>
+  <script src="js/app.js" defer></script>
+</head>
+<body>
+  <div id="controls">
+    <input type="file" id="zipInput" accept=".zip">
+    <div id="status">Chargez un fichier de visite (.zip)</div>
+  </div>
+
+  <div id="map"></div>
+</body>
+</html>
