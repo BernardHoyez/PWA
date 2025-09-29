@@ -90,5 +90,13 @@ Fonctionne hors ligne (cache intelligent).
 Design natif mobile.
 Service Worker intégré.
 
-Editeur de visite
-editpoih
+Editeur de visite<BR>
+<B>editpoih<B>
+<A HREF="https://bernardhoyez.github.io/PWA/ediipoih/">editpoih</A>
+Cet éditeur de visite est le plus avancé des projets de ce genre
+
+Visualiseur de visite<BR>
+<B>visupoi</B>
+<A HREF="https://bernardhoyez.github.io/PWA/visupoi/">visupoi</A>
+<BR>Le plus avancé des guides de visite
+<BR>Fonctionne bien avec l'éditeur editpoih
