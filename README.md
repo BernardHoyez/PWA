@@ -93,12 +93,12 @@ Service Worker intégré.
 <HR>
 
 Editeur de visite<BR>
-<B>editpoih<B>
+<B>editpoih<B><BR>
 <A HREF="https://bernardhoyez.github.io/PWA/ediipoih/">editpoih</A>
-Cet éditeur de visite est le plus avancé des projets de ce genre
+<BR>Cet éditeur de visite est le plus avancé des projets de ce genre
 <HR>
 Visualiseur de visite<BR>
-<B>visupoi</B>
+<B>visupoi</B><BR>
 <A HREF="https://bernardhoyez.github.io/PWA/visupoi/">visupoi</A>
 <BR>Le plus avancé des guides de visite
 <BR>Fonctionne bien avec l'éditeur editpoih
