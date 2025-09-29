@@ -90,3 +90,5 @@ Fonctionne hors ligne (cache intelligent).
 Design natif mobile.
 Service Worker intégré.
 
+Editeur de visite
+editpoih
