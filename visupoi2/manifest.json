@@ -1,0 +1,9 @@
+{
+  "name": "visupoi2",
+  "short_name": "visupoi2",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#007bff",
+  "icons": []
+}
