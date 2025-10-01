@@ -1,0 +1,27 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+h1 {
+  text-align: center;
+  font-size: 1.2rem;
+}
+
+#map {
+  width: 100vw;
+  height: 90vh;
+}
+
+/* Popups */
+.leaflet-popup-content {
+  max-width: 95vw !important;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.leaflet-popup-content img {
+  max-width: 100%;
+  display: block;
+  margin: 0.5rem 0;
+}
