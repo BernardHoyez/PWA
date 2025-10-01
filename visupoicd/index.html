@@ -1,0 +1,73 @@
+<!-- ========================================
+     index.html
+     ======================================== -->
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="theme-color" content="#2b6cb0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5, user-scalable=yes">
+    <title>visupoicd</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/lightbox.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="title">visupoicd</div>
+        <div class="controls">
+            <label class="file-label">Charger visit.zip
+                <input id="zipfile" type="file" accept=".zip" />
+            </label>
+            <button id="btn-install" style="display:none">Installer</button>
+        </div>
+    </header>
+    
+    <main>
+        <div id="map"></div>
+    </main>
+    
+    <div id="status" class="status"></div>
+
+    <!-- Lightbox Structure -->
+    <div class="lightbox-overlay">
+        <div class="lightbox-content">
+            <button class="lightbox-close" aria-label="Fermer">×</button>
+            <img src="" alt="" class="lightbox-image">
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
+    <script src="js/utils.js"></script>
+    <script src="js/zip-handler.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/lightbox.js"></script>
+    <script src="js/app.js"></script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js').catch(err => 
+                console.warn('SW registration failed', err)
+            );
+        }
+
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const btn = document.getElementById('btn-install');
+            btn.style.display = 'inline-block';
+            btn.onclick = async () => {
+                btn.style.display = 'none';
+                deferredPrompt.prompt();
+                const choice = await deferredPrompt.userChoice;
+                deferredPrompt = null;
+            };
+        });
+    </script>
+</body>
+</html>
