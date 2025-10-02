@@ -102,3 +102,9 @@ Visualiseur de visite<BR>
 <A HREF="https://bernardhoyez.github.io/PWA/visupoi/">visupoi</A>
 <BR>Le plus avancé des guides de visite
 <BR>Fonctionne bien avec l'éditeur editpoih
+
+Visualiseur de visite<BR>
+<B>visupoicd</B><BR>
+<A HREF="https://bernardhoyez.github.io/PWA/visupoicd/">visupoicd/A>
+<BR>Le plus avancé des guides de visite
+<BR>Fonctionne bien avec l'éditeur editpoih, avec en plus une lightbox (un clic sur l'image ouvre une lightbox zoomable)
