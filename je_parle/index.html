@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>je_parle - Synthèse Vocale PWA</title>
+    <link rel="manifest" href="/PWA/je_parle/manifest.json">
+    <link rel="stylesheet" href="/PWA/je_parle/style.css"> 
+</head>
+<body>
+    <h1>je_parle : Synthèse Vocale</h1>
+    
+    <textarea id="text-input" placeholder="Entrez votre texte ici en français..."></textarea>
+    
+    <div id="voice-selector-container">
+        <label for="voice-select">Voix :</label>
+        <select id="voice-select"></select>
+    </div>
+    
+    <button id="speak-button">Parler</button>
+    <button id="save-button" disabled title="La sauvegarde audio de l'API native est non prise en charge.">Sauvegarder l'Audio</button>
+
+    <p style="margin-top: 20px; color: red;">
+        **NOTE IMPORTANTE :** La fonction de sauvegarde audio (`Sauvegarder l'Audio`) est **désactivée** dans cette version 100% client (Option 1), car l'enregistrement fiable du son généré par l'API `SpeechSynthesis` n'est pas techniquement réalisable avec des APIs simples et sans utiliser un serveur.
+    </p>
+
+    <script src="/PWA/je_parle/app.js"></script>
+</body>
+</html>

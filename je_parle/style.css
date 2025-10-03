@@ -1,0 +1,174 @@
+/* Définition des variables de couleur pour un thème clair/sombre facile */
+:root {
+    --primary-color: #007bff; /* Bleu standard pour les boutons */
+    --background-color: #f4f7f9; /* Arrière-plan très clair */
+    --card-background: #ffffff; /* Fond des conteneurs (cartes) */
+    --text-color: #333333;
+    --border-color: #dddddd;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+/* 1. Réinitialisation et Base Mobile-First */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text-color);
+    background-color: var(--background-color);
+    /* Empêche la sélection de texte non essentielle pour un look d'application */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    gap: 20px; /* Espace entre les éléments principaux */
+}
+
+h1 {
+    color: var(--primary-color);
+    margin-bottom: 10px;
+    font-size: 1.5rem; /* Taille adaptée aux mobiles */
+    text-align: center;
+}
+
+/* 2. Style du Conteneur Principal (Carte) */
+#text-input {
+    width: 100%;
+    max-width: 600px;
+    min-height: 150px;
+    padding: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    line-height: 1.5;
+    resize: vertical; /* Autorise le redimensionnement vertical uniquement */
+    box-shadow: 0 4px 10px var(--shadow-color);
+    font-family: inherit;
+    color: var(--text-color);
+    background-color: var(--card-background);
+}
+
+/* 3. Contrôles et Boutons */
+#voice-selector-container {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+#voice-select {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1rem;
+    background-color: var(--card-background);
+    cursor: pointer;
+}
+
+/* Conteneur des boutons pour un alignement facile */
+body > div:last-of-type { 
+    display: flex;
+    gap: 15px;
+    width: 100%;
+    max-width: 600px;
+}
+
+button {
+    flex: 1; /* Les boutons prennent l'espace disponible */
+    padding: 12px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s, opacity 0.2s;
+}
+
+#speak-button {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+#speak-button:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+#save-button {
+    background-color: #6c757d; /* Gris pour la fonction secondaire/désactivée */
+    color: white;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* 4. Texte d'information/avertissement */
+p {
+    width: 100%;
+    max-width: 600px;
+    text-align: center;
+    font-size: 0.9rem;
+    padding: 10px;
+    border-radius: 6px;
+    background-color: #fff3cd; /* Jaune clair pour l'avertissement */
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+/* 5. Adaptation Tablette/Bureau (Responsive Design) */
+@media (min-width: 768px) {
+    h1 {
+        font-size: 2rem;
+    }
+    body {
+        padding: 40px;
+    }
+    /* Les boutons n'ont plus besoin de prendre tout l'espace sur desktop */
+    body > div:last-of-type {
+        justify-content: center;
+        width: auto;
+    }
+    button {
+        flex: none;
+        min-width: 150px;
+    }
+}
+
+/* 6. Style PWA Spécifique (Mode autonome/Dark mode) */
+
+/* Gérer le thème sombre pour les utilisateurs qui le préfèrent */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background-color: #121212;
+        --card-background: #1e1e1e;
+        --text-color: #f0f0f0;
+        --border-color: #333333;
+        --shadow-color: rgba(255, 255, 255, 0.05);
+    }
+    p {
+        background-color: #3a3a3a;
+        color: #ffda6a;
+        border-color: #555555;
+    }
+}
+
+/* Styles spécifiques lorsque l'application est en mode standalone (installée) */
+@media all and (display-mode: standalone) {
+    body {
+        padding-top: 30px; /* Plus d'espace sous la barre d'état/titre */
+    }
+}

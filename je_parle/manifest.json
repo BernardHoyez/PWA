@@ -1,0 +1,22 @@
+{
+  "name": "je_parle : Synthèse Vocale PWA",
+  "short_name": "je_parle",
+  "description": "Synthèse vocale française avec téléchargement (basé sur l'API native).",
+  "start_url": "/PWA/je_parle/index.html",
+  "scope": "/PWA/je_parle/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2196F3",
+  "icons": [
+    {
+      "src": "/PWA/je_parle/images/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/PWA/je_parle/images/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
