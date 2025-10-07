@@ -1,0 +1,8 @@
+{
+  "title": "Etretat - exemple",
+  "pois": [
+    { "id":"poi-1","title":"Mesnil Val 1","lat":50.045248,"lon":1.329825,"comment":"Falaise générale","image":{"name":"Général Mesnil.jpg"},"audio":{"name":"Audio 1.mp3"},"video":null },
+    { "id":"poi-2","title":"Mesnil 2","lat":50.045248,"lon":1.329825,"comment":"Falaise détail","image":{"name":"Mesnil détail 1.jpg"},"audio":{"name":"Audio 2.mp3"},"video":null },
+    { "id":"poi-3","title":"Mesnil 3","lat":50.034063,"lon":1.315318,"comment":"Vidéo","image":null,"audio":null,"video":{"name":"Eric Buffetaut FR3.mp4"} }
+  ]
+}
