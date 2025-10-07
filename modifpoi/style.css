@@ -1,0 +1,16 @@
+*{box-sizing:border-box}
+body,html{height:100%;margin:0;font-family:system-ui,Arial}
+header{padding:8px;background:#0b6ef6;color:#fff;display:flex;align-items:center;gap:12px}
+header h1{margin:0;font-size:1.1rem}
+#controls{margin-left:auto;display:flex;gap:8px;align-items:center}
+main{display:flex;height:calc(100% - 56px)}
+#map{flex:1}
+#poiPanel{width:320px;padding:8px;background:#f5f5f5;overflow:auto}
+.poi-item{border-bottom:1px solid #ddd;padding:8px}
+.poi-title{font-weight:700}
+.poi-coords{font-size:0.9rem;color:#333}
+.poi-actions{margin-top:6px;display:flex;gap:6px}
+button{padding:6px 8px;border-radius:6px;border:1px solid #ccc;background:#fff}
+button:disabled{opacity:0.5}
+.leaflet-popup-content img, .leaflet-popup-content video{max-width:300px;display:block}
+#map { min-height: 400px; }
