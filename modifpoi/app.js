@@ -1,1 +1,0 @@
-// app.js contenu abrégé (voir document principal, code complet déjà fourni)
