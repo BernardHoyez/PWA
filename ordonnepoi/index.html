@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ordonnepoi</title>
+<link rel="manifest" href="manifest.json">
+<style>
+body{font-family:Arial, sans-serif;margin:10px;background:#f4f4f4;}
+button{margin:5px;padding:10px;border:none;border-radius:8px;background:#0066cc;color:#fff;cursor:pointer;}
+button:hover{background:#004c99;}
+.poi{background:white;padding:10px;margin:5px;border-radius:8px;box-shadow:0 0 4px rgba(0,0,0,0.2);}
+.small{font-size:0.9em;color:#555;}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+</head>
+<body>
+<h2>ordonnepoi – gestion des POI</h2>
+<input type="file" id="fileInput" accept=".zip"><br>
+<button id="sortLon">Classement en longitude</button>
+<button id="sortLat">Classement en latitude</button>
+<button id="saveBtn">Sauvegarder</button>
+<button id="exportKML">Exporter KML</button>
+<div id="poiList"></div>
+<script>
+let visit=null, originalZip=null;
+const fileInput=document.getElementById('fileInput');
+const poiList=document.getElementById('poiList');
+
+fileInput.onchange=async e=>{
+  const f=e.target.files[0];
+  if(!f)return;
+  const z=await JSZip.loadAsync(await f.arrayBuffer());
+  originalZip=z;
+  const vfile=z.file('visit.json');
+  visit=JSON.parse(await vfile.async('text'));
+  render(visit.pois);
+};
+
+function render(pois){
+  poiList.innerHTML='';
+  pois.forEach(p=>{
+    const d=document.createElement('div');
+    d.className='poi';
+    d.innerHTML=`<b>${p.title}</b><br><span class='small'>lat ${p.lat}, lon ${p.lon}</span><br>${p.comment||''}`;
+    poiList.appendChild(d);
+  });
+}
+
+let currentAscLat=true,currentAscLon=true;
+function sortBy(key){
+  if(!visit)return;
+  const asc=(key==='lon'?currentAscLon:currentAscLat);
+  visit.pois.sort((a,b)=>(asc?(a[key]-b[key]):(b[key]-a[key])));
+  if(key==='lon')currentAscLon=!currentAscLon; else currentAscLat=!currentAscLat;
+  render(visit.pois);
+}
+
+document.getElementById('sortLon').onclick=()=>sortBy('lon');
+document.getElementById('sortLat').onclick=()=>sortBy('lat');
+
+// Sauvegarde complète ZIP avec data/
+document.getElementById('saveBtn').onclick=async()=>{
+  if(!visit||!originalZip)return;
+  const out=new JSZip();
+  out.file('visit.json',JSON.stringify(visit,null,2));
+  const folders=set=new Set();
+  originalZip.forEach((path,f)=>{
+    if(f.dir)out.folder(path);
+    else if(path!=='visit.json')folders.add(path);
+  });
+  await Promise.all([...folders].map(async path=>{
+    const buf=await originalZip.file(path).async('arraybuffer');
+    out.file(path,buf);
+  }));
+  const blob=await out.generateAsync({type:'blob'});
+  saveAs(blob,(visit.title||'visit')+'_ordonnepoi.zip');
+};
+
+function xmlEscape(str){
+  if(!str)return'';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            .replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+}
+
+document.getElementById('exportKML').onclick=()=>{
+  if(!visit)return;
+  let kml='<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2">\n<Document>\n';
+  kml+=`<name>${xmlEscape(visit.title)}</name>\n`;
+  visit.pois.forEach(p=>{
+    kml+=`<Placemark>\n<name>${xmlEscape(p.title)}</name>\n`+
+         `<description>${xmlEscape(p.comment||'')}</description>\n`+
+         `<Point><coordinates>${p.lon},${p.lat}</coordinates></Point>\n</Placemark>\n`;
+  });
+  kml+='</Document></kml>';
+  const blob=new Blob([kml],{type:'application/vnd.google-earth.kml+xml;charset=utf-8'});
+  saveAs(blob,(visit.title||'visit')+'.kml');
+};
+</script>
+</body>
+</html>
