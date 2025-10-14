@@ -1,0 +1,4 @@
+body { margin: 0; font-family: sans-serif; background: #fafafa; }
+#boutons { text-align: center; margin: 1em; }
+#map { width: 100vw; height: 85vh; }
+button { margin: 0 10px; padding: 10px 20px; font-size: 1em; cursor: pointer; }
