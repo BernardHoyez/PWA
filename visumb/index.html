@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visumb - Carte GPS</title>
+    <base href="/PWA/visumb/">
+    <link rel="manifest" href="/PWA/visumb/manifest.json">
+    <link rel="icon" href="/PWA/visumb/icon.png">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { height: 100vh; width: 100%; }
+        #status { position: absolute; top: 10px; left: 10px; background: white; padding: 10px; z-index: 1000; }
+        #fileInput { position: absolute; top: 50px; left: 10px; z-index: 1000; }
+    </style>
+</head>
+<body>
+    <div id="status">Chargement...</div>
+    <input type="file" id="fileInput" accept=".mbtiles" />
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.tilelayer.mbtiles@1.0.0/dist/leaflet.tilelayer.mbtiles.js"></script>
+    <script>
+        // Initialisation de la carte
+        const map = L.map('map').setView([48.8566, 2.3522], 13); // Paris par défaut
+        const status = document.getElementById('status');
+        const fileInput = document.getElementById('fileInput');
+
+        // Marqueur pour la position GPS
+        let marker = null;
+
+        // Charger le fichier .mbtiles sélectionné
+        async function loadMBTiles(file) {
+            try {
+                status.textContent = 'Chargement du fichier .mbtiles...';
+                const arrayBuffer = await file.arrayBuffer();
+                const SQL = await initSqlJs({ locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}` });
+                const db = new SQL.Database(new Uint8Array(arrayBuffer));
+
+                // Créer une couche de tuiles à partir du .mbtiles
+                L.tileLayer.mbTiles(db, {
+                    minZoom: 10,
+                    maxZoom: 18,
+                    attribution: 'Carte locale © Visumb'
+                }).addTo(map);
+
+                status.textContent = 'Carte chargée !';
+            } catch (error) {
+                console.error('Erreur de chargement du .mbtiles:', error);
+                status.textContent = 'Erreur de chargement de la carte';
+            }
+        }
+
+        // Gérer la sélection du fichier
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file && file.name.endsWith('.mbtiles')) {
+                loadMBTiles(file);
+            } else {
+                status.textContent = 'Veuillez sélectionner un fichier .mbtiles valide.';
+            }
+        });
+
+        // Obtenir la position GPS
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(
+                    position => {
+                        const { latitude, longitude } = position.coords;
+                        map.setView([latitude, longitude], 15);
+                        if (marker) {
+                            marker.setLatLng([latitude, longitude]);
+                        } else {
+                            marker = L.marker([latitude, longitude]).addTo(map)
+                                .bindPopup('Vous êtes ici !').openPopup();
+                        }
+                        status.textContent = `Position: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+                    },
+                    error => {
+                        console.error('Erreur GPS:', error);
+                        status.textContent = 'Erreur GPS: ' + error.message;
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
+            } else {
+                status.textContent = 'Geolocation non supportée';
+            }
+        }
+
+        // Initialisation
+        getLocation();
+
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/PWA/visumb/service-worker.js')
+                .then(reg => console.log('Service Worker enregistré:', reg))
+                .catch(err => console.error('Erreur Service Worker:', err));
+        }
+    </script>
+</body>
+</html>
