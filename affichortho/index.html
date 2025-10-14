@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Affichortho - GPS IGN Ortho</title>
+    <base href="/PWA/affichortho/">
+    <link rel="manifest" href="/PWA/affichortho/manifest.json">
+    <link rel="apple-touch-icon" href="/PWA/affichortho/icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/PWA/affichortho/icon-192.png">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        #map { height: 100vh; width: 100%; }
+        #status { position: absolute; top: 10px; left: 10px; background: white; padding: 10px; z-index: 1000; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .loading { color: #666; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <div id="status" class="loading">Initialisation...</div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.wmts@0.7.1/dist/leaflet.wmts.js"></script>
+    <script>
+        // Initialisation de la carte
+        const map = L.map('map').setView([46.2276, 2.2137], 6); // Centre de la France par défaut
+        const status = document.getElementById('status');
+
+        // Ajout de la couche IGN Ortho (WMTS)
+        const orthoLayer = L.wmts.layer({
+            url: 'https://wxs.ign.fr/choisirgeoportail/geoportail/wmts',
+            layer: 'ORTHOIMAGERY.ORTHOPHOTOS',
+            style: 'normal',
+            tilematrixSet: 'PM',
+            format: 'image/jpeg',
+            attribution: 'Orthophotographie IGN © IGN'
+        }).addTo(map);
+
+        // Marqueur pour la position GPS
+        let marker = null;
+        let circle = null; // Optionnel : cercle de précision
+
+        // Fonction pour mettre à jour la position
+        function updatePosition(position) {
+            const { latitude, longitude, accuracy } = position.coords;
+            map.setView([latitude, longitude], 18); // Zoom élevé pour 20cm
+
+            if (marker) {
+                marker.setLatLng([latitude, longitude]);
+            } else {
+                marker = L.marker([latitude, longitude]).addTo(map)
+                    .bindPopup(`Votre position<br>Précision: ${accuracy ? accuracy.toFixed(0) + ' m' : 'Inconnue'}`).openPopup();
+            }
+
+            if (circle) {
+                circle.setLatLng([latitude, longitude]).setRadius(accuracy || 0);
+            } else if (accuracy) {
+                circle = L.circle([latitude, longitude], { radius: accuracy }).addTo(map);
+            }
+
+            status.innerHTML = `<span class="success">Position GPS: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}</span>`;
+            status.className = 'success';
+        }
+
+        // Obtenir la position GPS
+        function getLocation() {
+            if (navigator.geolocation) {
+                status.innerHTML = 'Recherche de votre position GPS...';
+                status.className = 'loading';
+                navigator.geolocation.watchPosition(
+                    updatePosition,
+                    (error) => {
+                        console.error('Erreur GPS:', error);
+                        let message = 'Erreur GPS: ';
+                        switch (error.code) {
+                            case error.PERMISSION_DENIED:
+                                message += 'Accès refusé';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                message += 'Position indisponible';
+                                break;
+                            case error.TIMEOUT:
+                                message += 'Timeout';
+                                break;
+                            default:
+                                message += 'Erreur inconnue';
+                        }
+                        status.innerHTML = `<span class="error">${message}</span>`;
+                        status.className = 'error';
+                    },
+                    { 
+                        enableHighAccuracy: true, 
+                        timeout: 10000, 
+                        maximumAge: 30000 // 30 secondes
+                    }
+                );
+            } else {
+                status.innerHTML = '<span class="error">Géolocalisation non supportée</span>';
+                status.className = 'error';
+            }
+        }
+
+        // Initialisation
+        orthoLayer.on('load', () => {
+            status.innerHTML = 'Couche ortho IGN chargée';
+            status.className = 'success';
+            getLocation();
+        });
+        orthoLayer.on('loading', () => {
+            status.innerHTML = 'Chargement de la couche ortho...';
+            status.className = 'loading';
+        });
+        orthoLayer.on('error', () => {
+            status.innerHTML = '<span class="error">Erreur de chargement de la carte IGN</span>';
+            status.className = 'error';
+            getLocation(); // Essayer GPS quand même
+        });
+
+        // Service Worker pour PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/PWA/affichortho/sw.js')
+                .then((reg) => console.log('SW enregistré:', reg))
+                .catch((err) => console.error('Erreur SW:', err));
+        }
+    </script>
+</body>
+</html>
