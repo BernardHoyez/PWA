@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orthophotos IGN - visuphoto</title>
+  <link rel="manifest" href="manifest.json">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    html, body, #map { height: 100%; margin: 0; padding: 0; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js');
+    }
+
+    const map = L.map('map', {
+      center: [46.5, 2.5],
+      zoom: 13,
+      minZoom: 12,
+      maxZoom: 18
+    });
+
+    const orthoIGN = L.tileLayer(
+      'https://data.geopf.fr/wmts?' +
+      'SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&' +
+      'LAYER=ORTHOIMAGERY.ORTHOPHOTOS&STYLE=normal&' +
+      'TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&FORMAT=image/jpeg',
+      {
+        tileSize: 256,
+        attribution: '&copy; <a href="https://www.ign.fr/">IGN</a> / GéoPlateforme - Orthophotos 20 cm',
+        maxZoom: 18
+      }
+    ).addTo(map);
+
+    // Fonction de centrage sur position GPS
+    function onLocationFound(e) {
+      const radius = 5000; // 10 km de côté => 5 km de rayon
+      const lat = e.latlng.lat;
+      const lon = e.latlng.lng;
+
+      // Ajout d’un marqueur
+      L.marker([lat, lon]).addTo(map)
+        .bindPopup("Votre position").openPopup();
+
+      // Création du carré 10 km centré
+      const bounds = L.latLngBounds(
+        [lat - 0.045, lon - 0.045],
+        [lat + 0.045, lon + 0.045]
+      );
+      L.rectangle(bounds, { color: 'red', weight: 1 }).addTo(map);
+      map.fitBounds(bounds);
+    }
+
+    function onLocationError(e) {
+      alert("Localisation impossible : " + e.message);
+    }
+
+    map.on('locationfound', onLocationFound);
+    map.on('locationerror', onLocationError);
+
+    // Déclenche la géolocalisation
+    map.locate({ setView: true, maxZoom: 15 });
+  </script>
+</body>
+</html>
