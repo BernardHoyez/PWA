@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>visuplanortho - IGN GéoPlateforme</title>
+  <link rel="manifest" href="manifest.json">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    html, body, #map { height: 100%; margin: 0; padding: 0; }
+    .leaflet-control-layers-expanded {
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js');
+    }
+
+    const map = L.map('map', {
+      center: [46.5, 2.5],
+      zoom: 13,
+      minZoom: 12,
+      maxZoom: 18
+    });
+
+    // Orthophoto IGN
+    const orthoIGN = L.tileLayer(
+      'https://data.geopf.fr/wmts?' +
+      'SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&' +
+      'LAYER=ORTHOIMAGERY.ORTHOPHOTOS&STYLE=normal&' +
+      'TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&FORMAT=image/jpeg',
+      {
+        tileSize: 256,
+        attribution: '&copy; <a href="https://www.ign.fr/">IGN</a> / GéoPlateforme - Orthophotos 20 cm',
+        maxZoom: 18
+      }
+    );
+
+    // Plan IGN v2
+    const planIGN = L.tileLayer(
+      'https://data.geopf.fr/wmts?' +
+      'SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&' +
+      'LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&' +
+      'TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&FORMAT=image/png',
+      {
+        tileSize: 256,
+        attribution: '&copy; <a href="https://www.ign.fr/">IGN</a> / GéoPlateforme - Plan IGN v2',
+        maxZoom: 18
+      }
+    );
+
+    orthoIGN.addTo(map);
+
+    // Contrôles pour basculer entre fonds
+    const baseMaps = {
+      "Orthophoto": orthoIGN,
+      "Plan IGN v2": planIGN
+    };
+
+    L.control.layers(baseMaps, null, { collapsed: false }).addTo(map);
+
+    // Géolocalisation et carré 10 km
+    function onLocationFound(e) {
+      const lat = e.latlng.lat;
+      const lon = e.latlng.lng;
+
+      L.marker([lat, lon]).addTo(map).bindPopup("Votre position").openPopup();
+
+      const bounds = L.latLngBounds(
+        [lat - 0.045, lon - 0.045],
+        [lat + 0.045, lon + 0.045]
+      );
+      L.rectangle(bounds, { color: 'red', weight: 1 }).addTo(map);
+      map.fitBounds(bounds);
+    }
+
+    function onLocationError(e) {
+      alert("Localisation impossible : " + e.message);
+    }
+
+    map.on('locationfound', onLocationFound);
+    map.on('locationerror', onLocationError);
+
+    map.locate({ setView: true, maxZoom: 15 });
+  </script>
+</body>
+</html>
