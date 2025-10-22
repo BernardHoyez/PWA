@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>trouvegps</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; }
+    #map { height: 90vh; width: 100%; }
+    #coords { background: rgba(255,255,255,0.8); padding: 10px; text-align: center; }
+    #photoInput { margin: 10px; }
+    #status { position: fixed; bottom: 0; left: 0; background: rgba(0,0,0,0.7); color: white; font-size: 12px; padding: 4px 8px; }
+  </style>
+</head>
+<body>
+  <input type="file" id="photoInput" accept="image/*" />
+  <div id="coords">
+    <p id="dec"></p>
+    <p id="dm"></p>
+    <p id="dms"></p>
+  </div>
+  <div id="map"></div>
+  <div id="status">Chargement...</div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const statusEl = document.getElementById('status');
+    const scriptExif = document.createElement('script');
+    scriptExif.src = 'exif.min.js';
+    scriptExif.onload = () => {
+      statusEl.textContent = '✅ EXIF chargé';
+      const scriptApp = document.createElement('script');
+      scriptApp.src = 'app.js';
+      document.body.appendChild(scriptApp);
+    };
+    scriptExif.onerror = () => {
+      statusEl.textContent = '❌ Erreur : exif.min.js introuvable';
+    };
+    document.body.appendChild(scriptExif);
+  </script>
+</body>
+</html>
