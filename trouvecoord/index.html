@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2563eb">
+    <title>TrouveCoord</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f3f4f6;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            padding: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            z-index: 1000;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .upload-section {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-button {
+            background: white;
+            color: #2563eb;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .file-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .file-name {
+            color: rgba(255,255,255,0.9);
+            font-size: 0.9rem;
+        }
+
+        .coordinates-display {
+            background: rgba(255,255,255,0.95);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .coordinates-display.active {
+            display: block;
+        }
+
+        .coord-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .coord-row:last-child {
+            border-bottom: none;
+        }
+
+        .coord-label {
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .coord-value {
+            color: #1f2937;
+            font-family: 'Courier New', monospace;
+        }
+
+        #map {
+            flex: 1;
+            width: 100%;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            display: none;
+            border-left: 4px solid #dc2626;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            color: rgba(255,255,255,0.9);
+            font-size: 0.9rem;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        @media (max-width: 640px) {
+            .header h1 {
+                font-size: 1.2rem;
+            }
+
+            .upload-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .file-button {
+                justify-content: center;
+            }
+
+            .coord-row {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                📍 TrouveCoord
+            </h1>
+            <div class="upload-section">
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" class="file-input" accept="image/*">
+                    <button class="file-button" onclick="document.getElementById('fileInput').click()">
+                        📁 Sélectionner une photo
+                    </button>
+                </div>
+                <div class="file-name" id="fileName"></div>
+                <div class="loading" id="loading">Chargement...</div>
+            </div>
+
+            <div class="error-message" id="errorMessage"></div>
+
+            <div class="coordinates-display" id="coordsDisplay">
+                <div class="coord-row">
+                    <span class="coord-label">Degrés décimaux:</span>
+                    <span class="coord-value" id="decimal"></span>
+                </div>
+                <div class="coord-row">
+                    <span class="coord-label">Minutes décimales:</span>
+                    <span class="coord-value" id="decimalMinutes"></span>
+                </div>
+                <div class="coord-row">
+                    <span class="coord-label">Degrés sexagésimaux:</span>
+                    <span class="coord-value" id="dms"></span>
+                </div>
+            </div>
+        </div>
+
+        <div id="map"></div>
+    </div>
+
+    <script>
+        // Enregistrement du Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('Service Worker enregistré', reg))
+                .catch(err => console.log('Erreur Service Worker', err));
+        }
+
+        let map;
+        let marker;
+
+        // Initialisation de la carte avec la couche IGN
+        function initMap() {
+            map = L.map('map').setView([46.603354, 1.888334], 6);
+
+            // Tentative avec la nouvelle API Géoplateforme IGN
+            const ignLayer = L.tileLayer('https://wxs.ign.fr/cartes/geoportail/wmts?' +
+                'REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0' +
+                '&STYLE=normal' +
+                '&TILEMATRIXSET=PM' +
+                '&FORMAT=image/png' +
+                '&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2' +
+                '&TILEMATRIX={z}' +
+                '&TILEROW={y}' +
+                '&TILECOL={x}', {
+                attribution: '© <a href="https://www.ign.fr/">IGN</a>',
+                minZoom: 0,
+                maxZoom: 18
+            });
+
+            // Fallback OpenStreetMap en cas de problème IGN
+            const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            });
+
+            // Essayer IGN d'abord, sinon OSM
+            ignLayer.on('tileerror', function() {
+                console.log('Erreur chargement IGN, basculement sur OSM');
+                map.removeLayer(ignLayer);
+                osmLayer.addTo(map);
+            });
+
+            ignLayer.addTo(map);
+            
+            // Forcer un rafraîchissement de la carte
+            setTimeout(() => map.invalidateSize(), 100);
+        }
+
+        // Conversion des coordonnées GPS EXIF
+        function convertDMSToDD(degrees, minutes, seconds, direction) {
+            let dd = degrees + minutes / 60 + seconds / 3600;
+            if (direction === 'S' || direction === 'W') {
+                dd = dd * -1;
+            }
+            return dd;
+        }
+
+        // Conversion degrés décimaux vers minutes décimales
+        function convertToDecimalMinutes(dd) {
+            const absDD = Math.abs(dd);
+            const degrees = Math.floor(absDD);
+            const minutes = (absDD - degrees) * 60;
+            return { degrees, minutes };
+        }
+
+        // Conversion degrés décimaux vers degrés sexagésimaux
+        function convertToDMS(dd) {
+            const absDD = Math.abs(dd);
+            const degrees = Math.floor(absDD);
+            const minutesDecimal = (absDD - degrees) * 60;
+            const minutes = Math.floor(minutesDecimal);
+            const seconds = (minutesDecimal - minutes) * 60;
+            return { degrees, minutes, seconds };
+        }
+
+        // Formatage des coordonnées
+        function formatCoordinates(lat, lon) {
+            // Degrés décimaux
+            const decimal = `${lat.toFixed(6)}°, ${lon.toFixed(6)}°`;
+
+            // Minutes décimales
+            const latDM = convertToDecimalMinutes(lat);
+            const lonDM = convertToDecimalMinutes(lon);
+            const latDir = lat >= 0 ? 'N' : 'S';
+            const lonDir = lon >= 0 ? 'E' : 'W';
+            const decimalMinutes = `${latDM.degrees}° ${latDM.minutes.toFixed(4)}' ${latDir}, ${lonDM.degrees}° ${lonDM.minutes.toFixed(4)}' ${lonDir}`;
+
+            // Degrés sexagésimaux
+            const latDMS = convertToDMS(lat);
+            const lonDMS = convertToDMS(lon);
+            const dms = `${latDMS.degrees}° ${latDMS.minutes}' ${latDMS.seconds.toFixed(2)}" ${latDir}, ${lonDMS.degrees}° ${lonDMS.minutes}' ${lonDMS.seconds.toFixed(2)}" ${lonDir}`;
+
+            return { decimal, decimalMinutes, dms };
+        }
+
+        // Affichage des erreurs
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.classList.add('active');
+            document.getElementById('coordsDisplay').classList.remove('active');
+        }
+
+        // Masquage des erreurs
+        function hideError() {
+            document.getElementById('errorMessage').classList.remove('active');
+        }
+
+        // Traitement de la photo
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('loading').classList.add('active');
+            hideError();
+
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                
+                img.onload = function() {
+                    EXIF.getData(img, function() {
+                        const lat = EXIF.getTag(this, 'GPSLatitude');
+                        const latRef = EXIF.getTag(this, 'GPSLatitudeRef');
+                        const lon = EXIF.getTag(this, 'GPSLongitude');
+                        const lonRef = EXIF.getTag(this, 'GPSLongitudeRef');
+
+                        document.getElementById('loading').classList.remove('active');
+
+                        if (!lat || !lon || !latRef || !lonRef) {
+                            showError('❌ Erreur : Cette photo ne contient pas de données GPS dans ses métadonnées EXIF.');
+                            return;
+                        }
+
+                        // Conversion des coordonnées
+                        const latitude = convertDMSToDD(lat[0], lat[1], lat[2], latRef);
+                        const longitude = convertDMSToDD(lon[0], lon[1], lon[2], lonRef);
+
+                        // Affichage des coordonnées
+                        const coords = formatCoordinates(latitude, longitude);
+                        document.getElementById('decimal').textContent = coords.decimal;
+                        document.getElementById('decimalMinutes').textContent = coords.decimalMinutes;
+                        document.getElementById('dms').textContent = coords.dms;
+                        document.getElementById('coordsDisplay').classList.add('active');
+
+                        // Affichage sur la carte
+                        if (marker) {
+                            map.removeLayer(marker);
+                        }
+
+                        marker = L.marker([latitude, longitude]).addTo(map);
+                        marker.bindPopup(`<b>${file.name}</b><br>${coords.decimal}`).openPopup();
+                        map.setView([latitude, longitude], 15);
+                    });
+                };
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        // Initialisation
+        document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+        initMap();
+    </script>
+</body>
+</html>
