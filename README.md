@@ -116,6 +116,7 @@ ________________________________
 ___________________________________________________________
 
 Application <B>trouvecoord</B> <P>
+Cette application permet de sélectionner une photo géolocalisée (hors galerie), d'afficher ses coordonnées géographiques sous 3 formats et d'afficher sa position sur une carte IGN. <BR>
 TrouveCoord est maintenant pleinement opérationnelle sur :
 
 URL : https://bernardhoyez.github.io/PWA/trouvecoord/
