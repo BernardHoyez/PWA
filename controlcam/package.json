@@ -1,0 +1,27 @@
+{
+  "name": "controlcam",
+  "version": "1.0.0",
+  "description": "Application PWA pour contrôler la caméra de votre smartphone depuis votre PC",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server -p 8080 -c-1",
+    "dev": "npx http-server -p 8080 -c-1 -o"
+  },
+  "keywords": [
+    "pwa",
+    "camera",
+    "remote-control",
+    "smartphone",
+    "android"
+  ],
+  "author": "Bernard Hoyez",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BernardHoyez/PWA.git"
+  },
+  "bugs": {
+    "url": "https://github.com/BernardHoyez/PWA/issues"
+  },
+  "homepage": "https://bernardhoyez.github.io/PWA/controlcam/"
+}
