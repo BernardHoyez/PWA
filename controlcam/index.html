@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Contrôlez la caméra de votre smartphone depuis votre PC">
+    <meta name="theme-color" content="#1e293b">
+    <title>ControlCam - Caméra à distance</title>
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React et ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel pour JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        #root {
+            width: 100%;
+            min-height: 100vh;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(to bottom right, #1e3a8a, #7c3aed, #ec4899);">
+            <p style="color: white; font-size: 18px;">Chargement...</p>
+        </div>
+    </div>
+    
+    <!-- Application avec JSX -->
+    <script type="text/babel">
+        const { useState, useRef, useEffect } = React;
+        
+        function ControlCamApp() {
+          const [mode, setMode] = useState('');
+          const [deviceId, setDeviceId] = useState('');
+          const [connectedDevice, setConnectedDevice] = useState('');
+          const [logs, setLogs] = useState(['App démarrée']);
+          
+          const [stream, setStream] = useState(null);
+          const [facingMode, setFacingMode] = useState('environment');
+          const [capturedPhoto, setCapturedPhoto] = useState(null);
+          const [error, setError] = useState('');
+          
+          const videoRef = useRef(null);
+          const canvasRef = useRef(null);
+          
+          const log = (msg) => {
+            console.log(msg);
+            setLogs(prev => [...prev.slice(-20), msg]);
+          };
+          
+          useEffect(() => {
+            if (window.lucide) {
+              window.lucide.createIcons();
+            }
+          });
+          
+          useEffect(() => {
+            const params = new URLSearchParams(window.location.search);
+            const urlDeviceId = params.get('device');
+            if (urlDeviceId) {
+              log('URL device ID trouvé: ' + urlDeviceId);
+              setMode('controller');
+              setConnectedDevice(urlDeviceId);
+            }
+          }, []);
+          
+          useEffect(() => {
+            if (mode === 'camera' && deviceId) {
+              log('Mode caméra activé, démarrage...');
+              startCamera();
+            }
+          }, [mode, deviceId, facingMode]);
+          
+          const generateId = () => {
+            return Math.random().toString(36).substring(2, 10).toUpperCase();
+          };
+          
+          const initCamera = () => {
+            const id = generateId();
+            log('Init caméra, ID: ' + id);
+            setDeviceId(id);
+            setMode('camera');
+          };
+          
+          const startCamera = async () => {
+            log('startCamera appelée');
+            try {
+              setError('');
+              
+              if (!navigator.mediaDevices) {
+                throw new Error('MediaDevices API non disponible');
+              }
+              
+              log('Demande accès caméra...');
+              const mediaStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: facingMode }
+              });
+              
+              log('Caméra accessible!');
+              setStream(mediaStream);
+              
+              if (videoRef.current) {
+                videoRef.current.srcObject = mediaStream;
+                log('Stream attaché au video element');
+              } else {
+                log('ERREUR: videoRef est null');
+              }
+              
+            } catch (err) {
+              log('ERREUR: ' + err.message);
+              setError(err.message);
+            }
+          };
+          
+          const capturePhoto = () => {
+            if (videoRef.current && canvasRef.current) {
+              const video = videoRef.current;
+              const canvas = canvasRef.current;
+              canvas.width = video.videoWidth;
+              canvas.height = video.videoHeight;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(video, 0, 0);
+              setCapturedPhoto(canvas.toDataURL('image/jpeg', 0.95));
+              log('Photo capturée');
+            }
+          };
+          
+          const copyUrl = () => {
+            const url = `${window.location.origin}${window.location.pathname}?device=${deviceId}`;
+            navigator.clipboard.writeText(url);
+            log('URL copiée');
+          };
+          
+          // Écran de sélection
+          if (!mode) {
+            return (
+              <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900 flex items-center justify-center p-6">
+                <div className="max-w-4xl w-full">
+                  <div className="text-center mb-12">
+                    <i data-lucide="camera" className="w-20 h-20 text-white mx-auto mb-4"></i>
+                    <h1 className="text-4xl font-bold text-white mb-2">ControlCam</h1>
+                    <p className="text-white/80">Contrôlez la caméra de votre smartphone depuis votre PC</p>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <button
+                      onClick={initCamera}
+                      className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 hover:bg-white/20 transition-all"
+                    >
+                      <i data-lucide="smartphone" className="w-16 h-16 text-blue-400 mx-auto mb-4"></i>
+                      <h2 className="text-2xl font-bold text-white mb-2">Mode Caméra</h2>
+                      <p className="text-white/70">Smartphone</p>
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        const id = prompt('ID appareil:');
+                        if (id) {
+                          setConnectedDevice(id.toUpperCase());
+                          setMode('controller');
+                        }
+                      }}
+                      className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 hover:bg-white/20 transition-all"
+                    >
+                      <i data-lucide="monitor" className="w-16 h-16 text-purple-400 mx-auto mb-4"></i>
+                      <h2 className="text-2xl font-bold text-white mb-2">Mode Contrôleur</h2>
+                      <p className="text-white/70">PC</p>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+          
+          // Mode caméra
+          if (mode === 'camera') {
+            log('Rendu mode caméra');
+            return (
+              <div className="min-h-screen bg-black">
+                {/* Debug panel */}
+                <div className="absolute top-0 left-0 right-0 bg-red-900/90 text-white p-2 z-50 max-h-40 overflow-y-auto text-xs">
+                  <div className="font-bold">DEBUG:</div>
+                  {logs.map((l, i) => <div key={i}>{l}</div>)}
+                </div>
+                
+                {/* Header */}
+                <div className="absolute top-44 left-0 right-0 bg-black/80 p-4 z-20">
+                  <div className="text-white text-center">
+                    <div className="text-sm">ID: {deviceId}</div>
+                    <button onClick={copyUrl} className="bg-blue-500 px-4 py-2 rounded mt-2">
+                      Copier URL
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Video */}
+                <div className="absolute inset-0 flex items-center justify-center" style={{paddingTop: '200px'}}>
+                  {error ? (
+                    <div className="text-white text-center p-4">
+                      <div className="text-xl mb-2">❌ Erreur</div>
+                      <div>{error}</div>
+                    </div>
+                  ) : !capturedPhoto ? (
+                    <div className="relative w-full h-full">
+                      <video 
+                        ref={videoRef} 
+                        autoPlay 
+                        playsInline 
+                        muted 
+                        className="w-full h-full object-cover"
+                      />
+                      <canvas ref={canvasRef} className="hidden" />
+                      
+                      {/* Bouton capture */}
+                      <button
+                        onClick={capturePhoto}
+                        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-16 h-16 bg-white rounded-full border-4 border-gray-300"
+                      />
+                    </div>
+                  ) : (
+                    <div className="relative w-full h-full">
+                      <img src={capturedPhoto} alt="Photo" className="w-full h-full object-cover" />
+                      <button
+                        onClick={() => setCapturedPhoto(null)}
+                        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-blue-500 px-6 py-3 rounded-full text-white"
+                      >
+                        Reprendre
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          }
+          
+          // Mode controller
+          return (
+            <div className="min-h-screen bg-slate-900 text-white p-6">
+              <h1 className="text-2xl mb-4">Mode Contrôleur</h1>
+              <p>Device: {connectedDevice}</p>
+              <button 
+                onClick={() => setMode('')}
+                className="bg-red-500 px-4 py-2 rounded mt-4"
+              >
+                Retour
+              </button>
+            </div>
+          );
+        }
+        
+        // Render avec l'ancienne API React (compatible)
+        ReactDOM.render(<ControlCamApp />, document.getElementById('root'));
+    </script>
+    
+    <!-- Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('✓ SW enregistré'))
+                    .catch(err => console.log('✗ Erreur SW:', err));
+            });
+        }
+        
+        // Afficher les erreurs
+        window.addEventListener('error', (e) => {
+            document.body.innerHTML = `
+                <div style="padding: 20px; background: red; color: white;">
+                    <h2>ERREUR JAVASCRIPT</h2>
+                    <p>${e.message}</p>
+                    <pre>${e.error ? e.error.stack : ''}</pre>
+                </div>
+            `;
+        });
+    </script>
+</body>
+</html>
