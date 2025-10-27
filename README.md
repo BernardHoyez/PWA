@@ -129,6 +129,7 @@ ___________________________________________
 
 
 Application mesips
+https://bernardhoyez.github.io/PWA/mesips/
 
 Permet d'obtenir mes IP publique (V4 et V6) et privée
 URL : https://bernardhoyez.github.io/PWA/mesips/
