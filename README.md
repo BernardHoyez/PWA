@@ -124,3 +124,11 @@ Fond de carte : Plan IGN via la Géoplateforme ✅
 Extraction GPS : Métadonnées EXIF des photos ✅
 3 formats de coordonnées : Degrés décimaux, minutes décimales, degrés sexagésimaux ✅
 PWA : Installable et fonctionne hors ligne ✅
+
+___________________________________________
+
+
+Application mesips
+
+Permet d'obtenir mes IP publique (V4 et V6) et privée
+URL : https://bernardhoyez.github.io/PWA/mesips/
