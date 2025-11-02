@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Animateur - mesrandos</title>
+<link rel="stylesheet" href="style.css">
+<script src="app.js" defer></script>
+</head>
+<body>
+<h1>Animateur - Propositions de randonnées</h1>
+<section>
+  <form id="randoForm">
+    <label>Intitulé :</label><input type="text" id="intitule" required><br>
+    <label>Difficulté :</label><input type="text" id="difficulte" required><br>
+    <label>Distance (km) :</label><input type="number" id="distance" required><br>
+    <label>Dénivelé (m) :</label><input type="number" id="denivele"><br>
+    <label>Points remarquables :</label><input type="text" id="points"><br>
+    <label>Heure départ Parking :</label><input type="time" id="hParking"><br>
+    <label>Heure départ Rando :</label><input type="time" id="hRando"><br>
+    <label>Point de départ :</label><input type="text" id="depart"><br>
+    <label>Distance AR (km) :</label><input type="number" id="distanceAR"><br>
+    <label>Covoiturage :</label><input type="text" id="covoiturage"><br>
+    <label>Animateur :</label><input type="text" id="animateur" required><br>
+    <label>Téléphone :</label><input type="tel" id="telephone"><br>
+    <label>Date :</label><input type="date" id="date"><br>
+    <button type="submit">📤 Envoyer la proposition</button>
+  </form>
+</section>
+<div id="confirmation"></div>
+<a href="index.html" class="back">⬅ Retour</a>
+</body>
+</html>
