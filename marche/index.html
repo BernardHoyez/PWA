@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>marche — PWA randonnée (Plan IGN)</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>marche</h1>
+    <div id="status">Statut: prêt</div>
+  </header>
+
+  <main>
+    <section id="preflight">
+      <h2>Préparation</h2>
+      <label>Coordonnées départ (latitude, longitude):
+        <input id="lat" placeholder="lat (ex: 46.123456)" />
+        <input id="lon" placeholder="lon (ex: 2.123456)" />
+      </label>
+      <div style="font-size:0.9rem;color:#333;margin-bottom:6px">
+        Vous pouvez entrer les coordonnées manuellement (séparateur décimal point ou virgule accepté) ou sélectionner le point
+        directement en cliquant sur la carte (clic simple). Après sélection, cliquez sur "Enregistrer point de départ" pour mémoriser.
+      </div>
+      <button id="save-start">Enregistrer point de départ</button>
+      <div>
+        <label>Télécharger dalles autour (10 km), zoom 13→18</label>
+        <button id="choose-folder">Choisir dossier (optionnel)</button>
+        <button id="download-tiles">Télécharger dalles</button>
+      </div>
+      <div>
+        <small>URL tuiles (modifiez si nécessaire) :</small>
+        <input id="tile-url" size="120" />
+      </div>
+      <div style="font-size:0.85rem;color:#444;margin-top:6px">
+        Fond par défaut : Plan IGN v2 (GéoPlateforme). Vous pouvez basculer l'orthophoto via le contrôle de couches sur la carte.
+      </div>
+    </section>
+
+    <section id="map-section">
+      <h2>Carte</h2>
+      <div id="map"></div>
+      <div id="controls">
+        <button id="btn-start">Départ</button>
+        <button id="btn-photo">Photo</button>
+        <button id="btn-audio">Audio</button>
+        <button id="btn-stop">Arrêt</button>
+      </div>
+    </section>
+
+    <section id="files">
+      <h2>Traces & fichiers</h2>
+      <div id="trace-list"></div>
+    </section>
+  </main>
+
+  <input id="photo-input" type="file" accept="image/*" capture="environment" style="display:none" />
+
+  <script src="main.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').then(()=>console.log('Service worker enregistré')).catch(e=>console.warn(e));
+    }
+  </script>
+</body>
+</html>
