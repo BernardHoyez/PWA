@@ -7,7 +7,7 @@ On trouve ici plusieurs applications :
 <BR>Cette application tague les images en bas à gauche avec les coordonnées GPS.
 ________________________________________________
 
-<BR>Allez-y<BR>
+<BR><H2>Allez-y</H2><BR>
 <A href="https://bernardhoyez.github.io/PWA/Allez-y/">Allez-y</A>
 <BR>Cette application prend en entrée un point de destination. 
 Elle affiche sur une carte OSM la position actuelle de l'utilisateur du smartphone.
