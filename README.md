@@ -133,3 +133,34 @@ https://bernardhoyez.github.io/PWA/mesips/
 
 Permet d'obtenir mes IP publique (V4 et V6) et privée
 URL : https://bernardhoyez.github.io/PWA/mesips/
+____________________________________
+
+Application marche
+https://bernardhoyez.github.io/PWA/marche/
+
+Une application PWA de randonnée, intitulée "marche".
+
+
+1) Téléchargement anticipé (accès internet serveur Geoplateforme WMTS on-line) d'un fond de carte "Plan IGN" (public, pas de clé API)
+
+2) Sélection des coordonnées GPS du point de départ de la randonnée. Mise en mémoire.
+
+3) Téléchargement des dalles comprises dans un rayon de 10 kilomètres autour du point de départ, pour des niveaux de zoom de 13 à 18.
+Sauvegarde dans un dossier accessible.
+
+
+4) Au départ de la randonnée. En Off-line. Ouverture et positionnement du point de départ enregistré sur fond Plan IGN, zoom 13.
+
+5) Affichage de 4 boutons : Départ, Photo, Audio, Arrêt
+
+Départ : débute la visualisation du point GPS (marqueur) et l'enregistrement de la trace du déplacement
+
+Photo : capture de la photogéolocalisée, inscription des coordonnées GPS sur la photo (format degrés décimaux), sauvegarde du fichier image.
+(nom de fichier = coordonnées GPS avec 6 chiffres significatifs). Marquage d'un waypoint sur la trace.
+
+Audio : enregistrement d'un commentaire vocal (nom de fichier = coordonnées GPS avec 6 chiffres significatifs). 
+Marquage d'un waypoint sur la trace.
+
+Arrêt : arrêt d'enregistrement et sauvegarde de la trace sous deux fichiers (un en GPX et l'autre en KML).
+
+_____________________________________________________
