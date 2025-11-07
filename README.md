@@ -2,7 +2,7 @@
 
 On trouve ici plusieurs applications :
 
-<BR>tagmoi<BR>
+<BR><H2>tagmoi</H2><BR>
 <A href="https://bernardhoyez.github.io/PWA/tagmoi/">tagmoi</A>
 <BR>Cette application tague les images en bas à gauche avec les coordonnées GPS.
 ________________________________________________
