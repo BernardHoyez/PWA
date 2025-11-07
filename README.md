@@ -93,7 +93,7 @@ Service Worker intégré.
 <HR>
 
 Editeur de visite<BR>
-<B>editpoih<B><BR>
+<B><H2>editpoih<B></H2><BR>
 <A HREF="https://bernardhoyez.github.io/PWA/editpoih/">editpoih</A>
 <BR>Cet éditeur de visite est le plus avancé des projets de ce genre
 <HR>
@@ -106,7 +106,7 @@ Visualiseur de visite<BR>
 ______________________________________________________________________
 
 Visualiseur de visite<BR>
-<B>visupoicd</B><BR>
+<B><H2>visupoicd</H2></B><BR>
 <A HREF="https://bernardhoyez.github.io/PWA/visupoicd/">visupoicd</A>
 <BR>Le plus avancé des guides de visite
 <BR>Fonctionne bien avec l'éditeur editpoih, avec en plus une lightbox (un clic sur l'image ouvre une lightbox zoomable)
@@ -128,14 +128,14 @@ PWA : Installable et fonctionne hors ligne ✅
 ___________________________________________
 
 
-Application mesips
+Application <H2>mesips</H2>
 https://bernardhoyez.github.io/PWA/mesips/
 
 Permet d'obtenir mes IP publique (V4 et V6) et privée
 URL : https://bernardhoyez.github.io/PWA/mesips/
 ____________________________________
 
-Application marche
+Application <H2>marche</H2>
 https://bernardhoyez.github.io/PWA/marche/
 
 Une application PWA de randonnée, intitulée "marche".
