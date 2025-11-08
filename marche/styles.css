@@ -1,0 +1,103 @@
+:root{
+  --accent:#2b7a78;
+  --bg:#fbfbfb;
+  --btn-padding:10px 14px;
+  --corner-radius:8px;
+}
+
+/* Page layout */
+body{
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  margin:0;
+  background:var(--bg);
+  color:#222;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+header{
+  padding:12px;
+  background:linear-gradient(90deg,var(--accent),#116466);
+  color:white;
+}
+main{
+  padding:12px;
+  flex:1 1 auto;
+  display:flex;
+  flex-direction:column;
+}
+#preflight{
+  margin-bottom:8px;
+}
+
+/* Map */
+#map{
+  height:55vh;
+  border:1px solid #ccc;
+  margin-bottom:8px;
+}
+
+/* Buttons base */
+.btn{
+  padding: var(--btn-padding);
+  border-radius: var(--corner-radius);
+  border: 0;
+  color: #062; /* default dark text fallback */
+  cursor: pointer;
+  font-weight:600;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+}
+
+/* Specific button colors per your request */
+.btn-save { background: #b6f4b0; color: #064; }          /* vert clair */
+.btn-calc { background: #40e0d0; color: #034; }          /* turquoise */
+.btn-choose { background: #a7d8ff; color: #023; }        /* bleu clair */
+.btn-download { background: #ffd7a8; color: #4a3000; }   /* orange clair */
+
+.btn-start { background: #7fff00; color: #062; }         /* vert fluo */
+.btn-photo { background: #a7d8ff; color: #023; }         /* bleu clair */
+.btn-audio-start { background: #b6f4b0; color: #064; }   /* vert clair */
+.btn-audio-stop { background: #ffb47a; color: #5a2a00; } /* orange */
+.btn-stop { background: #ff66cc; color: #3d003d; }       /* rose fluo */
+
+/* Layout for controls */
+.controls { display:flex; flex-direction:column; gap:8px; }
+.controls-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+
+/* Zoom inputs & calc row */
+.zoom-row { display:flex; gap:12px; align-items:center; margin-top:6px; }
+.zoom-input input { width:72px; padding:6px; border-radius:6px; border:1px solid #ccc; }
+
+/* calculate button row */
+.calc-row { margin-top:8px; }
+
+/* download actions */
+.download-actions { display:flex; gap:8px; margin-top:8px; }
+
+/* small UI tweaks */
+#tile-estimate { margin-top:8px; font-size:0.95rem; }
+#download-progress { margin-top:6px; display:flex; align-items:center; gap:8px; }
+input { padding:6px; margin:4px 6px 4px 0; border-radius:6px; border:1px solid #ccc; }
+
+/* trace-list container */
+#trace-list { margin-top:8px; }
+
+/* toast */
+.toast {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  background: rgba(0,0,0,0.8);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  z-index: 9999;
+}
+
+/* responsive */
+@media (max-width:600px){
+  .zoom-row, .download-actions, .controls-row { flex-direction:column; align-items:flex-start; }
+  input { width:100%; }
+  #map { height:50vh; }
+}
