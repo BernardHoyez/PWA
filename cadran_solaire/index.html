@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f59e0b">
+    <meta name="description" content="Créez votre cadran solaire analemmatique personnalisé">
+    <title>Constructeur de Cadran Solaire</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon192.png">
+    <link rel="apple-touch-icon" href="icon192.png">
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/umd/lucide.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        #root {
+            width: 100%;
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { Sun, Compass, Ruler, Check, Camera } = lucide;
+        const { useState, useEffect } = React;
+
+        function SundialBuilder() {
+          const [step, setStep] = useState(0);
+          const [latitude, setLatitude] = useState(null);
+          const [orientation, setOrientation] = useState(null);
+          const [measuring, setMeasuring] = useState(false);
+          const [cardboardSize, setCardboardSize] = useState(30);
+          const [hourMarks, setHourMarks] = useState([]);
+          const [gnomon, setGnomon] = useState({ x: 0, y: 0, height: 0 });
+
+          useEffect(() => {
+            if ('geolocation' in navigator) {
+              navigator.geolocation.getCurrentPosition(
+                (position) => {
+                  setLatitude(position.coords.latitude.toFixed(4));
+                },
+                (error) => {
+                  console.error('Erreur géolocalisation:', error);
+                }
+              );
+            }
+          }, []);
+
+          const requestOrientation = () => {
+            setMeasuring(true);
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+              DeviceOrientationEvent.requestPermission()
+                .then(response => {
+                  if (response === 'granted') {
+                    startOrientationTracking();
+                  }
+                })
+                .catch(console.error);
+            } else {
+              startOrientationTracking();
+            }
+          };
+
+          const startOrientationTracking = () => {
+            const handler = (event) => {
+              const alpha = event.alpha || event.webkitCompassHeading;
+              if (alpha !== null) {
+                setOrientation(alpha.toFixed(1));
+                setMeasuring(false);
+                window.removeEventListener('deviceorientation', handler);
+                window.removeEventListener('deviceorientationabsolute', handler);
+              }
+            };
+            
+            window.addEventListener('deviceorientationabsolute', handler);
+            window.addEventListener('deviceorientation', handler);
+            
+            setTimeout(() => {
+              setMeasuring(false);
+              window.removeEventListener('deviceorientation', handler);
+              window.removeEventListener('deviceorientationabsolute', handler);
+            }, 5000);
+          };
+
+          const calculateSundial = () => {
+            if (!latitude) return;
+            
+            const lat = parseFloat(latitude);
+            const scale = cardboardSize / 40;
+            const marks = [];
+            
+            const a = 15 * scale;
+            const b = a * Math.sin(lat * Math.PI / 180);
+            
+            for (let hour = 6; hour <= 18; hour++) {
+              const angle = (hour - 12) * 15 * Math.PI / 180;
+              const x = a * Math.sin(angle);
+              const y = b * Math.cos(angle);
+              
+              marks.push({
+                hour,
+                x: x + cardboardSize / 2,
+                y: y + cardboardSize / 2
+              });
+            }
+            
+            setHourMarks(marks);
+            
+            const gnomonY = cardboardSize / 2 - b * Math.cos(0);
+            setGnomon({
+              x: cardboardSize / 2,
+              y: gnomonY,
+              height: a * 0.3
+            });
+          };
+
+          useEffect(() => {
+            if (latitude && step === 2) {
+              calculateSundial();
+            }
+          }, [latitude, cardboardSize, step]);
+
+          const steps = [
+            {
+              title: "Matériel nécessaire",
+              icon: React.createElement(Ruler, { className: "w-8 h-8" }),
+              content: (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <h3 style={{ fontWeight: 600, fontSize: '1.125rem' }}>Préparez :</h3>
+                  <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {[
+                      "Une feuille de carton rigide (minimum 30×30 cm)",
+                      "Un fil de fer rigide (15-20 cm)",
+                      "De la colle forte ou scotch",
+                      "Un crayon et une règle",
+                      "Votre smartphone"
+                    ].map((item, i) => (
+                      <li key={i} style={{ display: 'flex', alignItems: 'start', gap: '0.75rem' }}>
+                        <div style={{ width: '0.5rem', height: '0.5rem', background: '#f59e0b', borderRadius: '50%', marginTop: '0.5rem' }}></div>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            },
+            {
+              title: "Localisation",
+              icon: React.createElement(Compass, { className: "w-8 h-8" }),
+              content: (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{ background: '#dbeafe', padding: '1rem', borderRadius: '0.5rem' }}>
+                    <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Votre position :</p>
+                    {latitude ? (
+                      <p style={{ fontSize: '1.5rem', color: '#2563eb' }}>Latitude : {latitude}°</p>
+                    ) : (
+                      <p style={{ color: '#6b7280' }}>Détection en cours...</p>
+                    )}
+                  </div>
+                  
+                  <div style={{ background: '#fef3c7', padding: '1rem', borderRadius: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <p style={{ fontWeight: 600 }}>Orientation Nord :</p>
+                    <button
+                      onClick={requestOrientation}
+                      disabled={measuring}
+                      style={{
+                        width: '100%',
+                        background: measuring ? '#d1d5db' : '#f59e0b',
+                        color: 'white',
+                        padding: '0.75rem 1rem',
+                        borderRadius: '0.5rem',
+                        border: 'none',
+                        cursor: measuring ? 'not-allowed' : 'pointer',
+                        fontWeight: 600
+                      }}
+                    >
+                      {measuring ? 'Mesure en cours...' : orientation ? `Nord détecté : ${orientation}°` : 'Détecter le Nord'}
+                    </button>
+                    <p style={{ fontSize: '0.875rem', color: '#4b5563' }}>
+                      Tenez le téléphone à plat et tournez-vous pour aligner la flèche avec le Nord
+                    </p>
+                  </div>
+                </div>
+              )
+            },
+            {
+              title: "Dimensions",
+              icon: React.createElement(Ruler, { className: "w-8 h-8" }),
+              content: (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem' }}>
+                      Taille du carton (cm) :
+                    </label>
+                    <input
+                      type="range"
+                      min="20"
+                      max="50"
+                      value={cardboardSize}
+                      onChange={(e) => setCardboardSize(parseInt(e.target.value))}
+                      style={{ width: '100%' }}
+                    />
+                    <p style={{ textAlign: 'center', fontSize: '1.5rem', fontWeight: 700, color: '#d97706', marginTop: '0.5rem' }}>
+                      {cardboardSize} × {cardboardSize} cm
+                    </p>
+                  </div>
+                  
+                  <div style={{ background: '#d1fae5', padding: '1rem', borderRadius: '0.5rem' }}>
+                    <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Hauteur du gnomon (fil de fer) :</p>
+                    <p style={{ fontSize: '1.5rem', color: '#059669' }}>
+                      {gnomon.height.toFixed(1)} cm
+                    </p>
+                  </div>
+                </div>
+              )
+            },
+            {
+              title: "Plan de construction",
+              icon: React.createElement(Camera, { className: "w-8 h-8" }),
+              content: (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{ background: 'white', border: '2px solid #d1d5db', borderRadius: '0.5rem', padding: '1rem' }}>
+                    <svg
+                      viewBox={`0 0 ${cardboardSize} ${cardboardSize}`}
+                      style={{ width: '100%', height: 'auto', maxHeight: '400px' }}
+                    >
+                      <rect width={cardboardSize} height={cardboardSize} fill="#fef3c7" stroke="#d97706" strokeWidth="0.5" />
+                      
+                      <ellipse
+                        cx={cardboardSize / 2}
+                        cy={cardboardSize / 2}
+                        rx={15 * cardboardSize / 40}
+                        ry={15 * cardboardSize / 40 * Math.sin(parseFloat(latitude || 45) * Math.PI / 180)}
+                        fill="none"
+                        stroke="#92400e"
+                        strokeWidth="0.3"
+                        strokeDasharray="1,1"
+                      />
+                      
+                      {hourMarks.map((mark, i) => (
+                        <g key={i}>
+                          <circle cx={mark.x} cy={mark.y} r="0.8" fill="#dc2626" />
+                          <text
+                            x={mark.x}
+                            y={mark.y - 2}
+                            textAnchor="middle"
+                            fontSize="2.5"
+                            fill="#7c2d12"
+                            fontWeight="bold"
+                          >
+                            {mark.hour}h
+                          </text>
+                        </g>
+                      ))}
+                      
+                      <circle cx={gnomon.x} cy={gnomon.y} r="1" fill="#1e40af" />
+                      <line
+                        x1={gnomon.x}
+                        y1={gnomon.y}
+                        x2={gnomon.x}
+                        y2={gnomon.y - 3}
+                        stroke="#1e40af"
+                        strokeWidth="0.5"
+                      />
+                      <text
+                        x={gnomon.x + 2}
+                        y={gnomon.y}
+                        fontSize="2"
+                        fill="#1e40af"
+                      >
+                        Gnomon
+                      </text>
+                      
+                      <text
+                        x={cardboardSize / 2}
+                        y="3"
+                        textAnchor="middle"
+                        fontSize="2.5"
+                        fill="#dc2626"
+                        fontWeight="bold"
+                      >
+                        ↑ NORD
+                      </text>
+                    </svg>
+                  </div>
+                  
+                  <div style={{ background: '#dbeafe', padding: '1rem', borderRadius: '0.5rem', fontSize: '0.875rem' }}>
+                    <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Instructions :</p>
+                    <ol style={{ paddingLeft: '1.5rem' }}>
+                      <li>Reproduisez ce schéma sur votre carton avec le crayon</li>
+                      <li>Marquez chaque point d'heure (points rouges)</li>
+                      <li>Plantez le fil de fer verticalement au point bleu (gnomon)</li>
+                      <li>Orientez le cadran avec le Nord vers le haut</li>
+                    </ol>
+                  </div>
+                </div>
+              )
+            },
+            {
+              title: "Utilisation",
+              icon: React.createElement(Sun, { className: "w-8 h-8" }),
+              content: (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{ background: 'linear-gradient(to right, #fef3c7, #fed7aa)', padding: '1.5rem', borderRadius: '0.5rem' }}>
+                    <h3 style={{ fontWeight: 700, fontSize: '1.125rem', marginBottom: '0.75rem', color: '#78350f' }}>
+                      Comment lire l'heure ?
+                    </h3>
+                    <ol style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      {[
+                        "Placez le cadran en extérieur, bien à plat",
+                        "Orientez le bord \"NORD\" vers le Nord (utilisez la boussole de votre téléphone)",
+                        "L'ombre du gnomon (fil de fer) pointe vers l'heure solaire",
+                        "Note : l'heure solaire peut différer de l'heure légale (décalage dû au fuseau horaire et à l'heure d'été)"
+                      ].map((text, i) => (
+                        <li key={i} style={{ display: 'flex', gap: '0.75rem' }}>
+                          <span style={{ fontWeight: 700, color: '#d97706' }}>{i + 1}.</span>
+                          <span>{text}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                  
+                  <div style={{ background: '#d1fae5', padding: '1rem', borderRadius: '0.5rem' }}>
+                    <p style={{ fontWeight: 600, color: '#065f46', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {React.createElement(Check, { style: { width: '1.25rem', height: '1.25rem' } })}
+                      Votre cadran solaire est terminé !
+                    </p>
+                    <p style={{ fontSize: '0.875rem', marginTop: '0.5rem', color: '#047857' }}>
+                      Il sera précis toute l'année grâce à sa forme elliptique adaptée à votre latitude.
+                    </p>
+                  </div>
+                </div>
+              )
+            }
+          ];
+
+          return (
+            <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #fffbeb, #ffedd5, #fef3c7)', padding: '1rem' }}>
+              <div style={{ maxWidth: '42rem', margin: '0 auto' }}>
+                <div style={{ textAlign: 'center', marginBottom: '2rem', paddingTop: '1.5rem' }}>
+                  {React.createElement(Sun, { style: { width: '4rem', height: '4rem', margin: '0 auto 1rem', color: '#f59e0b' } })}
+                  <h1 style={{ fontSize: '1.875rem', fontWeight: 700, color: '#78350f', marginBottom: '0.5rem' }}>
+                    Constructeur de Cadran Solaire
+                  </h1>
+                  <p style={{ color: '#92400e' }}>
+                    Créez votre cadran solaire analemmatique personnalisé
+                  </p>
+                </div>
+
+                <div style={{ marginBottom: '2rem', background: 'white', borderRadius: '0.5rem', padding: '1rem', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    {steps.map((s, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          flex: 1,
+                          height: '0.5rem',
+                          borderRadius: '9999px',
+                          margin: '0 0.25rem',
+                          background: i <= step ? '#f59e0b' : '#e5e7eb'
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <p style={{ textAlign: 'center', fontSize: '0.875rem', color: '#4b5563' }}>
+                    Étape {step + 1} sur {steps.length}
+                  </p>
+                </div>
+
+                <div style={{ background: 'white', borderRadius: '0.5rem', boxShadow: '0 10px 15px rgba(0,0,0,0.1)', padding: '1.5rem', marginBottom: '1.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                    <div style={{ color: '#f59e0b' }}>{steps[step].icon}</div>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1f2937' }}>
+                      {steps[step].title}
+                    </h2>
+                  </div>
+                  
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    {steps[step].content}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
+                    {step > 0 && (
+                      <button
+                        onClick={() => setStep(step - 1)}
+                        style={{
+                          flex: 1,
+                          background: '#e5e7eb',
+                          color: '#374151',
+                          padding: '0.75rem 1rem',
+                          borderRadius: '0.5rem',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontWeight: 600
+                        }}
+                      >
+                        ← Précédent
+                      </button>
+                    )}
+                    {step < steps.length - 1 && (
+                      <button
+                        onClick={() => setStep(step + 1)}
+                        disabled={step === 1 && !latitude}
+                        style={{
+                          flex: 1,
+                          background: (step === 1 && !latitude) ? '#d1d5db' : '#f59e0b',
+                          color: 'white',
+                          padding: '0.75rem 1rem',
+                          borderRadius: '0.5rem',
+                          border: 'none',
+                          cursor: (step === 1 && !latitude) ? 'not-allowed' : 'pointer',
+                          fontWeight: 600
+                        }}
+                      >
+                        Suivant →
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ textAlign: 'center', fontSize: '0.875rem', color: '#78350f', background: '#fef3c7', padding: '1rem', borderRadius: '0.5rem' }}>
+                  <p style={{ fontWeight: 600 }}>💡 Astuce</p>
+                  <p style={{ marginTop: '0.25rem' }}>
+                    Un cadran solaire analemmatique utilise une ellipse pour compenser la variation de la position du soleil tout au long de l'année.
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        ReactDOM.render(
+          React.createElement(SundialBuilder),
+          document.getElementById('root')
+        );
+    </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker enregistré'))
+                    .catch(err => console.log('Erreur Service Worker:', err));
+            });
+        }
+    </script>
+</body>
+</html>
