@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f59e0b">
+    <meta name="description" content="Créez votre cadran solaire analemmatique personnalisé">
+    <title>Constructeur de Cadran Solaire</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon192.png">
+    <link rel="apple-touch-icon" href="icon192.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(to bottom right, #fffbeb, #ffedd5, #fef3c7);
+        }
+        #root {
+            width: 100%;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 42rem;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-top: 1.5rem;
+        }
+        .sun-icon {
+            width: 4rem;
+            height: 4rem;
+            margin: 0 auto 1rem;
+            color: #f59e0b;
+        }
+        h1 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: #78350f;
+            margin-bottom: 0.5rem;
+        }
+        .subtitle {
+            color: #92400e;
+        }
+        .progress-bar {
+            margin-bottom: 2rem;
+            background: white;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .progress-step {
+            flex: 1;
+            height: 0.5rem;
+            border-radius: 9999px;
+            margin: 0 0.25rem;
+            background: #e5e7eb;
+        }
+        .progress-step.active {
+            background: #f59e0b;
+        }
+        .progress-text {
+            text-align: center;
+            font-size: 0.875rem;
+            color: #4b5563;
+        }
+        .card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .card-icon {
+            color: #f59e0b;
+            width: 2rem;
+            height: 2rem;
+        }
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .btn {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            width: 100%;
+        }
+        .btn-primary {
+            background: #f59e0b;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #d97706;
+        }
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+        .btn:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+        }
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+        .btn-group .btn {
+            flex: 1;
+        }
+        .info-box {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .info-box-blue {
+            background: #dbeafe;
+        }
+        .info-box-amber {
+            background: #fef3c7;
+        }
+        .info-box-green {
+            background: #d1fae5;
+        }
+        .material-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            list-style: none;
+        }
+        .material-item {
+            display: flex;
+            align-items: start;
+            gap: 0.75rem;
+        }
+        .bullet {
+            width: 0.5rem;
+            height: 0.5rem;
+            background: #f59e0b;
+            border-radius: 50%;
+            margin-top: 0.5rem;
+            flex-shrink: 0;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin: 0.5rem 0;
+        }
+        .tip-box {
+            text-align: center;
+            font-size: 0.875rem;
+            color: #78350f;
+            background: #fef3c7;
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+        .svg-container {
+            background: white;
+            border: 2px solid #d1d5db;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        svg {
+            width: 100%;
+            height: auto;
+            max-height: 400px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <div class="container">
+            <div class="header">
+                <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                <h1>Constructeur de Cadran Solaire</h1>
+                <p class="subtitle">Créez votre cadran solaire analemmatique personnalisé</p>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-steps" id="progress"></div>
+                <p class="progress-text" id="progress-text">Étape 1 sur 5</p>
+            </div>
+
+            <div class="card" id="content"></div>
+
+            <div class="tip-box">
+                <p style="font-weight: 600;">💡 Astuce</p>
+                <p style="margin-top: 0.25rem;">
+                    Un cadran solaire analemmatique utilise une ellipse pour compenser la variation de la position du soleil tout au long de l'année.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 0;
+        let latitude = null;
+        let orientation = null;
+        let cardboardSize = 30;
+        let hourMarks = [];
+        let gnomon = { x: 0, y: 0, height: 0 };
+
+        // Géolocalisation au chargement
+        if ('geolocation' in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    latitude = position.coords.latitude.toFixed(4);
+                    if (currentStep === 1) renderStep();
+                },
+                (error) => console.error('Erreur géolocalisation:', error)
+            );
+        }
+
+        function calculateSundial() {
+            if (!latitude) return;
+            
+            const lat = parseFloat(latitude);
+            const scale = cardboardSize / 40;
+            const marks = [];
+            
+            const a = 15 * scale;
+            const b = a * Math.sin(lat * Math.PI / 180);
+            
+            for (let hour = 6; hour <= 18; hour++) {
+                const angle = (hour - 12) * 15 * Math.PI / 180;
+                const x = a * Math.sin(angle);
+                const y = b * Math.cos(angle);
+                
+                marks.push({
+                    hour,
+                    x: x + cardboardSize / 2,
+                    y: y + cardboardSize / 2
+                });
+            }
+            
+            hourMarks = marks;
+            
+            const gnomonY = cardboardSize / 2 - b * Math.cos(0);
+            gnomon = {
+                x: cardboardSize / 2,
+                y: gnomonY,
+                height: a * 0.3
+            };
+        }
+
+        function requestOrientation() {
+            const btn = document.getElementById('orientBtn');
+            btn.textContent = 'Mesure en cours...';
+            btn.disabled = true;
+
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(response => {
+                        if (response === 'granted') {
+                            startOrientationTracking();
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                startOrientationTracking();
+            }
+        }
+
+        function startOrientationTracking() {
+            const handler = (event) => {
+                const alpha = event.alpha || event.webkitCompassHeading;
+                if (alpha !== null) {
+                    orientation = alpha.toFixed(1);
+                    window.removeEventListener('deviceorientation', handler);
+                    window.removeEventListener('deviceorientationabsolute', handler);
+                    renderStep();
+                }
+            };
+            
+            window.addEventListener('deviceorientationabsolute', handler);
+            window.addEventListener('deviceorientation', handler);
+            
+            setTimeout(() => {
+                window.removeEventListener('deviceorientation', handler);
+                window.removeEventListener('deviceorientationabsolute', handler);
+                const btn = document.getElementById('orientBtn');
+                if (btn) {
+                    btn.disabled = false;
+                    if (!orientation) btn.textContent = 'Détecter le Nord';
+                }
+            }, 5000);
+        }
+
+        const steps = [
+            {
+                title: "Matériel nécessaire",
+                render: () => `
+                    <h3 style="font-weight: 600; font-size: 1.125rem; margin-bottom: 1rem;">Préparez :</h3>
+                    <ul class="material-list">
+                        <li class="material-item"><div class="bullet"></div><span>Une feuille de carton rigide (minimum 30×30 cm)</span></li>
+                        <li class="material-item"><div class="bullet"></div><span>Un fil de fer rigide (15-20 cm)</span></li>
+                        <li class="material-item"><div class="bullet"></div><span>De la colle forte ou scotch</span></li>
+                        <li class="material-item"><div class="bullet"></div><span>Un crayon et une règle</span></li>
+                        <li class="material-item"><div class="bullet"></div><span>Votre smartphone</span></li>
+                    </ul>
+                `
+            },
+            {
+                title: "Localisation",
+                render: () => `
+                    <div class="info-box info-box-blue">
+                        <p style="font-weight: 600; margin-bottom: 0.5rem;">Votre position :</p>
+                        ${latitude ? 
+                            `<p style="font-size: 1.5rem; color: #2563eb;">Latitude : ${latitude}°</p>` :
+                            `<p style="color: #6b7280;">Détection en cours...</p>`
+                        }
+                    </div>
+                    
+                    <div class="info-box info-box-amber">
+                        <p style="font-weight: 600; margin-bottom: 0.75rem;">Orientation Nord :</p>
+                        <button id="orientBtn" class="btn btn-primary" onclick="requestOrientation()">
+                            ${orientation ? `Nord détecté : ${orientation}°` : 'Détecter le Nord'}
+                        </button>
+                        <p style="font-size: 0.875rem; color: #4b5563; margin-top: 0.75rem;">
+                            Tenez le téléphone à plat et tournez-vous pour aligner la flèche avec le Nord
+                        </p>
+                    </div>
+                `
+            },
+            {
+                title: "Dimensions",
+                render: () => {
+                    calculateSundial();
+                    return `
+                        <div>
+                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">
+                                Taille du carton (cm) :
+                            </label>
+                            <input type="range" id="sizeSlider" min="20" max="50" value="${cardboardSize}" 
+                                   oninput="cardboardSize=parseInt(this.value); renderStep();">
+                            <p style="text-align: center; font-size: 1.5rem; font-weight: 700; color: #d97706; margin-top: 0.5rem;">
+                                ${cardboardSize} × ${cardboardSize} cm
+                            </p>
+                        </div>
+                        
+                        <div class="info-box info-box-green" style="margin-top: 1rem;">
+                            <p style="font-weight: 600; margin-bottom: 0.5rem;">Hauteur du gnomon (fil de fer) :</p>
+                            <p style="font-size: 1.5rem; color: #059669;">
+                                ${gnomon.height.toFixed(1)} cm
+                            </p>
+                        </div>
+                    `;
+                }
+            },
+            {
+                title: "Plan de construction",
+                render: () => {
+                    const svgMarks = hourMarks.map(mark => `
+                        <circle cx="${mark.x}" cy="${mark.y}" r="0.8" fill="#dc2626" />
+                        <text x="${mark.x}" y="${mark.y - 2}" text-anchor="middle" font-size="2.5" fill="#7c2d12" font-weight="bold">
+                            ${mark.hour}h
+                        </text>
+                    `).join('');
+
+                    return `
+                        <div class="svg-container">
+                            <svg viewBox="0 0 ${cardboardSize} ${cardboardSize}">
+                                <rect width="${cardboardSize}" height="${cardboardSize}" fill="#fef3c7" stroke="#d97706" stroke-width="0.5" />
+                                
+                                <ellipse
+                                    cx="${cardboardSize / 2}"
+                                    cy="${cardboardSize / 2}"
+                                    rx="${15 * cardboardSize / 40}"
+                                    ry="${15 * cardboardSize / 40 * Math.sin(parseFloat(latitude || 45) * Math.PI / 180)}"
+                                    fill="none"
+                                    stroke="#92400e"
+                                    stroke-width="0.3"
+                                    stroke-dasharray="1,1"
+                                />
+                                
+                                ${svgMarks}
+                                
+                                <circle cx="${gnomon.x}" cy="${gnomon.y}" r="1" fill="#1e40af" />
+                                <line x1="${gnomon.x}" y1="${gnomon.y}" x2="${gnomon.x}" y2="${gnomon.y - 3}" stroke="#1e40af" stroke-width="0.5" />
+                                <text x="${gnomon.x + 2}" y="${gnomon.y}" font-size="2" fill="#1e40af">Gnomon</text>
+                                
+                                <text x="${cardboardSize / 2}" y="3" text-anchor="middle" font-size="2.5" fill="#dc2626" font-weight="bold">
+                                    ↑ NORD
+                                </text>
+                            </svg>
+                        </div>
+                        
+                        <div class="info-box info-box-blue" style="font-size: 0.875rem;">
+                            <p style="font-weight: 600; margin-bottom: 0.5rem;">Instructions :</p>
+                            <ol style="padding-left: 1.5rem;">
+                                <li>Reproduisez ce schéma sur votre carton avec le crayon</li>
+                                <li>Marquez chaque point d'heure (points rouges)</li>
+                                <li>Plantez le fil de fer verticalement au point bleu (gnomon)</li>
+                                <li>Orientez le cadran avec le Nord vers le haut</li>
+                            </ol>
+                        </div>
+                    `;
+                }
+            },
+            {
+                title: "Utilisation",
+                render: () => `
+                    <div style="background: linear-gradient(to right, #fef3c7, #fed7aa); padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+                        <h3 style="font-weight: 700; font-size: 1.125rem; margin-bottom: 0.75rem; color: #78350f;">
+                            Comment lire l'heure ?
+                        </h3>
+                        <ol style="display: flex; flex-direction: column; gap: 0.75rem; padding-left: 0; list-style: none;">
+                            <li style="display: flex; gap: 0.75rem;">
+                                <span style="font-weight: 700; color: #d97706;">1.</span>
+                                <span>Placez le cadran en extérieur, bien à plat</span>
+                            </li>
+                            <li style="display: flex; gap: 0.75rem;">
+                                <span style="font-weight: 700; color: #d97706;">2.</span>
+                                <span>Orientez le bord "NORD" vers le Nord (utilisez la boussole de votre téléphone)</span>
+                            </li>
+                            <li style="display: flex; gap: 0.75rem;">
+                                <span style="font-weight: 700; color: #d97706;">3.</span>
+                                <span>L'ombre du gnomon (fil de fer) pointe vers l'heure solaire</span>
+                            </li>
+                            <li style="display: flex; gap: 0.75rem;">
+                                <span style="font-weight: 700; color: #d97706;">4.</span>
+                                <span>Note : l'heure solaire peut différer de l'heure légale (décalage dû au fuseau horaire et à l'heure d'été)</span>
+                            </li>
+                        </ol>
+                    </div>
+                    
+                    <div class="info-box info-box-green">
+                        <p style="font-weight: 600; color: #065f46; display: flex; align-items: center; gap: 0.5rem;">
+                            <svg style="width: 1.25rem; height: 1.25rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Votre cadran solaire est terminé !
+                        </p>
+                        <p style="font-size: 0.875rem; margin-top: 0.5rem; color: #047857;">
+                            Il sera précis toute l'année grâce à sa forme elliptique adaptée à votre latitude.
+                        </p>
+                    </div>
+                `
+            }
+        ];
+
+        function renderStep() {
+            // Progress
+            const progressDiv = document.getElementById('progress');
+            progressDiv.innerHTML = '';
+            for (let i = 0; i < steps.length; i++) {
+                const stepDiv = document.createElement('div');
+                stepDiv.className = 'progress-step' + (i <= currentStep ? ' active' : '');
+                progressDiv.appendChild(stepDiv);
+            }
+            document.getElementById('progress-text').textContent = `Étape ${currentStep + 1} sur ${steps.length}`;
+
+            // Content
+            const content = document.getElementById('content');
+            const step = steps[currentStep];
+            
+            content.innerHTML = `
+                <div class="card-header">
+                    <div class="card-icon">
+                        ${currentStep === 0 ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>' : ''}
+                        ${currentStep === 1 ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>' : ''}
+                        ${currentStep === 2 ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>' : ''}
+                        ${currentStep === 3 ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>' : ''}
+                        ${currentStep === 4 ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>' : ''}
+                    </div>
+                    <h2>${step.title}</h2>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    ${step.render()}
+                </div>
+
+                <div class="btn-group">
+                    ${currentStep > 0 ? '<button class="btn btn-secondary" onclick="prevStep()">← Précédent</button>' : ''}
+                    ${currentStep < steps.length - 1 ? `<button class="btn btn-primary" onclick="nextStep()" ${currentStep === 1 && !latitude ? 'disabled' : ''}>Suivant →</button>` : ''}
+                </div>
+            `;
+        }
+
+        function nextStep() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                renderStep();
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 0) {
+                currentStep--;
+                renderStep();
+            }
+        }
+
+        // Initial render
+        renderStep();
+
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker enregistré'))
+                    .catch(err => console.log('Erreur Service Worker:', err));
+            });
+        }
+    </script>
+</body>
+</html>
