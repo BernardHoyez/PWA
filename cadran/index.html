@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Cadran Solaire — Cadran</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="style.css" />
+    <script defer src="app.js"></script>
+</head>
+<body>
+<header>
+  <h1>🧭 Cadran Solaire — <small>analemmatique</small></h1>
+</header>
+
+<main>
+  <section id="position-section">
+    <h2>1 • Position GPS</h2>
+    <button id="getPosition">📍 Obtenir ma position</button>
+    <p id="position">Latitude : — | Longitude : —</p>
+  </section>
+
+  <section id="midi-section">
+    <h2>2 • Midi solaire vrai (passage au méridien)</h2>
+    <p id="midi-info">Calculer le midi solaire après obtention de la position.</p>
+    <button id="calcNoon">Calculer midi solaire</button>
+    <p id="midi-result"></p>
+    <button id="startMonitor" disabled>🔔 Démarrer le suivi du midi solaire</button>
+    <p id="monitor-status"></p>
+    <div id="instructions"></div>
+  </section>
+
+  <section id="ellipse-section">
+    <h2>3 • Cadran analemmatique</h2>
+    <label>Grand axe a (m) : <input id="grandAxe" type="number" min="0.5" max="4" step="0.01" value="1"></label>
+    <button id="calculer">Calculer ellipse & heures</button>
+    <pre id="resultat"></pre>
+  </section>
+</main>
+
+<footer>
+  <p>© 2025 — Bernard Hoyez — Application "Cadran"</p>
+</footer>
+</body>
+</html>
