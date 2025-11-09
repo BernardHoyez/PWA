@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadran solaire</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>🌞 Cadran solaire</h1>
+
+  <section>
+    <h2>1. Position GPS</h2>
+    <button id="getPosition">📍 Obtenir ma position</button>
+    <p id="position">Aucune donnée GPS</p>
+  </section>
+
+  <section>
+    <h2>2. Midi solaire vrai</h2>
+    <button id="calcNoon">🕛 Calculer le midi solaire</button>
+    <p id="midi-result"></p>
+    <button id="startMonitor" disabled>🔔 Démarrer le suivi</button>
+    <p id="monitor-status"></p>
+    <div id="instructions"></div>
+  </section>
+
+  <section>
+    <h2>3. Cadran analemmatique</h2>
+    <label>Grand axe de l’ellipse (m) :</label>
+    <input id="grandAxe" type="number" value="1" min="0.5" max="4" step="0.1">
+    <button id="calculer">📐 Calculer</button>
+    <pre id="resultat"></pre>
+    <svg id="cadran-svg" width="400" height="400" viewBox="-2 -2 4 4"></svg>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+body { font-family: Arial, sans-serif; margin: 1em; background: #fafafa; color: #333; }
+h1, h2 { color: #1a237e; }
+button { padding: 0.5em 1em; margin-top: 0.5em; border-radius: 8px; cursor: pointer; }
+section { border: 1px solid #ccc; padding: 1em; margin-bottom: 1em; border-radius: 10px; background: #fff; }
+pre { background: #eee; padding: 0.5em; border-radius: 8px; overflow-x: auto; }
+svg { border: 1px solid #ccc; margin-top: 1em; background: #fefefe; }
