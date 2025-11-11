@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>marche — PWA randonnée (Plan IGN)</title>
+
+  <!-- manifest & icons -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon192.png" sizes="192x192" />
+  <link rel="apple-touch-icon" href="icon192.png" />
+
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>marche</h1>
+    <div id="status">Statut: prêt</div>
+    <div id="pwa-install-area" style="display:inline-block;margin-left:12px">
+      <button id="btn-install" style="display:none">Installer</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="preflight">
+      <h2>Préparation</h2>
+      <label>Coordonnées départ (latitude, longitude):
+        <input id="lat" placeholder="lat (ex: 46.123456)" />
+        <input id="lon" placeholder="lon (ex: 2.123456)" />
+      </label>
+      <div style="font-size:0.9rem;color:#333;margin-bottom:6px">
+        Vous pouvez entrer les coordonnées manuellement (séparateur décimal point ou virgule accepté) ou sélectionner le point
+        directement en cliquant sur la carte (clic simple). Après sélection, cliquez sur "Enregistrer point de départ" pour mémoriser.
+      </div>
+      <button id="save-start" class="btn btn-save">Enregistrer point de départ</button>
+
+      <div class="download-controls">
+        <label>Télécharger dalles autour (10 km)</label>
+        <div class="zoom-row">
+          <div class="zoom-input">
+            <label>Zoom min: <input id="zmin" type="number" value="13" min="0" max="16" /></label>
+          </div>
+          <div class="zoom-input">
+            <label>Zoom max: <input id="zmax" type="number" value="16" min="0" max="16" /></label>
+          </div>
+        </div>
+
+        <div class="calc-row">
+          <button id="compute-tiles" class="btn btn-calc">Calculer dalles &amp; estimation</button>
+        </div>
+
+        <div class="download-actions">
+          <button id="choose-folder" class="btn btn-choose">Choisir dossier (optionnel)</button>
+          <button id="download-tiles" class="btn btn-download">Télécharger dalles</button>
+          <button id="clean-tiles-cache" class="btn btn-clean">Nettoyer cache tuiles</button>
+        </div>
+
+        <div id="tile-estimate" style="margin-top:8px;color:#333"></div>
+
+        <div id="download-progress" style="display:none;margin-top:8px;">
+          <progress id="progress-bar" value="0" max="100"></progress>
+          <span id="progress-text"></span>
+        </div>
+      </div>
+
+      <div style="margin-top:8px;">
+        <small>URL tuiles (modifiez si nécessaire) :</small>
+        <input id="tile-url" size="120" />
+      </div>
+
+      <!-- Sessions UI and auto-purge option -->
+      <div id="sessions-panel" style="margin-top:12px; border-top:1px dashed #ddd; padding-top:10px;">
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;">
+          <label style="font-weight:600">Sessions</label>
+          <label style="font-size:0.9rem;color:#444">Purger automatiquement les sessions plus anciennes que
+            <input id="auto-purge-days" type="number" min="1" value="2" style="width:50px;margin-left:6px;margin-right:6px" /> jours
+            <input id="auto-purge-enabled" type="checkbox" checked style="margin-left:6px" /> activé
+          </label>
+        </div>
+        <div style="font-size:0.9rem;color:#444;margin-bottom:6px;">
+          Sauvegardes automatiques toutes les minutes. Vous pouvez reprendre une session pour poursuivre l'enregistrement.
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+          <button id="btn-refresh-sessions" class="btn" style="background:#e8eef6;color:#033">Rafraîchir sessions</button>
+          <button id="btn-clear-sessions" class="btn" style="background:#ffecec;color:#7a0000">Supprimer toutes les sessions</button>
+        </div>
+        <div id="session-list" style="max-height:200px; overflow:auto; border:1px solid #eee; padding:8px; border-radius:6px;">
+          <div style="color:#666">Aucune session sauvegardée</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="map-section">
+      <h2>Carte</h2>
+      <div id="map"></div>
+
+      <div id="controls" class="controls">
+        <div class="controls-row">
+          <button id="btn-start" class="btn btn-start">Départ</button>
+        </div>
+
+        <div class="controls-row">
+          <button id="btn-photo" class="btn btn-photo">Photo</button>
+        </div>
+
+        <div class="controls-row">
+          <button id="btn-audio-start" class="btn btn-audio-start">Démarrer audio</button>
+          <button id="btn-audio-stop" class="btn btn-audio-stop" disabled>Arrêter audio</button>
+        </div>
+
+        <div class="controls-row">
+          <button id="btn-stop" class="btn btn-stop">Arrêt</button>
+        </div>
+      </div>
+    </section>
+
+    <div id="trace-list" style="margin-top:10px;"></div>
+  </main>
+
+  <div id="toast" class="toast" style="display:none"></div>
+
+  <input id="photo-input" type="file" accept="image/*" capture="environment" style="display:none" />
+
+  <script src="main.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').then(()=>console.log('Service worker enregistré')).catch(e=>console.warn(e));
+    }
+  </script>
+</body>
+</html>
