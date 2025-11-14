@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tagaudio+ V2</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script defer src="app.js"></script>
+<style>
+body{font-family:sans-serif;padding:10px;}
+#map{height:45vh;width:100%;background:#ddd;margin-top:10px;}
+textarea{width:100%;height:120px;}
+button,select{padding:10px;margin:5px;}
+</style>
+</head>
+<body>
+
+<h2>Tagaudio+ V2 — MP3 + GPS + GPX/KML/KMZ</h2>
+
+<input type="file" id="fileInput" accept="audio/mpeg">
+
+<select id="layerSelect">
+<option value="ign" selected>IGN</option>
+<option value="osm">OSM</option>
+</select>
+
+<div id="map"></div>
+<p id="coordsDisplay"></p>
+
+<button id="gpsBtn">GPS</button>
+<button id="manualBtn">Manuel</button>
+
+<h3>Export</h3>
+<button id="exportGPX">GPX</button>
+<button id="exportKML">KML</button>
+<button id="exportKMZ">KMZ (MP3 + KML)</button>
+
+<h3>Import</h3>
+<button id="importGPX">Importer GPX/KML</button>
+<input type="file" id="gpxInput" accept=".gpx,.kml" style="display:none">
+
+</body>
+</html>
