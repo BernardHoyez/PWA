@@ -1,0 +1,21 @@
+
+{
+  "name": "Randonne PWA",
+  "short_name": "Randonne",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "description": "PWA de suivi de randonnée avec fond IGN Plan V2",
+  "icons": [
+    {
+      "src": "icon192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
