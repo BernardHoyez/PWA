@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Randotiles - Tracé Randonnée Offline sur MBTiles</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4CAF50">
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 10px; 
+            background: #f5f5f5; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            font-size: 14px; 
+        }
+        #main-content { 
+            flex: 1; 
+            overflow-y: auto; 
+        }
+        #map { 
+            height: 60vh; 
+            width: 100%; 
+            border: 1px solid #ccc; 
+            margin: 10px 0; 
+            border-radius: 5px; 
+        }
+        .ol-zoom, .ol-rotate, .ol-attribution { display: none !important; }
+        .section { 
+            margin-bottom: 10px; 
+            padding: 8px; 
+            background: white; 
+            border-radius: 5px; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
+        }
+        .section h2 { 
+            margin: 0 0 8px 0; 
+            color: #4CAF50; 
+            font-size: 14px; 
+            font-weight: normal; 
+        }
+        button { 
+            padding: 10px; 
+            margin: 5px 0; 
+            width: 100%; 
+            box-sizing: border-box; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+            font-size: 14px; 
+            background: #4CAF50; 
+            color: white; 
+            cursor: pointer; 
+            transition: background 0.3s; 
+            border: none; 
+        }
+        button:hover { background: #45a049; }
+        button.secondary { background: #757575; }
+        button.secondary:hover { background: #616161; }
+        button.stop { background: #f44336; }
+        button.stop:hover { background: #d32f2f; }
+        #status { 
+            padding: 10px; 
+            background: #e8f5e8; 
+            border-radius: 4px; 
+            margin: 10px 0; 
+            font-size: 12px; 
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/ol@v7.3.0/dist/ol.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.min.js"></script>
+</head>
+<body>
+    <div id="main-content">
+        <h1>Randotiles</h1>
+        <p>Enregistrez votre trace GPS sur fond MBTiles offline.</p>
+
+        <!-- Import MBTiles -->
+        <div class="section">
+            <h2>Import Fond Cartographique</h2>
+            <button onclick="importMBTiles()">Choisir .mbtiles</button>
+        </div>
+
+        <!-- Carte -->
+        <div class="section">
+            <h2>Carte</h2>
+            <div id="map"></div>
+        </div>
+
+        <!-- Contrôles Trace -->
+        <div class="section">
+            <h2>Trace GPS</h2>
+            <button id="startBtn" onclick="startTrace()">Démarrer Trace</button>
+            <button id="stopBtn" onclick="stopTrace()" class="stop" style="display:none;">Arrêter Trace</button>
+            <button class="secondary" onclick="exportTrace()">Exporter GPX + KML</button>
+        </div>
+
+        <!-- Statut -->
+        <div id="status"></div>
+    </div>
+
+    <script>
+        let map, mbDb, traceLayer, traceFeature;
+        let tileGrid, SQL;
+        let watchId, tracePoints = [];
+
+        // Créer la grille WMTS (compatible MBTiles)
+        function createTileGrid() {
+            const proj3857 = ol.proj.get('EPSG:3857');
+            const maxResolution = ol.extent.getWidth(proj3857.getExtent()) / 256;
+            const resolutions = [];
+            const matrixIds = [];
+            for (let i = 0; i < 20; ++i) {
+                matrixIds[i] = i.toString();
+                resolutions[i] = maxResolution / Math.pow(2, i);
+            }
+            return new ol.tilegrid.WMTS({
+                origin: ol.extent.getTopLeft(proj3857.getExtent()),
+                resolutions: resolutions,
+                matrixIds: matrixIds
+            });
+        }
+
+        // Source custom pour MBTiles
+        class MBTilesSource extends ol.source.Tile {
+            constructor(db) {
+                super({ tileGrid: tileGrid });
+                this.db = db;
+            }
+            getTile(z, x, y, pixelRatio, projection) {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 256; canvas.height = 256;
+
+                const res = this.db.exec("SELECT tile_data FROM tiles WHERE zoom_level = ? AND tile_column = ? AND tile_row = ?;", [z, x, y]);
+                if (res[0] && res[0].values && res[0].values[0]) {
+                    const blob = new Blob([new Uint8Array(res[0].values[0][0])]);
+                    const img = new Image();
+                    img.onload = () => ctx.drawImage(img, 0, 0);
+                    img.src = URL.createObjectURL(blob);
+                } else {
+                    ctx.fillStyle = '#f0f0f0'; ctx.fillRect(0, 0, 256, 256); // Fond gris si hors rayon
+                }
+                const tile = new ol.Tile([z, x, y]);
+                tile.setImage(new ol.ImageCanvas(0, 0, 256, 256, canvas));
+                return tile;
+            }
+        }
+
+        // Initialiser carte
+        function initMap() {
+            tileGrid = createTileGrid();
+            map = new ol.Map({
+                target: 'map',
+                layers: [],
+                view: new ol.View({
+                    center: ol.proj.fromLonLat([2.3522, 48.8566]), // Paris par défaut
+                    zoom: 14
+                })
+            });
+
+            // Layer trace
+            traceLayer = new ol.layer.Vector({
+                source: new ol.source.Vector(),
+                style: new ol.style.Style({
+                    stroke: new ol.style.Stroke({ color: 'red', width: 3 })
+                })
+            });
+            map.addLayer(traceLayer);
+
+            // Clic pour centre
+            map.on('singleclick', (evt) => {
+                const coord = ol.proj.toLonLat(evt.coordinate);
+                map.getView().setCenter(evt.coordinate);
+            });
+        }
+
+        // Import MBTiles
+        async function importMBTiles() {
+            if ('showOpenFilePicker' in window) {
+                try {
+                    const [fileHandle] = await window.showOpenFilePicker({ types: [{ description: 'MBTiles', accept: { 'application/octet-stream': ['.mbtiles'] } }] });
+                    const file = await fileHandle.getFile();
+                    const arrayBuffer = await file.arrayBuffer();
+                    SQL = await initSqlJs({ locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}` });
+                    mbDb = new SQL.Database(new Uint8Array(arrayBuffer));
+                    const mbLayer = new ol.layer.Tile({ source: new MBTilesSource(mbDb) });
+                    map.addLayer(mbLayer);
+                    updateStatus('MBTiles importé ! Tracez votre randonnée.');
+                } catch (e) {
+                    updateStatus('Import annulé ou erreur: ' + e.message);
+                }
+            } else {
+                updateStatus('API import non supportée (navigateur moderne requis).');
+            }
+        }
+
+        // Démarrer trace
+        function startTrace() {
+            if (!navigator.geolocation) return updateStatus('GPS non supporté');
+            if (!mbDb) return updateStatus('Importez d\'abord un MBTiles.');
+            watchId = navigator.geolocation.watchPosition((p) => {
+                const coord = ol.proj.fromLonLat([p.coords.longitude, p.coords.latitude]);
+                tracePoints.push({ lat: p.coords.latitude, lon: p.coords.longitude, time: new Date().toISOString() });
+                if (!traceFeature) {
+                    traceFeature = new ol.Feature({ geometry: new ol.geom.LineString([coord]) });
+                    traceLayer.getSource().addFeature(traceFeature);
+                } else {
+                    traceFeature.getGeometry().appendCoordinate(coord);
+                }
+                map.getView().setCenter(coord);
+                updateStatus(`Trace active: ${tracePoints.length} pts`);
+            }, () => updateStatus('Erreur GPS'), { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('stopBtn').style.display = 'block';
+        }
+
+        // Arrêter trace
+        function stopTrace() {
+            if (watchId) navigator.geolocation.clearWatch(watchId);
+            watchId = null;
+            document.getElementById('startBtn').style.display = 'block';
+            document.getElementById('stopBtn').style.display = 'none';
+            updateStatus(`Trace arrêtée: ${tracePoints.length} pts. Exportez-la.`);
+        }
+
+        // Export GPX + KML
+        function exportTrace() {
+            if (tracePoints.length === 0) return updateStatus('Aucune trace à exporter.');
+            const date = new Date().toISOString().split('T')[0];
+
+            // GPX
+            let gpx = `<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="Randotiles"><trk><name>Trace Randonnée</name><trkseg>`;
+            tracePoints.forEach(pt => gpx += `<trkpt lat="${pt.lat}" lon="${pt.lon}"><time>${pt.time}</time></trkpt>`);
+            gpx += `</trkseg></trk></gpx>`;
+            const gpxBlob = new Blob([gpx], { type: 'application/gpx+xml' });
+            const gpxA = document.createElement('a');
+            gpxA.href = URL.createObjectURL(gpxBlob);
+            gpxA.download = `trace_${date}.gpx`;
+            gpxA.click();
+
+            // KML
+            let kml = `<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>Trace Randonnée</name><Placemark><name>Trace</name><LineString><tessellate>1</tessellate><coordinates>`;
+            tracePoints.forEach(pt => kml += `${pt.lon},${pt.lat},0 `);
+            kml += `</coordinates></LineString></Placemark></Document></kml>`;
+            const kmlBlob = new Blob([kml], { type: 'application/vnd.google-earth.kml+xml' });
+            const kmlA = document.createElement('a');
+            kmlA.href = URL.createObjectURL(kmlBlob);
+            kmlA.download = `trace_${date}.kml`;
+            kmlA.click();
+
+            updateStatus(`Trace exportée : GPX + KML (${tracePoints.length} pts)`);
+        }
+
+        function updateStatus(msg) {
+            document.getElementById('status').innerText = msg;
+        }
+
+        // Initialiser carte
+        initMap();
+
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(console.error);
+        }
+    </script>
+</body>
+</html>
