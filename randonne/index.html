@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Randonne PWA</title>
+<link rel="stylesheet" href="styles.css" />
+<script defer src="main.js"></script>
+<script defer src="sw-register.js"></script>
+<link rel="manifest" href="manifest.json" />
+</head>
+<body>
+  <h1>Randonne - Trace GPS</h1>
+  <div id="map"></div>
+  <div id="controls">
+    <button id="startBtn">Démarrer</button>
+    <button id="stopBtn" disabled>Arrêter</button>
+    <button id="clearBtn" disabled>Effacer</button>
+    <button id="exportKmlBtn">Exporter KML</button>
+    <button id="exportGpxBtn">Exporter GPX</button>
+  </div>
+  <div id="info">Distance: 0 m</div>
+  <div id="coords">
+    <label>Latitude: <input type="text" id="lat" readonly /></label>
+    <label>Longitude: <input type="text" id="lon" readonly /></label>
+  </div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-o9N1j6kZ1h4h8JO2Vwzt6kK5fM9L2FfX2y+G5x4Z8aM=" crossorigin=""></script>
+</body>
+</html>
