@@ -1,0 +1,35 @@
+const CACHE_NAME = 'randoign-v1';
+const urlsToCache = [
+    '/',
+    '/index.html',
+    'https://cdn.jsdelivr.net/npm/ol@v7.3.0/dist/ol.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.min.js'
+];
+
+self.addEventListener('install', (event) => {
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then((cache) => cache.addAll(urlsToCache))
+    );
+});
+
+self.addEventListener('fetch', (event) => {
+    // Cache tuiles IGN pour offline
+    if (event.request.url.includes('wxs.ign.fr')) {
+        event.respondWith(
+            caches.match(event.request).then((response) => {
+                return response || fetch(event.request).then((fetchResponse) => {
+                    return caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, fetchResponse.clone());
+                        return fetchResponse;
+                    });
+                });
+            })
+        );
+    } else {
+        event.respondWith(
+            caches.match(event.request)
+                .then((response) => response || fetch(event.request))
+        );
+    }
+});
