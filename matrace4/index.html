@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>matrace4</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#ffffff">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+</head>
+<body>
+  <div id="mode-selector">
+    <button id="online-mode" class="active">Mode en ligne</button>
+    <button id="offline-mode">Mode hors ligne</button>
+  </div>
+  <div id="map"></div>
+  <div id="controls-online" class="controls">
+    <button id="start-online">Commencer l'enregistrement</button>
+    <button id="stop-online">Arrêter l'enregistrement</button>
+    <button id="export-online">Exporter la trace (KML/GPX)</button>
+    <button id="download-map">Téléchargement cartes</button>
+  </div>
+  <div id="controls-offline" class="controls" style="display: none;">
+    <button id="start-offline">Commencer l'enregistrement</button>
+    <button id="stop-offline">Arrêter l'enregistrement</button>
+    <button id="export-offline">Exporter la trace (KML/GPX)</button>
+    <button id="load-map">Carte intégrée</button>
+  </div>
+  <div id="stats"></div>
+  <div id="download-panel" class="panel" style="display: none;">
+    <div class="panel-header">
+      <h3>Téléchargement des cartes</h3>
+      <span id="close-download-panel" class="close-btn">&times;</span>
+    </div>
+    <div>
+      <label for="download-lat">Latitude:</label>
+      <input type="text" id="download-lat" placeholder="ex: 46.5">
+    </div>
+    <div>
+      <label for="download-lon">Longitude:</label>
+      <input type="text" id="download-lon" placeholder="ex: 2.5">
+    </div>
+    <div>
+      <label for="download-radius">Rayon (km):</label>
+      <input type="range" id="download-radius" min="1" max="10" value="5">
+      <span id="download-radius-value">5</span> km
+    </div>
+    <button id="download-confirm">Confirmer</button>
+    <button id="download-cancel">Annuler</button>
+    <button id="center-on-user-download">Centrer sur ma position</button>
+    <div id="download-progress" style="margin-top: 10px; display: none;">
+      <progress id="download-progress-bar" value="0" max="100"></progress>
+      <span id="download-progress-text">0%</span>
+    </div>
+  </div>
+  <div id="load-map-panel" class="panel" style="display: none;">
+    <div class="panel-header">
+      <h3>Charger une carte intégrée</h3>
+      <span id="close-load-map-panel" class="close-btn">&times;</span>
+    </div>
+    <input type="file" id="import-mbtiles" accept=".mbtiles" style="display: none;">
+    <button id="select-mbtiles">Sélectionner un fichier MBTiles</button>
+    <div id="load-map-progress" style="margin-top: 10px; display: none;">
+      <span id="load-map-progress-text">Chargement en cours...</span>
+    </div>
+  </div>
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
