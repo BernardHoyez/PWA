@@ -1,0 +1,150 @@
+/* ====================== BASE ====================== */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkSystemFont, "Segoe UI", Roboto, sans-serif;
+  height: 100vh;
+  overflow: hidden;
+  background: #000;
+}
+
+/* ====================== MAP ====================== */
+#map {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* ====================== ÉCRAN D'ACCUEIL ====================== */
+#welcome {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, #2e7d32, #1b5e20);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  z-index: 3000;
+  padding: 20px;
+}
+
+#welcome h1 {
+  font-size: 3.4em;
+  margin: 0 0 12px 0;
+  font-weight: 900;
+  text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+#welcome p {
+  font-size: 1.45em;
+  margin-bottom: 50px;
+  opacity: 0.95;
+}
+
+.bigbtn {
+  margin: 14px;
+  padding: 20px 32px;
+  font-size: 1.28em;
+  font-weight: bold;
+  width: 88%;
+  max-width: 440px;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.bigbtn:active {
+  transform: translateY(4px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+#welcome #fromFileBtn { background: #ff9800; }
+#welcome #downloadBtn   { background: #2196f3; }
+#welcome .blank         { background: rgba(255,255,255,0.22); backdrop-filter: blur(4px); }
+
+/* ====================== PANNEAU DU BAS ====================== */
+#panel {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.97);
+  padding: 16px 24px;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.28);
+  text-align: center;
+  z-index: 1000;
+  min-width: 320px;
+  backdrop-filter: blur(8px);
+}
+
+#infos {
+  margin-bottom: 12px;
+  font-size: 1.15em;
+  font-weight: bold;
+  color: #1b5e20;
+}
+
+#infos div {
+  margin: 6px 0;
+}
+
+button {
+  margin: 6px;
+  padding: 14px 24px;
+  font-size: 1.15em;
+  font-weight: bold;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  min-width: 110px;
+  transition: all 0.2s;
+}
+
+button:active {
+  transform: scale(0.95);
+}
+
+#startBtn { background: #2e7d32; color: white; }
+#stopBtn  { background: #c62828; color: white; }
+#saveBtn  { background: #1565c0; color: white; }
+
+button:disabled {
+  background: #999 !important;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ====================== OVERLAY TÉLÉCHARGEMENT ====================== */
+#dlOverlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.92);
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: white;
+  text-align: center;
+}
+
+#dlOverlay progress {
+  width: 80%;
+  height: 24px;
+  margin: 20px 0;
+}
+
+/* Responsive pour très petits écrans */
+@media (max-height: 600px) {
+  #welcome h1 { font-size: 2.6em; }
+  #welcome p { font-size: 1.2em; margin-bottom: 30px; }
+  .bigbtn { padding: 16px 24px; font-size: 1.1em; }
+}

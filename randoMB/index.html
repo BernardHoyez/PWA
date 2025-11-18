@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>randoMB</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon192.png">
+  <link rel="apple-touch-icon" href="icon192.png">
+  <link rel="stylesheet" href="leaflet.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="welcome">
+    <h1>randoMB</h1>
+    <p>Choisis ton fond de carte pour la randonnée</p>
+    <button id="fromFileBtn" class="bigbtn">Choisir un fichier .mbtiles sur le téléphone</button>
+    <button id="downloadBtn" class="bigbtn">Télécharger une carte (France, régions…)</button>
+    <button id="noMapBtn" class="bigbtn blank">Continuer sans fond de carte</button>
+  </div>
+
+  <div id="map"></div>
+
+  <div id="panel">
+    <div id="infos">
+      <div>Temps : <span id="time">00:00:00</span></div>
+      <div>Distance : <span id="distance">0</span> m</div>
+      <div>Position : <span id="pos">-</span></div>
+    </div>
+    <button id="startBtn">START</button>
+    <button id="stopBtn" disabled>STOP</button>
+    <button id="saveBtn" disabled>Enregistrer la trace</button>
+  </div>
+
+  <!-- Toutes les dépendances -->
+  <script src="leaflet.js"></script>
+  <script src="sql-wasm.js"></script>
+  <script src="L.TileLayer.MBTiles.js"></script>
+  <script src="script.js"></script>
+
+  <!-- INITIALISATION FORCÉE (c’est ÇA qui faisait tout planter avant) -->
+  <script>
+    // On attend que TOUT soit chargé (y compris sql-wasm.js qui est asynchrone)
+    window.addEventListener('load', async () => {
+      // Service Worker
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+      }
+
+      // On attend que sql.js soit prêt
+      if (typeof initSqlJs !== 'undefined') {
+        await initSqlJs({ locateFile: () => 'sql-wasm.wasm' });
+      }
+
+      // Maintenant on lance l’app
+      initRandoMB();
+    });
+  </script>
+</body>
+</html>
