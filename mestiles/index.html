@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MesTiles - Générateur MBTiles</title>
+    <meta name="theme-color" content="#2563eb">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon512.png">
+    <link rel="apple-touch-icon" href="icon192.png">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #f8fafc;
+            border-radius: 15px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .section h2 {
+            color: #2563eb;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section h2::before {
+            content: '📍';
+            font-size: 1.2em;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #334155;
+            font-weight: 600;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        input[type="number"]:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #2563eb;
+            border: 2px solid #2563eb;
+        }
+
+        .btn-secondary:hover {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+            border: 2px solid #10b981;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #map {
+            width: 100%;
+            height: 400px;
+            border-radius: 15px;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .slider-container {
+            margin: 20px 0;
+        }
+
+        .slider-container input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #e2e8f0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+        }
+
+        .slider-container input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+        }
+
+        .slider-value {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .progress-container {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid #2563eb;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e2e8f0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #334155;
+            font-size: 0.9em;
+        }
+
+        .zoom-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .info-box {
+            background: #dbeafe;
+            border-left: 4px solid #2563eb;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .info-box p {
+            color: #1e40af;
+            margin: 5px 0;
+            font-size: 0.95em;
+        }
+
+        .folder-section {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .folder-section h3 {
+            color: #92400e;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 768px) {
+            .input-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            #map {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗺️ MesTiles</h1>
+            <p>Générateur de fichiers MBTiles</p>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <h2>Position du centre</h2>
+                
+                <div class="input-group">
+                    <label>1. Coordonnées manuelles</label>
+                    <div class="input-row">
+                        <div>
+                            <input type="number" id="lat" placeholder="Latitude" step="0.000001" value="49.515">
+                        </div>
+                        <div>
+                            <input type="number" id="lon" placeholder="Longitude" step="0.000001" value="0.107">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="setCenterManual()" style="margin-top: 10px;">
+                        📌 Positionner
+                    </button>
+                </div>
+
+                <div class="input-group">
+                    <label>2. Position actuelle</label>
+                    <button class="btn btn-secondary" onclick="setCenterGPS()">
+                        📱 Utiliser ma position
+                    </button>
+                </div>
+
+                <div class="input-group">
+                    <label>3. Cliquer sur la carte</label>
+                    <p style="color: #64748b; font-size: 0.9em;">Cliquez directement sur la carte pour définir le centre</p>
+                </div>
+
+                <div id="map"></div>
+
+                <div class="info-box" id="centerInfo">
+                    <p><strong>Centre actuel:</strong> Lat: 49.515, Lon: 0.107</p>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🎯 Paramètres de génération</h2>
+                
+                <div class="slider-container">
+                    <label>Rayon de capture: <span class="slider-value" id="radiusValue">5 km</span></label>
+                    <input type="range" id="radius" min="0" max="10" value="5" step="0.5" oninput="updateRadius()">
+                </div>
+
+                <div class="zoom-controls">
+                    <div>
+                        <label>Zoom minimum</label>
+                        <input type="number" id="minZoom" value="12" min="12" max="16">
+                    </div>
+                    <div>
+                        <label>Zoom maximum</label>
+                        <input type="number" id="maxZoom" value="16" min="12" max="16">
+                    </div>
+                </div>
+
+                <div class="folder-section" style="margin-top: 25px;">
+                    <h3>📁 Dossier de sauvegarde</h3>
+                    <button class="btn btn-secondary" onclick="selectDirectory()" id="dirBtn" style="width: 100%; margin-bottom: 15px; padding: 15px; font-size: 1.1em;">
+                        Activer le choix du dossier
+                    </button>
+                    <div class="info-box" id="dirInfo" style="background: #e0e7ff; border-left-color: #6366f1;">
+                        <p id="dirPath"><strong>Par défaut :</strong> Téléchargements<br><br>
+                        💡 <strong>Conseil :</strong> Créez d'abord un dossier "cartesMBtiles" dans Documents avec votre explorateur de fichiers, puis activez cette option pour y sauvegarder vos cartes.</p>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="generateMBTiles()" style="width: 100%; margin-top: 20px; padding: 15px; font-size: 1.1em;">
+                    🚀 Générer le fichier MBTiles
+                </button>
+
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill">0%</div>
+                    </div>
+                    <div class="progress-text" id="progressText">Préparation...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration du manifest et du service worker inline
+        const manifestData = {
+            name: "MesTiles",
+            short_name: "MesTiles",
+            description: "Générateur de fichiers MBTiles",
+            start_url: "./",
+            display: "standalone",
+            background_color: "#667eea",
+            theme_color: "#2563eb",
+            icons: [
+                { src: "icon192.png", sizes: "192x192", type: "image/png" },
+                { src: "icon512.png", sizes: "512x512", type: "image/png" }
+            ]
+        };
+
+        // Créer le manifest en tant que blob
+        const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
+        const manifestURL = URL.createObjectURL(manifestBlob);
+        const linkManifest = document.createElement('link');
+        linkManifest.rel = 'manifest';
+        linkManifest.href = manifestURL;
+        document.head.appendChild(linkManifest);
+
+        // Enregistrer le service worker inline
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                const CACHE_NAME = 'mestiles-v2';
+                self.addEventListener('install', event => {
+                    self.skipWaiting();
+                });
+                self.addEventListener('activate', event => {
+                    event.waitUntil(
+                        caches.keys().then(keys => {
+                            return Promise.all(keys.map(key => {
+                                if (key !== CACHE_NAME) return caches.delete(key);
+                            }));
+                        }).then(() => clients.claim())
+                    );
+                });
+                self.addEventListener('fetch', event => {
+                    event.respondWith(
+                        fetch(event.request).catch(() => caches.match(event.request))
+                    );
+                });
+            `;
+            const swBlob = new Blob([swCode], { type: 'application/javascript' });
+            const swURL = URL.createObjectURL(swBlob);
+            navigator.serviceWorker.register(swURL).catch(err => console.log('SW error:', err));
+        }
+
+        let map;
+        let centerMarker;
+        let centerLat = 49.515;
+        let centerLon = 0.107;
+        let circleLayer;
+        let directoryHandle = null;
+
+        function initMap() {
+            map = L.map('map').setView([centerLat, centerLon], 13);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            centerMarker = L.marker([centerLat, centerLon], {
+                draggable: false
+            }).addTo(map);
+
+            circleLayer = L.circle([centerLat, centerLon], {
+                radius: 5000,
+                color: '#2563eb',
+                fillColor: '#3b82f6',
+                fillOpacity: 0.2
+            }).addTo(map);
+
+            map.on('click', function(e) {
+                centerLat = e.latlng.lat;
+                centerLon = e.latlng.lng;
+                updateCenter();
+            });
+        }
+
+        function updateCenter() {
+            centerMarker.setLatLng([centerLat, centerLon]);
+            circleLayer.setLatLng([centerLat, centerLon]);
+            map.setView([centerLat, centerLon]);
+            document.getElementById('lat').value = centerLat.toFixed(6);
+            document.getElementById('lon').value = centerLon.toFixed(6);
+            document.getElementById('centerInfo').innerHTML = 
+                `<p><strong>Centre actuel:</strong> Lat: ${centerLat.toFixed(6)}, Lon: ${centerLon.toFixed(6)}</p>`;
+        }
+
+        function setCenterManual() {
+            centerLat = parseFloat(document.getElementById('lat').value);
+            centerLon = parseFloat(document.getElementById('lon').value);
+            updateCenter();
+        }
+
+        function setCenterGPS() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    centerLat = position.coords.latitude;
+                    centerLon = position.coords.longitude;
+                    updateCenter();
+                }, function(error) {
+                    alert('Erreur de géolocalisation: ' + error.message);
+                });
+            } else {
+                alert('La géolocalisation n\'est pas supportée par ce navigateur.');
+            }
+        }
+
+        function updateRadius() {
+            const radius = parseFloat(document.getElementById('radius').value);
+            document.getElementById('radiusValue').textContent = radius + ' km';
+            circleLayer.setRadius(radius * 1000);
+        }
+
+        function selectDirectory() {
+            // Activer le mode de sélection personnalisé
+            directoryHandle = 'use_picker';
+            const btn = document.getElementById('dirBtn');
+            btn.textContent = '✅ Mode activé !';
+            btn.className = 'btn btn-success';
+            document.getElementById('dirPath').innerHTML = '<strong>✅ Mode activé !</strong><br>Lors de la génération, vous pourrez choisir où sauvegarder le fichier (recommandé : Documents/cartesMBtiles)';
+            document.getElementById('dirInfo').style.background = '#d1fae5';
+            document.getElementById('dirInfo').style.borderLeftColor = '#10b981';
+        }
+
+        function getTileBounds(lat, lon, radiusKm, zoom) {
+            const R = 6371;
+            const latRad = lat * Math.PI / 180;
+            
+            const latOffset = (radiusKm / R) * (180 / Math.PI);
+            const lonOffset = (radiusKm / R) * (180 / Math.PI) / Math.cos(latRad);
+            
+            const minLat = lat - latOffset;
+            const maxLat = lat + latOffset;
+            const minLon = lon - lonOffset;
+            const maxLon = lon + lonOffset;
+            
+            function long2tile(lon, zoom) {
+                return Math.floor((lon + 180) / 360 * Math.pow(2, zoom));
+            }
+            
+            function lat2tile(lat, zoom) {
+                return Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom));
+            }
+            
+            return {
+                minX: long2tile(minLon, zoom),
+                maxX: long2tile(maxLon, zoom),
+                minY: lat2tile(maxLat, zoom),
+                maxY: lat2tile(minLat, zoom)
+            };
+        }
+
+        async function generateMBTiles() {
+            const radius = parseFloat(document.getElementById('radius').value);
+            const minZoom = parseInt(document.getElementById('minZoom').value);
+            const maxZoom = parseInt(document.getElementById('maxZoom').value);
+            
+            if (minZoom > maxZoom) {
+                alert('Le zoom minimum doit être inférieur ou égal au zoom maximum');
+                return;
+            }
+
+            const progressContainer = document.getElementById('progressContainer');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            const now = new Date();
+            const filename = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
+            
+            // IMPORTANT : Demander le fichier AVANT de commencer le traitement
+            let fileHandle = null;
+            if (directoryHandle === 'use_picker' && 'showSaveFilePicker' in window) {
+                try {
+                    const opts = {
+                        suggestedName: filename + '.mbtiles',
+                        types: [{
+                            description: 'MBTiles Database',
+                            accept: { 'application/x-sqlite3': ['.mbtiles'] }
+                        }],
+                        startIn: 'documents',
+                        id: 'mbtiles-save'
+                    };
+                    fileHandle = await window.showSaveFilePicker(opts);
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        alert('Sauvegarde annulée');
+                        return;
+                    }
+                    console.error('Erreur sélection fichier:', error);
+                    // Continue avec téléchargement classique
+                }
+            }
+            
+            progressContainer.style.display = 'block';
+            progressFill.style.width = '0%';
+            progressFill.textContent = '0%';
+            progressText.textContent = 'Initialisation de la base de données...';
+
+            try {
+                const SQL = await initSqlJs({
+                    locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
+                });
+
+                const db = new SQL.Database();
+
+                db.run(`CREATE TABLE metadata (name TEXT, value TEXT)`);
+                db.run(`CREATE TABLE tiles (zoom_level INTEGER, tile_column INTEGER, tile_row INTEGER, tile_data BLOB)`);
+                
+                db.run(`INSERT INTO metadata VALUES ('name', '${filename}')`);
+                db.run(`INSERT INTO metadata VALUES ('type', 'baselayer')`);
+                db.run(`INSERT INTO metadata VALUES ('version', '1.0')`);
+                db.run(`INSERT INTO metadata VALUES ('description', 'Tuiles OSM générées par MesTiles')`);
+                db.run(`INSERT INTO metadata VALUES ('format', 'png')`);
+                db.run(`INSERT INTO metadata VALUES ('bounds', '${centerLon-1},${centerLat-1},${centerLon+1},${centerLat+1}')`);
+
+                let totalTiles = 0;
+                let downloadedTiles = 0;
+
+                for (let z = minZoom; z <= maxZoom; z++) {
+                    const bounds = getTileBounds(centerLat, centerLon, radius, z);
+                    totalTiles += (bounds.maxX - bounds.minX + 1) * (bounds.maxY - bounds.minY + 1);
+                }
+
+                progressText.textContent = `Téléchargement de ${totalTiles} tuiles...`;
+
+                for (let z = minZoom; z <= maxZoom; z++) {
+                    const bounds = getTileBounds(centerLat, centerLon, radius, z);
+                    
+                    for (let x = bounds.minX; x <= bounds.maxX; x++) {
+                        for (let y = bounds.minY; y <= bounds.maxY; y++) {
+                            try {
+                                const url = `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
+                                const response = await fetch(url);
+                                const blob = await response.blob();
+                                const arrayBuffer = await blob.arrayBuffer();
+                                const uint8Array = new Uint8Array(arrayBuffer);
+                                
+                                const tmsY = Math.pow(2, z) - 1 - y;
+                                
+                                db.run(`INSERT INTO tiles VALUES (?, ?, ?, ?)`, [z, x, tmsY, uint8Array]);
+                                
+                                downloadedTiles++;
+                                const progress = Math.round((downloadedTiles / totalTiles) * 100);
+                                progressFill.style.width = progress + '%';
+                                progressFill.textContent = progress + '%';
+                                progressText.textContent = `Téléchargement: ${downloadedTiles} / ${totalTiles} tuiles`;
+                                
+                                await new Promise(resolve => setTimeout(resolve, 100));
+                            } catch (error) {
+                                console.error(`Erreur tuile ${z}/${x}/${y}:`, error);
+                            }
+                        }
+                    }
+                }
+
+                progressText.textContent = 'Génération du fichier...';
+
+                const data = db.export();
+                const blob = new Blob([data], { type: 'application/x-sqlite3' });
+                
+                // Sauvegarder dans le fichier déjà sélectionné
+                if (fileHandle) {
+                    try {
+                        const writable = await fileHandle.createWritable();
+                        await writable.write(blob);
+                        await writable.close();
+                        
+                        progressText.textContent = `✅ Terminé! ${downloadedTiles} tuiles téléchargées. Fichier enregistré : ${filename}.mbtiles`;
+                    } catch (error) {
+                        console.error('Erreur écriture fichier:', error);
+                        // Fallback vers téléchargement classique
+                        const a = document.createElement('a');
+                        a.href = URL.createObjectURL(blob);
+                        a.download = filename + '.mbtiles';
+                        a.click();
+                        progressText.textContent = `✅ Terminé! ${downloadedTiles} tuiles téléchargées (téléchargement classique)`;
+                    }
+                } else {
+                    // Téléchargement classique
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = filename + '.mbtiles';
+                    a.click();
+                    progressText.textContent = `✅ Terminé! ${downloadedTiles} tuiles téléchargées`;
+                }
+
+                progressFill.style.width = '100%';
+                progressFill.textContent = '100%';
+
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                }, 3000);
+
+            } catch (error) {
+                console.error('Erreur:', error);
+                progressText.textContent = '❌ Erreur: ' + error.message;
+            }
+        }
+
+        window.addEventListener('load', function() {
+            initMap();
+        });
+    </script>
+</body>
+</html>
