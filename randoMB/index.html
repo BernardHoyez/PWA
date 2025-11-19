@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>randoMB</title>
+<link rel="manifest" href="manifest.json">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+
+<script defer src="app.js"></script>
+</head>
+<body>
+<h1>randoMB</h1>
+
+<button id="startBtn">START</button>
+<button id="stopBtn" disabled>STOP</button>
+
+<p>Temps écoulé : <span id="time">0:00:00</span></p>
+<p>Distance : <span id="distance">0</span> m</p>
+<p>Position : <span id="position">--,--</span></p>
+
+<label>Choisir fichier MBTiles :</label>
+<input type="file" id="mbtilesInput" accept=".mbtiles">
+
+<div id="map" style="height:400px;"></div>
+
+</body>
+</html>
