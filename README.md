@@ -164,3 +164,14 @@ Marquage d'un waypoint sur la trace.
 Arrêt : arrêt d'enregistrement et sauvegarde de la trace sous deux fichiers (un en GPX et l'autre en KML).
 
 _____________________________________________________
+mestiles
+
+_____________________
+
+icongene
+**icongene**
+icongene est une PWA qui fabrique deux icones destinées à l'écriture de PWA (icon512 et icon192)
+Un texte choisi apparaît au centre de l'icône
+
+[icongene](Bernardhoyez.github.io/PWA/icongene)
+
