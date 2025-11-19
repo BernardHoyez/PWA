@@ -1,0 +1,22 @@
+{
+  "name": "icongene",
+  "short_name": "icongene",
+  "description": "Générateur d'icônes PWA 192×192 et 512×512 avec fond sombre aléatoire",
+  "start_url": "/PWA/icongene/",
+  "scope": "/PWA/icongene/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#6200ee",
+  "icons": [
+    {
+      "src": "/PWA/icongene/icon192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/PWA/icongene/icon512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

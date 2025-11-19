@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>icongene – Générateur d'icônes PWA</title>
+  <meta name="description" content="Génère instantanément tes icônes 192×192 et 512×512 avec fond sombre aléatoire">
+  
+  <!-- PWA manifest -->
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- Icônes pour le navigateur et l'installation -->
+  <link rel="icon" href="icon192.png" sizes="192x192">
+  <link rel="icon" href="icon512.png" sizes="512x512">
+  <link rel="apple-touch-icon" href="icon192.png">
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #121212;
+      color: #eee;
+      margin: 0;
+      padding: 2rem;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    h1 { 
+      font-size: 2rem; 
+      margin-bottom: 2rem; 
+      text-align: center; 
+    }
+    input {
+      padding: 1rem;
+      font-size: 1.3rem;
+      width: 100%;
+      max-width: 420px;
+      margin-bottom: 2.5rem;
+      border-radius: 12px;
+      border: none;
+      text-align: center;
+    }
+    .icons {
+      display: flex;
+      gap: 3rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    canvas {
+      border: 5px solid #333;
+      border-radius: 16px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+      transition: transform 0.2s;
+    }
+    canvas:hover { transform: scale(1.03); }
+    button {
+      margin-top: 1.2rem;
+      padding: 0.9rem 2rem;
+      font-size: 1rem;
+      background: #6200ee;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      width: 100%;
+      max-width: 200px;
+    }
+    button:hover { background: #3700b3; }
+  </style>
+</head>
+<body>
+  <h1>icongene</h1>
+  <input type="text" id="name" placeholder="Entre le nom de ton app" autofocus>
+  
+  <div class="icons">
+    <div>
+      <canvas id="canvas192" width="192" height="192"></canvas>
+      <br>
+      <button onclick="download(192)">icon192.png</button>
+    </div>
+    <div>
+      <canvas id="canvas512" width="512" height="512"></canvas>
+      <br>
+      <button onclick="download(512)">icon512.png</button>
+    </div>
+  </div>
+
+  <script>
+    const input = document.getElementById('name');
+    const canvas192 = document.getElementById('canvas192');
+    const canvas512 = document.getElementById('canvas512');
+    const ctx192 = canvas192.getContext('2d');
+    const ctx512 = canvas512.getContext('2d');
+
+    function generate() {
+      const name = input.value.trim() || 'App';
+
+      // Fond sombre aléatoire mais élégant
+      const hue = Math.floor(Math.random() * 360);
+      const bgColor = `hsl(${hue}, 45%, ${18 + Math.random() * 12}%)`;
+
+      [ {ctx: ctx192, size: 192}, {ctx: ctx512, size: 512} ].forEach(c => {
+        c.ctx.fillStyle = bgColor;
+        c.ctx.fillRect(0, 0, c.size, c.size);
+
+        c.ctx.fillStyle = 'white';
+        c.ctx.textAlign = 'center';
+        c.ctx.textBaseline = 'middle';
+
+        let fontSize = Math.floor(c.size / (name.length > 10 ? 6.5 : name.length > 6 ? 5.5 : 4.5));
+        c.ctx.font = `bold ${fontSize}px system-ui, sans-serif`;
+        
+        c.ctx.shadowColor = 'rgba(0,0,0,0.9)';
+        c.ctx.shadowBlur = 12;
+        c.ctx.shadowOffsetX = 5;
+        c.ctx.shadowOffsetY = 5;
+
+        if (name.length > 15 && c.size >= 512) {
+          wrapText(c.ctx, name, c.size/2, c.size/2, c.size * 0.8, fontSize * 1.5);
+        } else {
+          c.ctx.fillText(name.toUpperCase(), c.size/2, c.size/2);
+        }
+      });
+    }
+
+    function wrapText(context, text, x, y, maxWidth, lineHeight) {
+      const words = text.split(' ');
+      let line = '';
+      let lines = [];
+
+      for (let n = 0; n < words.length; n++) {
+        let testLine = line + words[n] + ' ';
+        let testWidth = context.measureText(testLine).width;
+        if (testWidth > maxWidth && n > 0) {
+          lines.push(line);
+          line = words[n] + ' ';
+        } else {
+          line = testLine;
+        }
+      }
+      lines.push(line);
+
+      let startY = y - ((lines.length - 1) * lineHeight) / 2;
+      lines.forEach((l, i) => {
+        context.fillText(l.toUpperCase(), x, startY + i * lineHeight);
+      });
+    }
+
+    // Téléchargement avec les noms fixes demandés
+    function download(size) {
+      const canvas = size === 192 ? canvas192 : canvas512;
+      canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = size === 192 ? 'icon192.png' : 'icon512.png';
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    }
+
+    input.addEventListener('input', generate);
+    window.addEventListener('load', generate);
+  </script>
+</body>
+</html>
