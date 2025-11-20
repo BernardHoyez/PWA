@@ -97,7 +97,7 @@ function saveTrack() {
     document.body.appendChild(kmlLink);
     kmlLink.click();
     document.body.removeChild(kmlLink);
-}
+};
 
 // Charger un fichier MBtiles
 document.getElementById('load-mbtiles-btn').addEventListener('click', () => {
@@ -110,8 +110,15 @@ document.getElementById('mbtiles-input').addEventListener('change', (e) => {
 
     const reader = new FileReader();
     reader.onload = function(e) {
-        const arrayBuffer = e.target.result;
-        loadMBtiles(arrayBuffer);
+        try {
+            const arrayBuffer = e.target.result;
+            loadMBtiles(arrayBuffer);
+        } catch (error) {
+            console.error("Erreur lors de la lecture du fichier MBtiles :", error);
+        }
+    };
+    reader.onerror = function(e) {
+        console.error("Erreur lors de la lecture du fichier :", e);
     };
     reader.readAsArrayBuffer(file);
 });
