@@ -1,0 +1,25 @@
+{
+  "name": "LirTuiles - Lecteur MBTiles GPS",
+  "short_name": "LirTuiles",
+  "description": "Affiche vos cartes MBTiles avec position GPS",
+  "start_url": "/PWA/lirtuiles/",
+  "scope": "/PWA/lirtuiles/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0066cc",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
