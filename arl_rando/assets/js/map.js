@@ -34,7 +34,6 @@ document.getElementById('online-btn').addEventListener('click', () => {
 document.getElementById('offline-btn').addEventListener('click', () => {
     map.removeLayer(osmLayer);
     map.removeLayer(ignLayer);
-    // Ne rien faire d'autre ici, le chargement des MBtiles se fait via le bouton dédié
 });
 
 // Gestion du menu déroulant pour les sources de carte
@@ -63,5 +62,5 @@ function loadMBtiles(arrayBuffer) {
         minZoom: 1,
         maxZoom: 14
     }).addTo(map);
-    map.setView([45.764043, 4.835659], 13); // Recentrer la carte après chargement
+    map.setView([45.764043, 4.835659], 13);
 }
