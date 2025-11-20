@@ -1,0 +1,22 @@
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: sans-serif; height: 100vh; overflow: hidden; }
+#header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 68px;
+  background: #006400;
+  color: white;
+  padding: 8px;
+  text-align: center;
+  z-index: 1000;
+  pointer-events: none;
+}
+#header * { pointer-events: auto; }
+h1 { margin: 0; font-size: 1.4em; }
+#status { font-size: 0.85em; margin-top: 4px; }
+#mbtilesPicker { margin-top: 6px; }
+#map { 
+  height: 100vh; 
+  width: 100vw; 
+  margin-top: 0 !important;
+}
