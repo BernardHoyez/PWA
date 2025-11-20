@@ -63,7 +63,8 @@ function loadMBtiles(arrayBuffer) {
             minZoom: 1,
             maxZoom: 14
         }).addTo(map);
-        console.log("MBtiles chargé avec succès.");
+        console.log("MBtiles chargé avec succès et ajouté à la carte.");
+        map.fitBounds(mbtilesLayer.getBounds()); // Ajuste la vue de la carte aux limites des tuiles MBtiles
     } catch (e) {
         console.error("Erreur lors du chargement des MBtiles :", e);
     }
