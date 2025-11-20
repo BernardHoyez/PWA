@@ -58,9 +58,13 @@ function loadMBtiles(arrayBuffer) {
     if (mbtilesLayer) {
         map.removeLayer(mbtilesLayer);
     }
-    mbtilesLayer = L.tileLayer.mbTiles(arrayBuffer, {
-        minZoom: 1,
-        maxZoom: 14
-    }).addTo(map);
-    map.setView([45.764043, 4.835659], 13);
+    try {
+        mbtilesLayer = L.tileLayer.mbTiles(arrayBuffer, {
+            minZoom: 1,
+            maxZoom: 14
+        }).addTo(map);
+        console.log("MBtiles chargé avec succès.");
+    } catch (e) {
+        console.error("Erreur lors du chargement des MBtiles :", e);
+    }
 }
