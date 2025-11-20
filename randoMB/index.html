@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>randoMB</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<style>
+body { margin:0; padding:0; font-family:sans-serif; }
+#map { height: 60vh; }
+#stats { padding:10px; }
+button { padding:10px; margin:5px; font-size:16px; }
+</style>
+</head>
+<body>
+<h2 style="padding:10px;">randoMB</h2>
+
+<div id="map"></div>
+
+<div id="stats">
+  <div>Temps écoulé : <span id="time">0s</span></div>
+  <div>Distance : <span id="dist">0 m</span></div>
+  <div>Position : <span id="pos">--</span></div>
+  <button id="startBtn">START</button>
+  <button id="stopBtn">STOP</button>
+  <input type="file" id="mbtilesInput" accept=".mbtiles" />
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.6.2/sql-wasm.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
