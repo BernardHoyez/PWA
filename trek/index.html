@@ -1,0 +1,40 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Trek</title>
+<link rel="manifest" href="manifest.json">
+<style>
+body { margin:0; font-family:sans-serif; }
+#map { width:100vw; height:60vh; }
+#controls { padding:10px; background:#f0f0f0; }
+button { padding:8px 12px; margin:5px 0; }
+</style>
+<script src="https://unpkg.com/maplibre-gl@3.2.0/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@3.2.0/dist/maplibre-gl.css" rel="stylesheet" />
+</head>
+<body>
+
+<div id="map"></div>
+
+<div id="controls">
+  <label><b>Rayon (km):</b> <span id="rval">5</span></label><br>
+  <input type="range" id="radius" min="0" max="10" value="5">
+  <br><br>
+
+  <button id="download">Générer PMTiles IGN V2</button>
+
+  <hr>
+
+  <input type="file" id="gpxfile">
+  <button id="loadgpx">Charger GPX</button>
+  <button id="startTrack">Démarrer enregistrement</button>
+  <button id="stopTrack">Arrêter + Export GPX</button>
+</div>
+
+<script src="pmtiles-lib.js"></script>
+<script src="gpx-lib.js"></script>
+<script src="trek.js"></script>
+</body>
+</html>
