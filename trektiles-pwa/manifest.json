@@ -1,0 +1,35 @@
+{
+  "name": "TrekTiles - Générateur PMTiles",
+  "short_name": "TrekTiles",
+  "description": "Créez des cartes hors-ligne PMTiles pour vos randonnées (OSM • IGN)",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#2563eb",
+  "background_color": "#667eea",
+  "categories": ["navigation", "utilities"],
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "icon192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "icon512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ]
+}
