@@ -1,0 +1,22 @@
+{
+  "name": "TrekTiles",
+  "short_name": "TrekTiles",
+  "description": "Générateur de cartes hors-ligne PMTiles (OSM & IGN) pour randonnée",
+  "start_url": "/PWA/trektiles/",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/PWA/trektiles/icon192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/PWA/trektiles/icon512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
