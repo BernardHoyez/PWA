@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Treking - Trace GPS avec PMTiles</title>
+    <meta name="theme-color" content="#059669">
+    
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon512.png">
+    <link rel="apple-touch-icon" href="icon192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    
+    <!-- PMTiles -->
+    <script src="https://unpkg.com/pmtiles@3.0.3/dist/pmtiles.min.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+               background: linear-gradient(135deg, #047857 0%, #059669 100%); min-height: 100vh; }
+        .container { display: flex; flex-direction: column; height: 100vh; }
+        .header { background: #047857; color: #fff; padding: 15px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .header h1 { font-size: 1.5em; font-weight: 700; }
+        
+        /* Mode sélection */
+        .mode-selection { background: #fff; padding: 30px 20px; text-align: center; min-height: 100vh; }
+        .mode-selection h2 { color: #047857; margin-bottom: 30px; font-size: 1.8em; }
+        .mode-buttons { display: flex; flex-direction: column; gap: 15px; max-width: 300px; margin: 0 auto; }
+        .mode-btn { padding: 20px; border: 3px solid #047857; border-radius: 15px; background: #fff;
+                    font-size: 1.2em; font-weight: 600; cursor: pointer; transition: all 0.3s;
+                    display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .mode-btn:hover { background: #047857; color: #fff; transform: translateY(-2px); }
+        .mode-btn.offline { border-color: #dc2626; }
+        .mode-btn.offline:hover { background: #dc2626; }
+        
+        /* Carte */
+        .map-container { flex: 1; position: relative; display: none; }
+        #map { width: 100%; height: 100%; }
+        .controls { position: absolute; bottom: 20px; left: 0; right: 0; padding: 0 20px; z-index: 1000; }
+        .control-buttons { display: flex; gap: 10px; justify-content: center; }
+        .control-btn { padding: 15px 25px; border: none; border-radius: 50px; font-size: 1em;
+                      font-weight: 600; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                      transition: all 0.3s; min-width: 100px; }
+        .control-btn:active { transform: scale(0.95); }
+        .btn-start { background: #10b981; color: #fff; }
+        .btn-stop { background: #ef4444; color: #fff; display: none; }
+        .btn-save { background: #3b82f6; color: #fff; display: none; }
+        
+        .status-bar { position: absolute; top: 0; left: 0; right: 0; background: rgba(0,0,0,0.7);
+                      color: #fff; padding: 10px 15px; font-size: 0.9em; z-index: 1000;
+                      display: flex; justify-content: space-between; align-items: center; }
+        .status-indicator { display: flex; align-items: center; gap: 5px; }
+        .live-indicator { width: 10px; height: 10px; background: #10b981; border-radius: 50%; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        
+        .file-input { position: absolute; top: 70px; left: 20px; z-index: 1000; background: #fff;
+                    padding: 10px 15px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+                    display: none; }
+        .file-input label { font-weight: 600; color: #047857; margin-bottom: 5px; display: block; }
+        .file-input input[type="file"] { display: none; }
+        .file-input button { width: 100%; padding: 8px; background: #047857; color: #fff; border: none;
+                           border-radius: 5px; cursor: pointer; margin-top: 5px; }
+        
+        .tile-source-selector { position: absolute; top: 70px; right: 20px; z-index: 1000; background: #fff;
+                              padding: 10px 15px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+                              display: none; }
+        select { padding: 8px; border: 2px solid #047857; border-radius: 5px; width: 100%; }
+        
+        .distance-display { position: absolute; top: 130px; left: 20px; background: #fff; padding: 10px 15px;
+                           border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); font-weight: 600;
+                           color: #047857; display: none; }
+        
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.3em; }
+            .control-buttons { gap: 5px; }
+            .control-btn { padding: 12px 20px; font-size: 0.9em; min-width: 80px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Mode sélection -->
+    <div class="mode-selection" id="modeSelection">
+        <h2>🗺️ Treking</h2>
+        <p style="color: #6b7280; margin-bottom: 30px;">Choisissez votre mode de navigation</p>
+        <div class="mode-buttons">
+            <button class="mode-btn" onclick="startApp('online')">
+                📶 Mode En Ligne<br>
+                <small style="font-weight:normal;">OSM / IGN en direct</small>
+            </button>
+            <button class="mode-btn offline" onclick="startApp('offline')">
+                📴 Mode Hors Ligne<br>
+                <small style="font-weight:normal;">Utiliser mes PMTiles</small>
+            </button>
+        </div>
+    </div>
+
+    <!-- Application -->
+    <div class="container" id="appContainer" style="display: none;">
+        <div class="header">
+            <h1>🗺️ Treking</h1>
+        </div>
+        
+        <div class="map-container" id="mapContainer">
+            <div class="status-bar">
+                <div class="status-indicator">
+                    <div class="live-indicator" id="liveIndicator" style="display: none;"></div>
+                    <span id="statusText">Prêt</span>
+                </div>
+                <div id="gpsStatus">GPS: 🔴 Inactif</div>
+            </div>
+            
+            <div class="file-input" id="fileInput">
+                <label for="pmtileFile">📁 Fichier PMTiles :</label>
+                <input type="file" id="pmtileFile" accept=".pmtiles" onchange="loadPMTiles(event)">
+                <button onclick="document.getElementById('pmtileFile').click()">Choisir un fichier</button>
+                <div id="fileName" style="margin-top: 8px; font-size: 0.8em; color: #6b7280;"></div>
+            </div>
+            
+            <div class="tile-source-selector" id="tileSourceSelector">
+                <label for="tileSource">🗺️ Source :</label>
+                <select id="tileSource" onchange="changeTileSource()">
+                    <option value="osm">OpenStreetMap</option>
+                    <option value="ign">IGN Plan v2</option>
+                </select>
+            </div>
+            
+            <div class="distance-display" id="distanceDisplay">
+                📏 Distance: <span id="distance">0.00</span> km
+            </div>
+            
+            <div id="map"></div>
+            
+            <div class="controls">
+                <div class="control-buttons">
+                    <button class="control-btn btn-start" id="startBtn" onclick="startTracking()">▶️ START</button>
+                    <button class="control-btn btn-stop" id="stopBtn" onclick="stopTracking()">⏹️ STOP</button>
+                    <button class="control-btn btn-save" id="saveBtn" onclick="showSaveOptions()">💾 ENREGISTRER</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let map;
+        let pmtilesInstance = null;
+        let currentLayer = null;
+        let gpsTracker = null;
+        let track = [];
+        let isTracking = false;
+        let watchId = null;
+        let currentMode = null;
+        let currentTileSource = 'osm';
+
+        // Enregistrement du Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('✅ SW enregistré'))
+                .catch(err => console.warn('⚠️ Erreur SW:', err));
+        }
+
+        // Classe pour gérer l'enregistrement GPS
+        class GPSTracker {
+            constructor() {
+                this.positions = [];
+                this.startTime = null;
+                this.totalDistance = 0;
+            }
+
+            start() {
+                this.startTime = new Date();
+                this.positions = [];
+                this.totalDistance = 0;
+                
+                if (!navigator.geolocation) {
+                    alert('❌ Géolocalisation non supportée');
+                    return false;
+                }
+
+                const options = {
+                    enableHighAccuracy: true,
+                    maximumAge: 0,
+                    timeout: 10000
+                };
+
+                watchId = navigator.geolocation.watchPosition(
+                    (position) => this.onPosition(position),
+                    (error) => this.onError(error),
+                    options
+                );
+
+                return true;
+            }
+
+            stop() {
+                if (watchId !== null) {
+                    navigator.geolocation.clearWatch(watchId);
+                    watchId = null;
+                }
+            }
+
+            onPosition(position) {
+                const coords = {
+                    lat: position.coords.latitude,
+                    lon: position.coords.longitude,
+                    alt: position.coords.altitude,
+                    time: new Date(position.timestamp),
+                    accuracy: position.coords.accuracy
+                };
+
+                // Calculer la distance depuis le dernier point
+                if (this.positions.length > 0) {
+                    const last = this.positions[this.positions.length - 1];
+                    this.totalDistance += this.calculateDistance(last, coords);
+                }
+
+                this.positions.push(coords);
+                track.push([coords.lat, coords.lon]);
+                
+                // Mettre à jour l'affichage
+                document.getElementById('distance').textContent = this.totalDistance.toFixed(2);
+                document.getElementById('gpsStatus').textContent = `GPS: 🟢 ${coords.accuracy.toFixed(0)}m`;
+
+                // Dessiner sur la carte
+                if (window.trackLine) {
+                    map.removeLayer(window.trackLine);
+                }
+                window.trackLine = L.polyline(track, { color: '#ef4444', weight: 4, opacity: 0.8 }).addTo(map);
+                
+                // Centrer sur la position actuelle
+                if (window.userMarker) {
+                    map.removeLayer(window.userMarker);
+                }
+                window.userMarker = L.circleMarker([coords.lat, coords.lon], {
+                    radius: 6,
+                    color: '#10b981',
+                    fillColor: '#10b981',
+                    fillOpacity: 1,
+                    weight: 2,
+                    opacity: 1
+                }).addTo(map);
+            }
+
+            onError(error) {
+                console.error('Erreur GPS:', error);
+                document.getElementById('gpsStatus').textContent = `GPS: 🔴 Erreur ${error.code}`;
+            }
+
+            calculateDistance(p1, p2) {
+                const R = 6371;
+                const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+                const dLon = (p2.lon - p1.lon) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                        Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
+                        Math.sin(dLon/2) * Math.sin(dLon/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return R * c;
+            }
+
+            getTrack() {
+                return {
+                    positions: this.positions,
+                    startTime: this.startTime,
+                    endTime: new Date(),
+                    distance: this.totalDistance
+                };
+            }
+        }
+
+        // Démarrer l'application
+        function startApp(mode) {
+            currentMode = mode;
+            document.getElementById('modeSelection').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'flex';
+            document.getElementById('mapContainer').style.display = 'block';
+            
+            initMap();
+            
+            if (mode === 'offline') {
+                document.getElementById('fileInput').style.display = 'block';
+                document.getElementById('statusText').textContent = '📴 Mode Hors Ligne - Sélectionnez un fichier PMTiles';
+            } else {
+                document.getElementById('tileSourceSelector').style.display = 'block';
+                document.getElementById('distanceDisplay').style.display = 'block';
+                changeTileSource();
+                document.getElementById('statusText').textContent = '📶 Mode En Ligne - Prêt';
+            }
+        }
+
+        // Initialiser la carte
+        function initMap() {
+            map = L.map('map', { zoomControl: true }).setView([44.8378, -0.5792], 13);
+            L.control.scale().addTo(map);
+        }
+
+        // Charger le fichier PMTiles
+        async function loadPMTiles(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('statusText').textContent = `Chargement de ${file.name}...`;
+            
+            try {
+                const buffer = await file.arrayBuffer();
+                pmtilesInstance = new pmtiles.PMTiles(buffer);
+                
+                // Définir le layer PMTiles
+                const layer = L.tileLayer.pmtiles('', {
+                    attribution: '© trek-tiles',
+                    maxZoom: 19
+                });
+                
+                // Remplacer la méthode getTileUrl
+                layer.getTileUrl = function(coords) {
+                    const tileId = pmtiles.zxyToTileId(coords.z, coords.x, coords.y);
+                    return pmtilesInstance.getZxy(coords.z, coords.x, coords.y).then(tile => {
+                        if (tile) {
+                            const blob = new Blob([tile.data], { type: 'image/png' });
+                            return URL.createObjectURL(blob);
+                        }
+                        return '';
+                    });
+                };
+                
+                if (currentLayer) map.removeLayer(currentLayer);
+                currentLayer = layer.addTo(map);
+                
+                // Zoom sur les bounds du fichier
+                const header = await pmtilesInstance.getHeader();
+                if (header.bounds) {
+                    const [minLon, minLat, maxLon, maxLat] = header.bounds;
+                    map.fitBounds([[minLat, minLon], [maxLat, maxLon]]);
+                }
+                
+                document.getElementById('statusText').textContent = `✅ ${file.name} chargé`;
+                document.getElementById('distanceDisplay').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Erreur chargement PMTiles:', error);
+                alert('❌ Erreur chargement fichier: ' + error.message);
+                document.getElementById('statusText').textContent = '❌ Échec chargement';
+            }
+        }
+
+        // Changer la source en ligne
+        function changeTileSource() {
+            currentTileSource = document.getElementById('tileSource').value;
+            
+            if (currentLayer) map.removeLayer(currentLayer);
+            
+            if (currentTileSource === 'osm') {
+                currentLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 19
+                }).addTo(map);
+            } else if (currentTileSource === 'ign') {
+                currentLayer = L.tileLayer('https://data.geopf.fr/wmts?' +
+                    'SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0' +
+                    '&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png' +
+                    '&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
+                    attribution: '© IGN - Plan v2',
+                    maxZoom: 19
+                }).addTo(map);
+            }
+        }
+
+        // Démarrer l'enregistrement
+        function startTracking() {
+            gpsTracker = new GPSTracker();
+            if (gpsTracker.start()) {
+                isTracking = true;
+                track = [];
+                document.getElementById('startBtn').style.display = 'none';
+                document.getElementById('stopBtn').style.display = 'block';
+                document.getElementById('liveIndicator').style.display = 'block';
+                document.getElementById('statusText').textContent = '🔴 Enregistrement actif';
+            }
+        }
+
+        // Arrêter l'enregistrement
+        function stopTracking() {
+            if (gpsTracker) gpsTracker.stop();
+            isTracking = false;
+            document.getElementById('startBtn').style.display = 'block';
+            document.getElementById('stopBtn').style.display = 'none';
+            document.getElementById('saveBtn').style.display = 'block';
+            document.getElementById('liveIndicator').style.display = 'none';
+            document.getElementById('statusText').textContent = '⏸️ Enregistrement terminé';
+        }
+
+        // Afficher les options d'enregistrement
+        function showSaveOptions() {
+            const format = confirm('Exporter au format GPX (OK) ou KML (Annuler) ?');
+            if (format) {
+                exportGPX();
+            } else {
+                exportKML();
+            }
+        }
+
+        // Exporter GPX
+        function exportGPX() {
+            const data = gpsTracker.getTrack();
+            let gpx = '<?xml version="1.0" encoding="UTF-8"?>\n';
+            gpx += '<gpx version="1.1" creator="Treking PWA">\n';
+            gpx += '  <trk>\n';
+            gpx += `    <name>Randonnée ${data.startTime.toLocaleDateString()}</name>\n`;
+            gpx += '    <trkseg>\n';
+            
+            data.positions.forEach(pos => {
+                gpx += `      <trkpt lat="${pos.lat}" lon="${pos.lon}">\n`;
+                if (pos.alt) gpx += `        <ele>${pos.alt}</ele>\n`;
+                gpx += `        <time>${pos.time.toISOString()}</time>\n`;
+                gpx += '      </trkpt>\n';
+            });
+            
+            gpx += '    </trkseg>\n';
+            gpx += '  </trk>\n';
+            gpx += '</gpx>';
+            
+            downloadFile(gpx, `randonnee-${Date.now()}.gpx`, 'application/gpx+xml');
+        }
+
+        // Exporter KML
+        function exportKML() {
+            const data = gpsTracker.getTrack();
+            let kml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+            kml += '<kml xmlns="http://www.opengis.net/kml/2.2">\n';
+            kml += '  <Document>\n';
+            kml += `    <name>Randonnée ${data.startTime.toLocaleDateString()}</name>\n`;
+            kml += '    <Placemark>\n';
+            kml += '      <name>Trace</name>\n';
+            kml += '      <LineString>\n';
+            kml += '        <coordinates>\n';
+            
+            data.positions.forEach(pos => {
+                const alt = pos.alt || 0;
+                kml += `          ${pos.lon},${pos.lat},${alt}\n`;
+            });
+            
+            kml += '        </coordinates>\n';
+            kml += '      </LineString>\n';
+            kml += '    </Placemark>\n';
+            kml += '  </Document>\n';
+            kml += '</kml>';
+            
+            downloadFile(kml, `randonnee-${Date.now()}.kml`, 'application/vnd.google-earth.kml+xml');
+        }
+
+        // Télécharger un fichier
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            document.getElementById('statusText').textContent = `✅ Trace sauvegardée : ${filename}`;
+            document.getElementById('saveBtn').style.display = 'none';
+        }
+
+        // Gestion hors ligne
+        window.addEventListener('offline', () => {
+            alert('📴 Passage en mode hors ligne');
+            if (currentMode === 'online') {
+                document.getElementById('statusText').textContent = '📴 Hors ligne - Certaines fonctionnalités indisponibles';
+            }
+        });
+
+        window.addEventListener('online', () => {
+            alert('📶 Retour en ligne');
+            if (currentMode === 'online') {
+                document.getElementById('statusText').textContent = '📶 Mode en ligne - Prêt';
+            }
+        });
+    </script>
+</body>
+</html>
