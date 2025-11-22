@@ -1,0 +1,22 @@
+{
+  "name": "trekme",
+  "short_name": "trekme",
+  "id": "/PWA/trekme/",
+  "start_url": "/PWA/trekme/index.html",
+  "display": "standalone",
+  "scope": "/PWA/trekme/",
+  "background_color": "#ffffff",
+  "theme_color": "#004d40",
+  "icons": [
+    {
+      "src": "icon192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
