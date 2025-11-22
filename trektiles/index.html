@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrekTiles – PMTiles offline</title>
+    <meta name="description" content="Générateur de cartes hors-ligne PMTiles (OSM & IGN)">
+    <meta name="theme-color" content="#2563eb">
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon512.png">
+    <link rel="apple-touch-icon" href="icon192.png">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:system-ui,sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;padding:15px}
+        .c{max-width:1200px;margin:0 auto;background:#fff;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
+        .h{background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;padding:30px;text-align:center}
+        .h h1{font-size:2.5em;margin-bottom:8px}
+        .content{padding:30px}
+        .s{margin-bottom:30px;padding:25px;background:#f8fafc;border-radius:15px;border:2px solid #e2e8f0}
+        .s h2{color:#2563eb;margin-bottom:20px;font-size:1.5em}
+        input,select{width:100%;padding:12px 15px;border:2px solid #e2e8f0;border-radius:10px;font-size:1em;background:#fff}
+        input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+        .btn{padding:14px 28px;border:none;border-radius:10px;font-weight:600;cursor:pointer;background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;margin:8px 4px}
+        .btn-success{background:#10b981}
+        #map{height:420px;border-radius:15px;margin:20px 0;box-shadow:0 8px 25px rgba(0,0,0,.15)}
+        .slider-value{background:#2563eb;color:#fff;padding:6px 14px;border-radius:20px;font-weight:600;margin-left:8px}
+        .progress-container{display:none;margin-top:25px;padding:20px;background:#fff;border-radius:12px;border:2px solid #2563eb}
+        .progress-bar{height:34px;background:#e2e8f0;border-radius:17px;overflow:hidden}
+        .progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#2563eb,#3b82f6);transition:width .4s;color:#fff;font-weight:600;display:flex;align-items:center;justify-content:center}
+        .folder{background:#fef3c7;border:2px solid #f59e0b;padding:20px;border-radius:15px;margin:20px 0}
+        @media(max-width:768px){.input-row{grid-template-columns:1fr}#map{height:300px}}
+    </style>
+</head>
+<body>
+<div class="c">
+    <div class="h"><h1>TrekTiles</h1><p>Cartes hors-ligne PMTiles (OSM • IGN)</p></div>
+    <div class="content">
+        <div class="s">
+            <h2>Source</h2>
+            <select id="tileSource" onchange="changeTileSource()">
+                <option value="osm">OpenStreetMap</option>
+                <option value="ign">IGN Plan v2</option>
+            </select>
+        </div>
+
+        <div class="s">
+            <h2>Centre</h2>
+            <div class="input-row" style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
+                <input type="number" id="lat" step="0.000001" value="44.8378">
+                <input type="number" id="lon" step="0.000001" value="-0.5792">
+            </div>
+            <button class="btn" onclick="setCenterManual()">Positionner</button>
+            <button class="btn" onclick="setCenterGPS()">Ma position</button>
+            <p style="margin:10px 0;color:#666">Ou cliquez sur la carte</p>
+            <div id="map"></div>
+            <div style="padding:10px;background:#dbeafe;border-radius:8px">Centre : <strong id="centerInfo">44.8378, -0.5792</strong></div>
+        </div>
+
+        <div class="s">
+            <h2>Paramètres</h2>
+            <div style="margin:20px 0">
+                <label>Rayon : <span class="slider-value" id="radiusValue">10 km</span></label>
+                <input type="range" id="radius" min="1" max="50" value="10" step="1" style="width:100%" oninput="updateRadius()">
+            </div>
+            <div class="input-row" style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
+                <div><label>Zoom min</label><input type="number" id="minZoom" value="10" min="0" max="18"></div>
+                <div><label>Zoom max</label><input type="number" id="maxZoom" value="16" min="0" max="18"></div>
+            </div>
+
+            <div class="folder">
+                <button class="btn btn-success" onclick="selectDirectory()" id="dirBtn" style="width:100%;padding:16px;font-size:1.1em">
+                    Activer choix du dossier
+                </button>
+                <p id="dirInfo" style="margin-top:10px">Sinon → Téléchargements</p>
+            </div>
+
+            <button class="btn" onclick="generatePMTiles()" style="width:100%;padding:20px;font-size:1.4em;margin-top:20px">
+                Générer le fichier .pmtiles
+            </button>
+
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar"><div class="progress-fill" id="progressFill">0%</div></div>
+                <div style="text-align:center;font-weight:600" id="progressText">Préparation…</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<!-- PMTiles v3.2.0 – version DIRECTE (bypass cache SW) -->
+<script src="https://cdn.jsdelivr.net/npm/pmtiles@3.2.0/dist/index.min.js"></script>
+
+<script>
+    // Désactive complètement le SW tant que le bug de cache n'est pas réglé
+    // if ('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+
+    let map, marker, circle, tileLayer;
+    let centerLat = 44.8378, centerLon = -0.5792;
+    let directoryHandle = null;
+    let currentTileSource = 'osm';
+
+    function initMap() {
+        map = L.map('map',{scrollWheelZoom:false}).setView([centerLat, centerLon], 13);
+        changeTileSource();
+        marker = L.marker([centerLat, centerLon]).addTo(map);
+        circle = L.circle([centerLat, centerLon],{radius:10000,color:'#2563eb',fillOpacity:0.15}).addTo(map);
+        map.on('click', e=>{centerLat=e.latlng.lat;centerLon=e.latlng.lng;updateCenter()});
+        map.scrollWheelZoom.enable();
+        updateCenter();
+    }
+
+    function changeTileSource() {
+        currentTileSource = document.getElementById('tileSource').value;
+        if (tileLayer) map.removeLayer(tileLayer);
+        tileLayer = L.tileLayer(currentTileSource==='osm'?
+            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png':
+            'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}',
+            {attribution: currentTileSource==='osm'?'© OpenStreetMap':'© IGN', maxZoom:19}
+        ).addTo(map);
+    }
+
+    function updateCenter() {
+        marker.setLatLng([centerLat, centerLon]);
+        circle.setLatLng([centerLat, centerLon]);
+        map.setView([centerLat, centerLon]);
+        document.getElementById('lat').value = centerLat.toFixed(6);
+        document.getElementById('lon').value = centerLon.toFixed(6);
+        document.getElementById('centerInfo').textContent = centerLat.toFixed(6)+', '+centerLon.toFixed(6);
+        updateRadius();
+    }
+    function setCenterManual(){centerLat=+document.getElementById('lat').value;centerLon=+document.getElementById('lon').value;updateCenter()}
+    function setCenterGPS(){navigator.geolocation.getCurrentPosition(p=>{centerLat=p.coords.latitude;centerLon=p.coords.longitude;updateCenter()})}
+    function updateRadius(){const r=+document.getElementById('radius').value;document.getElementById('radiusValue').textContent=r+' km';circle.setRadius(r*1000)}
+    function selectDirectory(){directoryHandle='use_picker';document.getElementById('dirBtn').textContent='Choix dossier activé !';document.getElementById('dirInfo').textContent='Vous choisirez le dossier à la sauvegarde'}
+
+    function tileBounds(lat,lon,rKm,z){
+        const R=6371, d=rKm/R*180/Math.PI/cos=Math.cos(lat*Math.PI/180);
+        const minLat=lat-d, maxLat=lat+d, minLon=lon-d/cos, maxLon=lon+d/cos;
+        const t=(x,z)=>(1<<z);
+        return{
+            minX: Math.floor((minLon+180)/360*t(z)),
+            maxX: Math.floor((maxLon+180)/360*t(z)),
+            minY: Math.floor((1-Math.log(Math.tan(maxLat*Math.PI/180)+1/Math.cos(maxLat*Math.PI/180))/Math.PI)/2*t(z)),
+            maxY: Math.floor((1-Math.log(Math.tan(minLat*Math.PI/180)+1/Math.cos(minLat*Math.PI/180))/Math.PI)/2*t(z))
+        }
+    }
+
+    async function generatePMTiles(){
+        const radius=+document.getElementById('radius').value;
+        const minZ=+document.getElementById('minZoom').value;
+        const maxZ=+document.getElementById('maxZoom').value;
+        if(minZ>maxZ)return alert('Zoom min > max');
+
+        const name=`trektiles-${new Date().toISOString().slice(0,16).replace('T','-').replace(':','')}`;
+
+        let fileHandle=null;
+        if(directoryHandle==='use_picker'&&'showSaveFilePicker'in window){
+            try{fileHandle=await showSaveFilePicker({suggestedName:name+'.pmtiles',types:[{accept:{'application/octet-stream':['.pmtiles']}}]});}
+            catch(e){if(e.name!=='AbortError')console.error(e)}
+        }
+
+        document.getElementById('progressContainer').style.display='block';
+        document.getElementById('progressFill').style.width='0%';
+        document.getElementById('progressText').textContent='Calcul du nombre de tuiles…';
+
+        const writer=new PMTiles.Writer();
+        let total=0, done=0;
+        for(let z=minZ;z<=maxZ;z++)total+=(tileBounds(centerLat,centerLon,radius,z).maxX-tileBounds(centerLat,centerLon,radius,z).minX+1)*(tileBounds(centerLat,centerLon,radius,z).maxY-tileBounds(centerLat,centerLon,radius,z).minY+1);
+
+        for(let z=minZ;z<=maxZ;z++){
+            const b=tileBounds(centerLat,centerLon,radius,z);
+            for(let x=b.minX;x<=b.maxX;x++){
+                for(let y=b.minY;y<=b.maxY;y++){
+                    try{
+                        const url=currentTileSource==='osm'?
+                            `https://tile.openstreetmap.org/${z}/${x}/${y}.png`:
+                            `https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX=${z}&TILEROW=${y}&TILECOL=${x}`;
+                        const r=await fetch(url,{cache:"no-store"});
+                        if(!r.ok)continue;
+                        const buf=await r.arrayBuffer();
+                        await writer.addTile(z,x,y,buf);
+                        done++;
+                        const pct=Math.round(done/total*100);
+                        document.getElementById('progressFill').style.width=pct+'%';
+                        document.getElementById('progressFill').textContent=pct+'%';
+                        document.getElementById('progressText').textContent=`${done}/${total} tuiles…`;
+                        if(done%40===0)await new Promise(r=>setTimeout(r,1));
+                    }catch(e){}
+                }
+            }
+        }
+
+        document.getElementById('progressText').textContent='Finalisation du PMTiles…';
+        const final=await writer.finish({
+            minZoom:minZ,maxZoom:maxZ,
+            center:[centerLon,centerLat,Math.round((minZ+maxZ)/2)],
+            name:"TrekTiles – "+(currentTileSource==='osm'?'OSM':'IGN'),
+            attribution:currentTileSource==='osm'?'© OpenStreetMap contributors':'© IGN',
+            format:'png'
+        });
+
+        const blob=new Blob([final],{type:'application/octet-stream'});
+        if(fileHandle){
+            const w=await fileHandle.createWritable();
+            await w.write(blob);await w.close();
+            document.getElementById('progressText').textContent='Terminé ! Fichier sauvegardé';
+        }else{
+            const a=document.createElement('a');
+            a.href=URL.createObjectURL(blob);
+            a.download=name+'.pmtiles';
+            a.click();
+            document.getElementById('progressText').textContent='Terminé ! Téléchargement lancé';
+        }
+        document.getElementById('progressFill').style.width='100%';
+        setTimeout(()=>document.getElementById('progressContainer').style.display='none',6000);
+    }
+
+    window.onload=initMap;
+</script>
+</body>
+</html>
