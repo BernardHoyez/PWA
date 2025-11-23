@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Générateur SQLITEDB OSMAnd</title>
+<link rel="manifest" href="manifest.json" />
+<style>
+body { font-family: sans-serif; margin: 0; padding: 0; }
+#map { height: 60vh; width: 100%; }
+.controls { padding: 10px; background: #f0f0f0; }
+label { display: block; margin-top: 10px; }
+</style>
+</head>
+<body>
+<h2 style="padding:10px">Créateur de tuiles SQLITEDB pour OSMAnd</h2>
+<div id="map"></div>
+<div class="controls">
+  <label>Rayon (km): <input type="range" id="radius" min="1" max="50" value="5" /></label>
+  <label>Dossier de sauvegarde : <input type="file" id="folder" webkitdirectory directory /></label>
+  <button id="generate">Générer SQLITEDB</button>
+  <div id="info"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+let map = L.map('map').setView([44, 6], 10);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+let centerMarker = L.marker(map.getCenter(), { draggable: true }).addTo(map);
+centerMarker.on('dragend', () => updateInfo());
+map.on('move', () => { centerMarker.setLatLng(map.getCenter()); updateInfo(); });
+
+document.getElementById("radius").addEventListener("input", updateInfo);
+updateInfo();
+
+function updateInfo() {
+  const c = map.getCenter();
+  const r = document.getElementById("radius").value;
+  document.getElementById("info").innerText = `Centre: ${c.lat.toFixed(5)}, ${c.lng.toFixed(5)} | Rayon: ${r} km`;
+}
+
+// --- Génération SQLITEDB ---
+document.getElementById("generate").onclick = async () => {
+  const db = await initSqlJs({ locateFile: f => `https://sql.js.org/dist/${f}` });
+  const sqlitedb = new db.Database();
+  sqlitedb.run(`CREATE TABLE tiles (zoom INTEGER, x INTEGER, y INTEGER, tile BLOB);`);
+
+  const c = map.getCenter();
+  const radiusKm = Number(document.getElementById("radius").value);
+  const folder = document.getElementById("folder").files;
+
+  const zmin = 10, zmax = 15;
+
+  for (let z = zmin; z <= zmax; z++) {
+    // calcul emprise approximative
+    const delta = radiusKm / 111;
+    const minLat = c.lat - delta;
+    const maxLat = c.lat + delta;
+    const minLng = c.lng - delta;
+    const maxLng = c.lng + delta;
+
+    const n = 2 ** z;
+    const x1 = Math.floor((minLng + 180) / 360 * n);
+    const x2 = Math.floor((maxLng + 180) / 360 * n);
+    const y1 = Math.floor((1 - Math.log(Math.tan(minLat * Math.PI/180) + 1/Math.cos(minLat * Math.PI/180)) / Math.PI) / 2 * n);
+    const y2 = Math.floor((1 - Math.log(Math.tan(maxLat * Math.PI/180) + 1/Math.cos(maxLat * Math.PI/180)) / Math.PI) / 2 * n);
+
+    for (let x = x1; x <= x2; x++) {
+      for (let y = y1; y <= y2; y++) {
+        const url = `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
+        const img = await fetch(url);
+        if (!img.ok) continue;
+        const arr = new Uint8Array(await img.arrayBuffer());
+        const stmt = sqlitedb.prepare("INSERT INTO tiles VALUES (?, ?, ?, ?)");
+        stmt.bind([z, x, y, arr]);
+        stmt.step();
+        stmt.free();
+      }
+    }
+  }
+
+  const data = sqlitedb.export();
+  const blob = new Blob([data], { type: "application/x-sqlite3" });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `tiles_${Date.now()}.sqlitedb`;
+  a.click();
+};
+</script>
+
+<!-- SQL.js -->
+<script src="https://sql.js.org/dist/sql-wasm.js"></script>
+
+<script>
+// ------------------- MANIFEST PWA --------------------
+const manifest = {
+  name: "SQLITEDB Generator",
+  short_name: "SQLITEDBGen",
+  display: "standalone",
+  start_url: ".",
+  icons: [
+    { src: "icon192.png", sizes: "192x192", type: "image/png" },
+    { src: "icon512.png", sizes: "512x512", type: "image/png" }
+  ]
+};
+const blobManifest = new Blob([JSON.stringify(manifest)], { type: "application/json" });
+const manifestURL = URL.createObjectURL(blobManifest);
+const link = document.querySelector('link[rel="manifest"]');
+link.href = manifestURL;
+
+// ------------------- SERVICE WORKER -------------------
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>
