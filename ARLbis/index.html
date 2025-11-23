@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARL - Générateur cartes offline</title>
+    <meta name="theme-color" content="#2563eb">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.11.0/sql-wasm.min.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;padding:20px;color:#333;}
+        .container{max-width:1200px;margin:0 auto;background:white;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.3);overflow:hidden;}
+        .header{background:linear-gradient(135deg,#2563eb 0%,#3b82f6 100%);color:white;padding:30px;text-align:center;}
+        .header h1{font-size:2.5em;margin-bottom:10px;}
+        .content{padding:30px;}
+        .section{margin-bottom:30px;padding:25px;background:#f8fafc;border-radius:15px;border:2px solid #e2e8f0;}
+        .section h2{color:#2563eb;margin-bottom:20px;font-size:1.5em;display:flex;align-items:center;gap:10px;}
+        .input-row{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:15px 0;}
+        input,select{width:100%;padding:12px 15px;border:2px solid #e2e8f0;border-radius:10px;font-size:1em;background:white;}
+        .btn{padding:14px 25px;border:none;border-radius:10px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .3s;margin:10px 5px 10px 0;}
+        .btn-primary{background:linear-gradient(135deg,#2563eb 0%,#3b82f6 100%);color:white;box-shadow:0 4px 15px rgba(37,99,235,0.4);}
+        .btn-primary:hover{transform:translateY(-2px);}
+        .btn-success{background:#10b981;color:white;}
+        #map{width:100%;height:420px;border-radius:15px;margin-top:20px;box-shadow:0 4px 20px rgba(0,0,0,0.15);}
+        .progress-container{display:none;margin-top:25px;padding:20px;background:#f0f9ff;border:2px solid #0ea5e9;border-radius:12px;}
+        .progress-bar{height:36px;background:#e0e7ff;border-radius:18px;overflow:hidden;margin-bottom:12px;}
+        .progress-fill{height:100%;background:linear-gradient(90deg,#2563eb,#3b82f6);width:0%;transition:width .4s;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;}
+        .folder-section{background:#fefce8;border:2px solid #f59e0b;border-radius:15px;padding:20px;margin:20px 0;}
+        .info-box{background:#dbeafe;border-left:4px solid #2563eb;padding:15px;border-radius:8px;margin-top:15px;}
+        @media(max-width:768px){.input-row{grid-template-columns:1fr;}}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>ARL - Cartes offline</h1>
+        <p>Générateur .sqlitedb 100 % compatible OSMand • Locus • Guru Maps</p>
+    </div>
+    
+    <div class="content">
+        <div class="section">
+            <h2>Fond de carte</h2>
+            <select id="tileSource" onchange="changeTileSource()">
+                <option value="osm">OpenStreetMap</option>
+                <option value="ign">IGN Plan v2 (France)</option>
+            </select>
+        </div>
+
+        <div class="section">
+            <h2>Centre de la zone</h2>
+            <div class="input-row">
+                <input type="number" id="lat" step="0.000001" value="49.515" placeholder="Latitude">
+                <input type="number" id="lon" step="0.000001" value="0.107" placeholder="Longitude">
+            </div>
+            <button class="btn btn-primary" onclick="setCenterManual()">Appliquer coordonnées</button>
+            <button class="btn btn-primary" onclick="setCenterGPS()">Ma position GPS</button>
+            <div id="map"></div>
+            <div class="info-box" id="centerInfo">
+                <strong>Centre actuel :</strong> Lat 49.515000, Lon 0.107000
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Paramètres de génération</h2>
+            <label>Rayon : <strong id="radiusValue">5 km</strong></label>
+            <input type="range" id="radius" min="1" max="25" value="5" step="0.5" oninput="updateRadius()" style="width:100%;margin:15px 0;height:8px;">
+
+            <div class="input-row">
+                <div><label>Zoom min</label><input type="number" id="minZoom" value="11" min="8" max="17"></div>
+                <div><label>Zoom max</label><input type="number" id="maxZoom" value="16" min="12" max="18"></div>
+            </div>
+
+            <div class="folder-section">
+                <h3>Dossier de sauvegarde (persistant)</h3>
+                <button class="btn btn-primary" onclick="chooseFolder()" id="folderBtn">Choisir le dossier</button>
+                <div id="folderStatus" style="margin-top:12px;font-size:0.95em;color:#92400e;">
+                    Aucun dossier choisi → téléchargement classique dans Téléchargements
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="generateMap()" style="width:100%;padding:18px;font-size:1.3em;margin-top:20px;">
+                Générer la carte .sqlitedb
+            </button>
+
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar"><div class="progress-fill" id="progressFill">0%</div></div>
+                <div style="text-align:center;" id="progressText">Initialisation…</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let map, marker, circle, centerLat = 49.515, centerLon = 0.107;
+let tileLayer, source = 'osm';
+let directoryHandle = null;
+
+function initMap() {
+    map = L.map('map').setView([centerLat, centerLon], 13);
+    changeTileSource(); // charge OSM par défaut
+
+    marker = L.marker([centerLat, centerLon], {draggable: true}).addTo(map);
+    circle = L.circle([centerLat, centerLon], {radius: 5000, color: '#2563eb', weight: 3, fillOpacity: 0.15}).addTo(map);
+
+    map.on('click', e => {
+        centerLat = e.latlng.lat;
+        centerLon = e.latlng.lng;
+        updateCenterDisplay();
+    });
+
+    marker.on('dragend', e => {
+        const pos = marker.getLatLng();
+        centerLat = pos.lat;
+        centerLon = pos.lng;
+        updateCenterDisplay();
+    });
+
+    updateCenterDisplay();
+}
+
+function changeTileSource() {
+    source = document.getElementById('tileSource').value;
+    if (tileLayer) map.removeLayer(tileLayer);
+    tileLayer = L.tileLayer(source === 'osm'
+        ? 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+        : 'https://data.geopf.fr/wmts
