@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Générateur SQLITEDB / MBTiles OSMAnd</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<link rel="manifest" href="manifest.json" />
+<style>
+body { font-family: sans-serif; margin: 0; padding: 0; }
+#map { height: 60vh; width: 100%; }
+.controls { padding: 10px; background: #f0f0f0; }
+label { display: block; margin-top: 10px; }
+</style>
+</head>
+<body>
+<h2 style="padding:10px">Créateur de tuiles (.sqlitedb / .mbtiles) format OSMAnd / BigPlanet</h2>
+<div id="map"></div>
+<div class="controls">
+  <label>Fond de carte:
+    <select id="basemap">
+      <option value="osm">OSM</option>
+      <option value="ign">IGNv2</option>
+    </select>
+  </label>
+
+  <button id="gpsBtn">Centre = GPS</button>
+
+  <label>Rayon (km): <input type="range" id="radius" min="1" max="50" value="5" /></label>
+
+  <label>Format de sortie:
+    <select id="outputFormat">
+      <option value="sqlitedb">OSMand (.sqlitedb)</option>
+      <option value="mbtiles">MBTiles (.mbtiles)</option>
+    </select>
+  </label>
+
+  <button id="generate">Générer</button>
+  <div id="info"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://sql.js.org/dist/sql-wasm.js"></script>
+
+<script>
+let map = L.map('map', { zoomControl: true }).setView([44, 6], 10);
+
+const tileOSM = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png');
+const tileIGN = L.tileLayer('https://wxs.ign.fr/essentiels/geoportail/tms/1.0.0/PLAN.IGNV2/{z}/{x}/{y}.png');
+let currentLayer = tileOSM.addTo(map);
+
+document.getElementById('basemap').onchange = () => {
+  map.removeLayer(currentLayer);
+  currentLayer = (basemap.value === 'osm') ? tileOSM : tileIGN;
+  currentLayer.addTo(map);
+};
+
+// CERCLE
+let circle = L.circle(map.getCenter(), { radius: 5000 }).addTo(map);
+
+// MARQUEUR DE CENTRE
+let centerMarker = L.marker(map.getCenter(), { draggable: true }).addTo(map);
+centerMarker.on('dragend', ()=> updateInfo());
+
+// Choix centre par clic
+map.on('click', (e)=>{
+  map.setView(e.latlng);
+  centerMarker.setLatLng(e.latlng);
+  updateInfo();
+});
+
+// GPS
+gpsBtn.onclick = ()=>{
+  if (navigator.geolocation) navigator.geolocation.getCurrentPosition(pos=>{
+    const p = [pos.coords.latitude, pos.coords.longitude];
+    map.setView(p, 14);
+    centerMarker.setLatLng(p);
+    updateInfo();
+  });
+};
+
+// Mise à jour info
+radius.oninput = updateInfo;
+updateInfo();
+
+function updateInfo() {
+  const c = centerMarker.getLatLng();
+  const r = radius.value;
+  circle.setLatLng(c);
+  circle.setRadius(r * 1000);
+  info.innerText = `Centre: ${c.lat.toFixed(5)}, ${c.lng.toFixed(5)} | Rayon: ${r} km`;
+}
+
+// ---------------- GENERATION BIGPLANET (OSMAnd) -----------------
+async function generateTiles() {
+  const format = document.getElementById('outputFormat').value;
+  const db = await initSqlJs({ locateFile: f => `https://sql.js.org/dist/${f}` });
+  const sql = new db.Database();
+
+  sql.run(`CREATE TABLE tiles
