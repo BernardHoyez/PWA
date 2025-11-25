@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Générateur SQLITEDB / MBTiles OSMAnd</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<link rel="manifest" href="manifest.json" />
+
+<style>
+body { font-family: sans-serif; margin: 0; padding: 0; }
+#map { height: 60vh; width: 100%; }
+.controls { padding: 10px; background: #f0f0f0; }
+label { display: block; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<h2 style="padding:10px">Créateur de tuiles (.sqlitedb / .mbtiles) format OSMAnd / BigPlanet</h2>
+
+<div id="map"></div>
+
+<div class="controls">
+
+  <label>Fond de carte :
+    <select id="basemap">
+      <option value="osm">OSM</option>
+      <option value="ign">IGNv2</option>
+    </select>
+  </label>
+
+  <button id="gpsBtn">Centre = GPS</button>
+
+  <label>
+    Rayon :
+    <input type="range" id="radius" min="1" max="50" value="5" />
+    <span id="radiusValue">5</span> km
+  </label>
+
+  <label>Format de sortie :
+    <select id="outputFormat">
+      <option value="sqlitedb">OSMand (.sqlitedb)</option>
+      <option value="mbtiles">MBTiles (.mbtiles)</option>
+    </select>
+  </label>
+
+  <button id="generate">Générer</button>
+
+  <progress id="progressBar" value="0" max="100" style="width:100%; display:none;"></progress>
+
+  <div id="info"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://sql.js.org/dist/sql-wasm.js"></script>
+
+<script>
+// ------------------------- CARTE -------------------------
+let map = L.map('map', { zoomControl: true }).setView([44, 6], 10);
+
+const tileOSM = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png');
+
+// ❗ VERSION IGN EXACTE QUI FONCTIONNAIT DANS TON CODE INITIAL
+const tileIGN = L.tileLayer(
+  "https://wxs.ign.fr/essentiels/geoportail/tms/1.0.0/PLAN.IGNV2/{z}/{x}/{y}.png",
+  { tms: true }
+);
+
+let currentLayer = tileOSM.addTo(map);
+
+basemap.onchange = () => {
+  map.removeLayer(currentLayer);
+  currentLayer = (basemap.value === 'osm') ? tileOSM : tileIGN;
+  currentLayer.addTo(map);
+};
+
+// ------------------------- MARQUEUR ET CERCLE -------------------------
+let circle = L.circle(map.getCente
