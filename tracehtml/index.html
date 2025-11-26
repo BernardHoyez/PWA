@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>tracehtml</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon512.png" sizes="512x512">
+  <style>
+    body{font-family:system-ui;margin:40px;background:#f8f9fa}
+    .c{max-width:600px;margin:auto;background:#fff;padding:30px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.1);text-align:center}
+    input,button{margin:10px 0;padding:12px;width:100%;font-size:1.1em}
+    button{background:#007bff;color:#fff;border:none;border-radius:8px;cursor:pointer}
+    button:hover{background:#0056b3}
+  </style>
+</head>
+<body>
+  <div class="c">
+    <h1>tracehtml</h1>
+    <p>Chargez un .gpx ou .kml → fichier HTML autonome généré immédiatement</p>
+    <input type="file" id="file" accept=".gpx,.kml">
+    <button id="btn">Générer la carte</button>
+    <p id="msg"></p>
+  </div>
+
+  <script>
+    // Chargement unique de togeojson
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/@turf/turf@6/turf.min.js';
+    document.head.appendChild(script);
+
+    script.onload = () => {
+      const togeojsonScript = document.createElement('script');
+      togeojsonScript.src = 'https://unpkg.com/@mapbox/togeojson';
+      document.head.appendChild(togeojsonScript);
+    };
+  </script>
+  <script src="app.js"></script>
+</body>
+</html>
