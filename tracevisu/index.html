@@ -1,0 +1,384 @@
+import React, { useState, useEffect } from 'react';
+import { Upload, Download, Map, FileText, Navigation } from 'lucide-react';
+
+export default function GPSTraceConverter() {
+  const [file, setFile] = useState(null);
+  const [traceData, setTraceData] = useState(null);
+  const [mapHtml, setMapHtml] = useState('');
+  const [fileName, setFileName] = useState('');
+
+  // Parser KML
+  const parseKML = (text) => {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(text, 'text/xml');
+    const coordinates = [];
+    
+    const coordElements = xmlDoc.getElementsByTagName('coordinates');
+    for (let elem of coordElements) {
+      const coordText = elem.textContent.trim();
+      const points = coordText.split(/\s+/);
+      
+      points.forEach(point => {
+        const [lon, lat, ele] = point.split(',');
+        if (lon && lat) {
+          coordinates.push({
+            lat: parseFloat(lat),
+            lon: parseFloat(lon),
+            ele: ele ? parseFloat(ele) : 0
+          });
+        }
+      });
+    }
+    
+    return coordinates;
+  };
+
+  // Parser GPX
+  const parseGPX = (text) => {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(text, 'text/xml');
+    const coordinates = [];
+    
+    const trkpts = xmlDoc.getElementsByTagName('trkpt');
+    for (let pt of trkpts) {
+      const lat = parseFloat(pt.getAttribute('lat'));
+      const lon = parseFloat(pt.getAttribute('lon'));
+      const eleElem = pt.getElementsByTagName('ele')[0];
+      const ele = eleElem ? parseFloat(eleElem.textContent) : 0;
+      
+      coordinates.push({ lat, lon, ele });
+    }
+    
+    return coordinates;
+  };
+
+  // Convertir en GPX
+  const toGPX = (coords) => {
+    let gpx = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="GPS Trace Converter">
+  <trk>
+    <name>Trace GPS</name>
+    <trkseg>
+`;
+    coords.forEach(coord => {
+      gpx += `      <trkpt lat="${coord.lat}" lon="${coord.lon}">
+        <ele>${coord.ele}</ele>
+      </trkpt>
+`;
+    });
+    gpx += `    </trkseg>
+  </trk>
+</gpx>`;
+    return gpx;
+  };
+
+  // Convertir en KML
+  const toKML = (coords) => {
+    let kml = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Trace GPS</name>
+    <Placemark>
+      <name>Route</name>
+      <LineString>
+        <coordinates>
+`;
+    coords.forEach(coord => {
+      kml += `          ${coord.lon},${coord.lat},${coord.ele}\n`;
+    });
+    kml += `        </coordinates>
+      </LineString>
+    </Placemark>
+  </Document>
+</kml>`;
+    return kml;
+  };
+
+  // Convertir en GeoJSON
+  const toGeoJSON = (coords) => {
+    const geojson = {
+      type: "FeatureCollection",
+      features: [{
+        type: "Feature",
+        properties: {
+          name: "Trace GPS"
+        },
+        geometry: {
+          type: "LineString",
+          coordinates: coords.map(c => [c.lon, c.lat, c.ele])
+        }
+      }]
+    };
+    return JSON.stringify(geojson, null, 2);
+  };
+
+  // Générer HTML avec carte OSM
+  const generateMapHTML = (coords) => {
+    if (!coords || coords.length === 0) return '';
+
+    const center = {
+      lat: coords.reduce((sum, c) => sum + c.lat, 0) / coords.length,
+      lon: coords.reduce((sum, c) => sum + c.lon, 0) / coords.length
+    };
+
+    const coordsJSON = JSON.stringify(coords);
+
+    return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trace GPS - ${fileName}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; }
+    #map { width: 100vw; height: 100vh; }
+    .info-box {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      z-index: 1000;
+      max-width: 250px;
+    }
+    .info-box h3 { margin-bottom: 10px; font-size: 16px; }
+    .info-box p { margin: 5px 0; font-size: 13px; color: #555; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div class="info-box">
+    <h3>📍 Trace GPS</h3>
+    <p><strong>Points:</strong> <span id="points"></span></p>
+    <p><strong>Distance:</strong> <span id="distance"></span> km</p>
+    <p><strong>Dénivelé:</strong> <span id="elevation"></span> m</p>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script>
+    const coords = ${coordsJSON};
+    
+    // Initialiser la carte
+    const map = L.map('map').setView([${center.lat}, ${center.lon}], 13);
+    
+    // Ajouter tuiles OSM
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(map);
+    
+    // Dessiner la trace
+    const latLngs = coords.map(c => [c.lat, c.lon]);
+    const polyline = L.polyline(latLngs, {
+      color: '#ff4444',
+      weight: 4,
+      opacity: 0.8
+    }).addTo(map);
+    
+    // Marqueurs début/fin
+    L.marker([coords[0].lat, coords[0].lon]).addTo(map)
+      .bindPopup('🚀 Départ');
+    L.marker([coords[coords.length-1].lat, coords[coords.length-1].lon]).addTo(map)
+      .bindPopup('🏁 Arrivée');
+    
+    // Ajuster la vue
+    map.fitBounds(polyline.getBounds());
+    
+    // Calculer statistiques
+    function haversine(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+    
+    let totalDist = 0;
+    for (let i = 1; i < coords.length; i++) {
+      totalDist += haversine(coords[i-1].lat, coords[i-1].lon, coords[i].lat, coords[i].lon);
+    }
+    
+    let elevGain = 0;
+    for (let i = 1; i < coords.length; i++) {
+      const diff = coords[i].ele - coords[i-1].ele;
+      if (diff > 0) elevGain += diff;
+    }
+    
+    document.getElementById('points').textContent = coords.length;
+    document.getElementById('distance').textContent = totalDist.toFixed(2);
+    document.getElementById('elevation').textContent = Math.round(elevGain);
+  </script>
+</body>
+</html>`;
+  };
+
+  // Gérer l'upload
+  const handleFileUpload = (e) => {
+    const uploadedFile = e.target.files[0];
+    if (!uploadedFile) return;
+
+    setFileName(uploadedFile.name.replace(/\.[^/.]+$/, ''));
+    const reader = new FileReader();
+    
+    reader.onload = (event) => {
+      const text = event.target.result;
+      let coords = [];
+
+      if (uploadedFile.name.toLowerCase().endsWith('.kml')) {
+        coords = parseKML(text);
+      } else if (uploadedFile.name.toLowerCase().endsWith('.gpx')) {
+        coords = parseGPX(text);
+      }
+
+      if (coords.length > 0) {
+        setTraceData(coords);
+        const html = generateMapHTML(coords);
+        setMapHtml(html);
+      } else {
+        alert('Aucune coordonnée trouvée dans le fichier');
+      }
+    };
+    
+    reader.readAsText(uploadedFile);
+    setFile(uploadedFile);
+  };
+
+  // Télécharger fichier
+  const downloadFile = (content, filename, type) => {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <div className="max-w-4xl mx-auto">
+        {/* En-tête */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <Navigation className="w-8 h-8 text-indigo-600" />
+            <h1 className="text-3xl font-bold text-gray-800">
+              TraceVisu
+            </h1>
+          </div>
+          <p className="text-gray-600">
+            Importez vos fichiers KML ou GPX pour les visualiser et les convertir
+          </p>
+        </div>
+
+        {/* Zone d'upload */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+          <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-indigo-300 rounded-lg cursor-pointer hover:bg-indigo-50 transition-colors">
+            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+              <Upload className="w-12 h-12 text-indigo-500 mb-3" />
+              <p className="mb-2 text-lg font-semibold text-gray-700">
+                Cliquez pour importer un fichier
+              </p>
+              <p className="text-sm text-gray-500">KML ou GPX (max 10MB)</p>
+              {file && (
+                <p className="mt-3 text-sm font-medium text-indigo-600">
+                  📁 {file.name}
+                </p>
+              )}
+            </div>
+            <input
+              type="file"
+              className="hidden"
+              accept=".kml,.gpx"
+              onChange={handleFileUpload}
+            />
+          </label>
+        </div>
+
+        {/* Aperçu et téléchargements */}
+        {traceData && mapHtml && (
+          <>
+            {/* Aperçu carte */}
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
+              <div className="bg-indigo-600 text-white px-6 py-3 flex items-center gap-2">
+                <Map className="w-5 h-5" />
+                <h2 className="text-lg font-semibold">Aperçu de la trace</h2>
+              </div>
+              <iframe
+                srcDoc={mapHtml}
+                className="w-full h-96 border-0"
+                title="Aperçu carte"
+              />
+              <div className="p-4 bg-gray-50 text-center text-sm text-gray-600">
+                {traceData.length} points GPS • Carte OpenStreetMap
+              </div>
+            </div>
+
+            {/* Boutons de téléchargement */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Download className="w-5 h-5 text-indigo-600" />
+                <h2 className="text-xl font-semibold text-gray-800">
+                  Télécharger la trace
+                </h2>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <button
+                  onClick={() => downloadFile(mapHtml, `${fileName}.html`, 'text/html')}
+                  className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                >
+                  <FileText className="w-5 h-5" />
+                  Carte HTML
+                </button>
+                
+                <button
+                  onClick={() => downloadFile(toGPX(traceData), `${fileName}.gpx`, 'application/gpx+xml')}
+                  className="flex items-center justify-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
+                >
+                  <Download className="w-5 h-5" />
+                  Format GPX
+                </button>
+                
+                <button
+                  onClick={() => downloadFile(toKML(traceData), `${fileName}.kml`, 'application/vnd.google-earth.kml+xml')}
+                  className="flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  <Download className="w-5 h-5" />
+                  Format KML
+                </button>
+                
+                <button
+                  onClick={() => downloadFile(toGeoJSON(traceData), `${fileName}.geojson`, 'application/geo+json')}
+                  className="flex items-center justify-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                >
+                  <Download className="w-5 h-5" />
+                  Format GeoJSON
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Instructions */}
+        {!traceData && (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              ℹ️ Comment utiliser l'application
+            </h3>
+            <ol className="space-y-2 text-gray-700">
+              <li>1. Importez un fichier KML ou GPX contenant votre trace GPS</li>
+              <li>2. Visualisez votre trace sur une carte OpenStreetMap interactive</li>
+              <li>3. Téléchargez la carte au format HTML ou convertissez vers GPX, KML ou GeoJSON</li>
+            </ol>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
