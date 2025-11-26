@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>traceX – Drag & Drop magique</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon512.png" sizes="512x512">
+  <style>
+    body {
+      margin:0; font-family:system-ui,sans-serif; background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; height:100vh; display:flex; align-items:center; justify-content:center;
+    }
+    .dropzone {
+      width:90%; max-width:600px; padding:60px; border:4px dashed rgba(255,255,255,.4);
+      border-radius:20px; text-align:center; background:rgba(255,255,255,.1); backdrop-filter:blur(10px);
+      transition:all .3s; cursor:pointer;
+    }
+    .dropzone.dragover { border-color:#fff; background:rgba(255,255,255,.2); transform:scale(1.05); }
+    h1 { margin:0 0 20px; font-size:2.8em; }
+    p { margin:10px 0 30px; font-size:1.3em; opacity:0.9; }
+    .info { font-size:0.9em; opacity:0.7; margin-top:40px; }
+    #status { margin-top:20px; font-weight:bold; font-size:1.2em; min-height:30px; }
+    #error { color: #ff6b6b; margin-top:10px; font-size:1em; }
+  </style>
+</head>
+<body>
+
+  <div class="dropzone" id="dropzone">
+    <h1>traceX</h1>
+    <p>Déposez votre fichier <strong>.gpx</strong> ou <strong>.kml</strong> ici</p>
+    <p>ou cliquez pour sélectionner</p>
+    <div id="status"></div>
+    <div id="error"></div>
+    <div class="info">Carte HTML autonome générée instantanément avec téléchargements GPX · KML · GeoJSON</div>
+  </div>
+
+  <input type="file" id="file-input" accept=".gpx,.kml" hidden>
+
+  <script>
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file-input');
+    const status = document.getElementById('status');
+    const errorDiv = document.getElementById('error');
+
+    ['dragenter','dragover','dragleave','drop'].forEach(ev => {
+      dropzone.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); });
+    });
+
+    ['dragenter','dragover'].forEach(ev => {
+      dropzone.addEventListener(ev, () => dropzone.classList.add('dragover'));
+    });
+
+    ['dragleave','drop'].forEach(ev => {
+      dropzone.addEventListener(ev, () => dropzone.classList.remove('dragover'));
+    });
+
+    dropzone.addEventListener('drop', e => {
+      const files = e.dataTransfer.files;
+      if (files.length) handleFile(files[0]);
+    });
+
+    dropzone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) handleFile(fileInput.files[0]);
+    });
+
+    async function handleFile(file) {
+      if (!file.name.match(/\.(gpx|kml)$/i)) {
+        errorDiv.textContent = "Format non supporté (seuls .gpx et .kml)";
+        return;
+      }
+      status.textContent = "Conversion en cours…";
+      errorDiv.textContent = "";
+      try {
+        await generateHtml(file);
+        status.textContent = "Terminé ! Fichier téléchargé";
+        setTimeout(() => status.textContent = "", 4000);
+      } catch (e) {
+        status.textContent = "";
+        errorDiv.textContent = "Erreur : " + e.message;
+        console.error(e);
+      }
+    }
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(console.error);
+    }
+  </script>
+  <script src="app.js"></script>
+</body>
+</html>
