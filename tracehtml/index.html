@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tracehtml – KML/GPX → Carte HTML autonome</title>
+    <meta name="description" content="Convertit un fichier KML ou GPX en page HTML autonome avec carte OSM et téléchargements">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icon512.png" sizes="512x512">
+    <link rel="apple-touch-icon" href="icon192.png">
+    <style>
+        body {font-family:system-ui,sans-serif;margin:2rem;background:#f8f9fa;color:#212529}
+        .container {max-width:600px;margin:0 auto;background:white;padding:2rem;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.1)}
+        h1 {color:#007bff}
+        input[type=file] {width:100%;padding:12px;margin:1rem 0}
+        button {background:#007bff;color:white;border:none;padding:14px 28px;font-size:1.1rem;border-radius:8px;cursor:pointer}
+        button:hover {background:#0056b3}
+        .footer {margin-top:4rem;text-align:center;color:#666;font-size:0.9rem}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>tracehtml</h1>
+        <p>Chargez un fichier <strong>.kml</strong> ou <strong>.gpx</strong> → vous recevez immédiatement une page HTML autonome avec :</p>
+        <ul>
+            <li>Carte OpenStreetMap</li>
+            <li>Téléchargements GPX · KML · GeoJSON</li>
+        </ul>
+
+        <input type="file" id="file-input" accept=".kml,.gpx" required>
+        <br><br>
+        <button id="generate-btn">Générer la carte HTML</button>
+        <p id="status" style="margin-top:1rem;font-weight:bold;color:#28a745"></p>
+    </div>
+
+    <div class="footer">tracehtml – PWA open-source – 2025</div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+    <script>
+        // Attendre que tout soit chargé puis attacher l’événement
+        document.addEventListener("DOMContentLoaded", function () {
+            const btn = document.getElementById("generate-btn");
+            const status = document.getElementById("status");
+            btn.addEventListener("click", async function () {
+                status.textContent = "Traitement en cours…";
+                try {
+                    await generateHtml();
+                    status.textContent = "Fichier généré et téléchargé !";
+                    setTimeout(() => status.textContent = "", 4000);
+                } catch (e) {
+                    status.textContent = "Erreur";
+                    console.error(e);
+                }
+            });
+        });
+
+        // Enregistrement du Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</body>
+</html>
