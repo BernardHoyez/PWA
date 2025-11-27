@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>tracehtml</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon512.png" sizes="512x512">
+  <style>
+    body{font-family:system-ui;margin:40px;background:#f8f9fa}
+    .c{max-width:600px;margin:auto;background:#fff;padding:30px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.1);text-align:center}
+    
+    #dropZone {
+      margin: 20px 0;
+      padding: 40px;
+      border: 3px dashed #007bff;
+      border-radius: 12px;
+      background: #f0f8ff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    #dropZone:hover {
+      background: #e6f3ff;
+      border-color: #0056b3;
+    }
+    
+    #dropZone.drag-over {
+      background: #d0e9ff;
+      border-color: #0056b3;
+      transform: scale(1.02);
+    }
+    
+    #dropZone svg {
+      width: 60px;
+      height: 60px;
+      margin-bottom: 15px;
+      fill: #007bff;
+    }
+    
+    #dropZone p {
+      margin: 10px 0;
+      color: #333;
+      font-size: 1.1em;
+    }
+    
+    #dropZone .hint {
+      font-size: 0.9em;
+      color: #666;
+    }
+    
+    #file {
+      display: none;
+    }
+    
+    button{
+      background:#007bff;
+      color:#fff;
+      border:none;
+      border-radius:8px;
+      cursor:pointer;
+      padding:12px;
+      width:100%;
+      font-size:1.1em;
+      margin-top:10px;
+    }
+    
+    button:hover{background:#0056b3}
+    
+    #msg {
+      margin-top: 15px;
+      font-weight: bold;
+      color: #28a745;
+    }
+  </style>
+</head>
+<body>
+  <div class="c">
+    <h1>tracehtml</h1>
+    <p>Chargez un .gpx ou .kml → fichier HTML autonome généré immédiatement</p>
+    
+    <div id="dropZone">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="17 8 12 3 7 8"></polyline>
+        <line x1="12" y1="3" x2="12" y2="15"></line>
+      </svg>
+      <p><strong>Glissez-déposez votre fichier ici</strong></p>
+      <p class="hint">ou cliquez pour sélectionner</p>
+      <p class="hint">Formats acceptés : .gpx, .kml</p>
+    </div>
+    
+    <input type="file" id="file" accept=".gpx,.kml">
+    
+    <p id="msg"></p>
+  </div>
+  
+  <script>
+    // Chargement unique de togeojson
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/@turf/turf@6/turf.min.js';
+    document.head.appendChild(script);
+    script.onload = () => {
+      const togeojsonScript = document.createElement('script');
+      togeojsonScript.src = 'https://unpkg.com/@mapbox/togeojson';
+      document.head.appendChild(togeojsonScript);
+    };
+  </script>
+  <script src="app.js"></script>
+</body>
+</html>

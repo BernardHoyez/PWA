@@ -1,0 +1,25 @@
+{
+  "name": "traceY",
+  "short_name": "traceY",
+  "description": "Convertisseur GPX/KML vers carte HTML interactive",
+  "start_url": "/PWA/traceY/",
+  "scope": "/PWA/traceY/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#007bff",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icon192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
