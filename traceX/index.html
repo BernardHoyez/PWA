@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>traceX – Drag & Drop</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon512.png" sizes="512x512">
+  <style>
+    body{margin:0;font-family:system-ui;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;height:100vh;display:flex;align-items:center;justify-content:center}
+    #d{width:90%;max-width:600px;padding:60px;border:4px dashed rgba(255,255,255,.4);border-radius:20px;text-align:center;background:rgba(255,255,255,.1);cursor:pointer;transition:.3s}
+    #d.dragover{border-color:#fff;background:rgba(255,255,255,.2);transform:scale(1.05)}
+    h1{font-size:2.8em;margin:0 0 20px}
+    #s,#e{margin-top:20px;font-weight:bold}
+    #e{color:#ff6b6b}
+  </style>
+</head>
+<body>
+
+<div id="d">
+  <h1>traceX</h1>
+  <p>Déposez un fichier <strong>.gpx</strong> ou <strong>.kml</strong></p>
+  <p>ou cliquez ici</p>
+  <div id="s"></div>
+  <div id="e"></div>
+</div>
+
+<input type="file" id="i" accept=".gpx,.kml" hidden>
+
+<!-- app.js chargé en premier, puis le code qui l’utilise -->
+<script src="app.js"></script>
+<script>
+  const d = document.getElementById('d');
+  const i = document.getElementById('i');
+  const s = document.getElementById('s');
+  const e = document.getElementById('e');
+
+  d.ondragover = ev => { ev.preventDefault(); d.classList.add('dragover'); };
+  d.ondragleave = () => d.classList.remove('dragover');
+  d.ondrop = ev => {
+    ev.preventDefault();
+    d.classList.remove('dragover');
+    if (ev.dataTransfer.files[0]) process(ev.dataTransfer.files[0]);
+  };
+  d.onclick = () => i.click();
+  i.onchange = () => { if (i.files[0]) process(i.files[0]); };
+
+  async function process(file) {
+    if (!/\.(gpx|kml)$/i.test(file.name)) return e.textContent = "Seuls .gpx et .kml";
+    s.textContent = "Conversion…"; e.textContent = "";
+    try {
+      await window.generateHtml(file);
+      s.textContent = "Terminé !";
+      setTimeout(() => s.textContent = "", 3000);
+    } catch (err) {
+      s.textContent = ""; e.textContent = err.message || "Erreur";
+    }
+  }
+</script>
+
+</body>
+</html>
