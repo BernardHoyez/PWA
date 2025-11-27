@@ -1,0 +1,13 @@
+{
+  "name": "traceX",
+  "short_name": "traceX",
+  "description": "Drag & Drop → Carte HTML autonome (version fun)",
+  "start_url": "/PWA/traceX/",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#764ba2",
+  "icons": [
+    { "src": "icon192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable any" }
+  ]
+}
