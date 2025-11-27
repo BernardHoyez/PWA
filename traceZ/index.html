@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>traceZ</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon512.png" sizes="512x512">
+  <link rel="apple-touch-icon" href="icon512.png">
+  <style>
+    body{font-family:system-ui;margin:40px;background:#f8f9fa}
+    .c{max-width:600px;margin:auto;background:#fff;padding:30px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.1);text-align:center}
+    
+    .map-selector {
+      margin: 20px 0;
+      padding: 20px;
+      background: #f0f9ff;
+      border: 2px solid #0ea5e9;
+      border-radius: 12px;
+    }
+    
+    .map-selector h3 {
+      color: #0c4a6e;
+      margin-bottom: 15px;
+      font-size: 1.2em;
+    }
+    
+    .map-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 15px;
+    }
+    
+    .map-option {
+      padding: 20px;
+      border: 3px solid #e2e8f0;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: white;
+      text-align: center;
+    }
+    
+    .map-option:hover {
+      border-color: #007bff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+    }
+    
+    .map-option.selected {
+      border-color: #007bff;
+      background: #eff6ff;
+    }
+    
+    .map-option h4 {
+      color: #1e293b;
+      margin-bottom: 8px;
+      font-size: 1.1em;
+    }
+    
+    .map-option p {
+      color: #64748b;
+      font-size: 0.9em;
+      margin: 5px 0;
+    }
+    
+    #dropZone {
+      margin: 20px 0;
+      padding: 40px;
+      border: 3px dashed #007bff;
+      border-radius: 12px;
+      background: #f0f8ff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    #dropZone:hover {
+      background: #e6f3ff;
+      border-color: #0056b3;
+    }
+    
+    #dropZone.drag-over {
+      background: #d0e9ff;
+      border-color: #0056b3;
+      transform: scale(1.02);
+    }
+    
+    #dropZone svg {
+      width: 60px;
+      height: 60px;
+      margin-bottom: 15px;
+      fill: #007bff;
+    }
+    
+    #dropZone p {
+      margin: 10px 0;
+      color: #333;
+      font-size: 1.1em;
+    }
+    
+    #dropZone .hint {
+      font-size: 0.9em;
+      color: #666;
+    }
+    
+    #file {
+      display: none;
+    }
+    
+    #msg {
+      margin-top: 15px;
+      font-weight: bold;
+      color: #28a745;
+      min-height: 24px;
+    }
+    
+    @media (max-width: 768px) {
+      .map-options { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="c">
+    <h1>traceZ</h1>
+    <p>Chargez un .gpx ou .kml → fichier HTML autonome avec fond au choix</p>
+    
+    <div class="map-selector">
+      <h3>🗺️ Choisir le fond de carte</h3>
+      <div class="map-options">
+        <div class="map-option selected" onclick="selectMap('osm')" id="map-osm">
+          <h4>🌍 OpenStreetMap</h4>
+          <p>Mondial</p>
+          <p>Contributif</p>
+        </div>
+        <div class="map-option" onclick="selectMap('ign')" id="map-ign">
+          <h4>🇫🇷 IGN Plan V2</h4>
+          <p>France métropolitaine</p>
+          <p>Haute précision</p>
+        </div>
+      </div>
+    </div>
+    
+    <div id="dropZone">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="17 8 12 3 7 8"></polyline>
+        <line x1="12" y1="3" x2="12" y2="15"></line>
+      </svg>
+      <p><strong>Glissez-déposez votre fichier ici</strong></p>
+      <p class="hint">ou cliquez pour sélectionner</p>
+      <p class="hint">Formats acceptés : .gpx, .kml</p>
+    </div>
+    
+    <input type="file" id="file" accept=".gpx,.kml">
+    
+    <p id="msg"></p>
+  </div>
+  
+  <script>
+    // Enregistrement du Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('Service Worker enregistré', reg))
+          .catch(err => console.log('Erreur Service Worker', err));
+      });
+    }
+    
+    // Chargement unique de togeojson
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/@turf/turf@6/turf.min.js';
+    document.head.appendChild(script);
+    script.onload = () => {
+      const togeojsonScript = document.createElement('script');
+      togeojsonScript.src = 'https://unpkg.com/@mapbox/togeojson';
+      document.head.appendChild(togeojsonScript);
+    };
+  </script>
+  <script src="app.js"></script>
+</body>
+</html>
