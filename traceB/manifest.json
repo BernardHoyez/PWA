@@ -1,0 +1,25 @@
+{
+  "name": "traceB",
+  "short_name": "traceB",
+  "description": "Convertisseur GPX/KML/KMZ avec photos géolocalisées",
+  "start_url": "/PWA/traceB/",
+  "scope": "/PWA/traceB/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#007bff",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icon192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
