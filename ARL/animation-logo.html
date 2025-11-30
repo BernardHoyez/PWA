@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animation Rollevillaise</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #f0f0f0;
+        }
+        
+        .container {
+            background: #5B7FA6;
+            width: 400px;
+            height: 400px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .text-container {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .title {
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 42px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .main-text {
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 42px;
+            font-weight: bold;
+            text-align: center;
+            line-height: 1.2;
+        }
+        
+        .characters {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+        }
+        
+        .character {
+            position: absolute;
+            transition: all 0.5s ease;
+        }
+        
+        /* Première forme - devient personnage gauche */
+        .shape1 {
+            width: 20px;
+            height: 60px;
+            background: #A8C256;
+            border-radius: 10px;
+            left: 60px;
+            top: 80px;
+            animation: dance1 2s infinite ease-in-out;
+        }
+        
+        /* Deuxième forme - devient personnage centre */
+        .shape2 {
+            width: 20px;
+            height: 80px;
+            background: #6B9E3E;
+            border-radius: 10px;
+            left: 90px;
+            top: 60px;
+            animation: dance2 2s infinite ease-in-out 0.3s;
+        }
+        
+        /* Troisième forme - devient personnage droite */
+        .shape3 {
+            width: 30px;
+            height: 70px;
+            background: #89B5D9;
+            border-radius: 15px;
+            left: 120px;
+            top: 70px;
+            animation: dance3 2s infinite ease-in-out 0.6s;
+        }
+        
+        /* Têtes animées */
+        .head {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            position: absolute;
+            top: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .shape1 .head {
+            background: #C5D97F;
+            animation: headBob1 2s infinite ease-in-out;
+        }
+        
+        .shape2 .head {
+            background: #8FBF5F;
+            animation: headBob2 2s infinite ease-in-out 0.3s;
+        }
+        
+        .shape3 .head {
+            background: #A5C9E4;
+            animation: headBob3 2s infinite ease-in-out 0.6s;
+        }
+        
+        /* Bras */
+        .arms {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .arm {
+            position: absolute;
+            width: 3px;
+            height: 35px;
+            background: currentColor;
+            border-radius: 2px;
+            top: 10px;
+        }
+        
+        .arm-left {
+            left: -8px;
+            transform-origin: top center;
+            animation: armWaveLeft 1.2s infinite ease-in-out;
+        }
+        
+        .arm-right {
+            right: -8px;
+            transform-origin: top center;
+            animation: armWaveRight 1.2s infinite ease-in-out;
+        }
+        
+        .shape2 .arm-left {
+            animation: armWaveLeft 1.2s infinite ease-in-out 0.2s;
+        }
+        
+        .shape2 .arm-right {
+            animation: armWaveRight 1.2s infinite ease-in-out 0.2s;
+        }
+        
+        .shape3 .arm-left {
+            animation: armWaveLeft 1.2s infinite ease-in-out 0.4s;
+        }
+        
+        .shape3 .arm-right {
+            animation: armWaveRight 1.2s infinite ease-in-out 0.4s;
+        }
+        
+        @keyframes dance1 {
+            0%, 100% { transform: translateY(0) rotate(-5deg); }
+            25% { transform: translateY(-10px) rotate(-8deg); }
+            50% { transform: translateY(0) rotate(-5deg); }
+            75% { transform: translateY(-8px) rotate(-2deg); }
+        }
+        
+        @keyframes dance2 {
+            0%, 100% { transform: translateY(0) scale(1); }
+            25% { transform: translateY(-15px) scale(1.05); }
+            50% { transform: translateY(0) scale(1); }
+            75% { transform: translateY(-12px) scale(1.03); }
+        }
+        
+        @keyframes dance3 {
+            0%, 100% { transform: translateY(0) rotate(5deg); }
+            25% { transform: translateY(-8px) rotate(8deg); }
+            50% { transform: translateY(0) rotate(5deg); }
+            75% { transform: translateY(-12px) rotate(2deg); }
+        }
+        
+        @keyframes headBob1 {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            25% { transform: translateX(-50%) translateY(-3px) rotate(-10deg); }
+            50% { transform: translateX(-50%) translateY(0); }
+            75% { transform: translateX(-50%) translateY(-2px) rotate(10deg); }
+        }
+        
+        @keyframes headBob2 {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            25% { transform: translateX(-50%) translateY(-5px) rotate(10deg); }
+            50% { transform: translateX(-50%) translateY(0); }
+            75% { transform: translateX(-50%) translateY(-3px) rotate(-10deg); }
+        }
+        
+        @keyframes headBob3 {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            25% { transform: translateX(-50%) translateY(-2px) rotate(8deg); }
+            50% { transform: translateX(-50%) translateY(0); }
+            75% { transform: translateX(-50%) translateY(-4px) rotate(-8deg); }
+        }
+        
+        @keyframes armWaveLeft {
+            0%, 100% { transform: rotate(-45deg); }
+            15% { transform: rotate(-120deg); }
+            30% { transform: rotate(-40deg); }
+            45% { transform: rotate(-130deg); }
+            60% { transform: rotate(-35deg); }
+            75% { transform: rotate(-125deg); }
+        }
+        
+        @keyframes armWaveRight {
+            0%, 100% { transform: rotate(45deg); }
+            15% { transform: rotate(120deg); }
+            30% { transform: rotate(40deg); }
+            45% { transform: rotate(130deg); }
+            60% { transform: rotate(35deg); }
+            75% { transform: rotate(125deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="characters">
+            <div class="character shape1">
+                <div class="head"></div>
+                <div class="arms">
+                    <div class="arm arm-left"></div>
+                    <div class="arm arm-right"></div>
+                </div>
+            </div>
+            <div class="character shape2">
+                <div class="head"></div>
+                <div class="arms">
+                    <div class="arm arm-left"></div>
+                    <div class="arm arm-right"></div>
+                </div>
+            </div>
+            <div class="character shape3">
+                <div class="head"></div>
+                <div class="arms">
+                    <div class="arm arm-left"></div>
+                    <div class="arm arm-right"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-container">
+            <div class="title">Association</div>
+            <div class="main-text">
+                Rollevillaise<br>
+                de loisirs
+            </div>
+        </div>
+    </div>
+</body>
+</html>
