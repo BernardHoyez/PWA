@@ -115,7 +115,7 @@
         </svg>
         <h1>panoA</h1>
       </div>
-      <p class="text-sm">Assembleur panoramique avec homographies et warping d'images</p>
+      <p class="text-sm">Véritable assemblage panoramique avec système de coordonnées commun</p>
     </div>
 
     <div class="card">
@@ -127,11 +127,11 @@
         <h2>Instructions</h2>
       </div>
       <ul class="text-sm">
-        <li>Chargez 2 images ou plus avec recouvrement (30-50%)</li>
-        <li>Détection FAST de points clés robustes</li>
-        <li>Calcul d'homographies via RANSAC</li>
-        <li>Warping inverse avec interpolation bilinéaire</li>
-        <li>Correction automatique de luminosité</li>
+        <li>Chargez 2+ images avec recouvrement latéral (30-70%)</li>
+        <li>Image centrale = référence du système de coordonnées</li>
+        <li>Toutes les autres images transformées vers cette référence</li>
+        <li>Composition des homographies pour alignement global</li>
+        <li>Chaque pixel mappé une seule fois - pas de duplication</li>
       </ul>
     </div>
 
@@ -191,7 +191,7 @@
     </div>
 
     <div class="footer">
-      <p>FAST • Descripteurs • RANSAC • Homographies DLT • Warping inverse • Interpolation bilinéaire</p>
+      <p>FAST • RANSAC • DLT • Composition homographies • Référentiel commun • Zero duplication</p>
     </div>
   </div>
 
@@ -275,6 +275,7 @@
       matchesBox.classList.remove('hidden');
     }
 
+    // Détection de points clés FAST
     function detectFAST(imageData, threshold = 30) {
       const { width, height, data } = imageData;
       const keypoints = [];
@@ -312,6 +313,7 @@
       return keypoints.sort((a, b) => b.response - a.response).slice(0, 1000);
     }
 
+    // Descripteur de patch
     function computeDescriptor(imageData, kp, patchSize = 16) {
       const { width, height, data } = imageData;
       const descriptor = [];
@@ -332,6 +334,7 @@
       return descriptor;
     }
 
+    // Matching avec ratio test
     function matchDescriptors(desc1, desc2, kp1, kp2) {
       const matches = [];
       
@@ -367,6 +370,7 @@
       return matches;
     }
 
+    // Application homographie
     function applyHomography(H, x, y) {
       const w = H[2][0] * x + H[2][1] * y + H[2][2];
       if (Math.abs(w) < 0.0001) return [x, y];
@@ -375,14 +379,14 @@
       return [xp, yp];
     }
 
+    // Estimation homographie DLT
     function estimateHomographyDLT(matches) {
       if (matches.length < 4) return null;
       
-      // Normalisation des points pour stabilité numérique
+      // Normalisation points
       const pts1 = matches.map(m => [m.p1.x, m.p1.y]);
       const pts2 = matches.map(m => [m.p2.x, m.p2.y]);
       
-      // Calcul du centroïde et échelle
       const mean1 = [
         pts1.reduce((s, p) => s + p[0], 0) / pts1.length,
         pts1.reduce((s, p) => s + p[1], 0) / pts1.length
@@ -392,12 +396,12 @@
         pts2.reduce((s, p) => s + p[1], 0) / pts2.length
       ];
       
-      const scale1 = Math.sqrt(2) / (pts1.reduce((s, p) => {
+      const scale1 = Math.sqrt(2) / Math.max(0.001, pts1.reduce((s, p) => {
         const dx = p[0] - mean1[0], dy = p[1] - mean1[1];
         return s + Math.sqrt(dx*dx + dy*dy);
       }, 0) / pts1.length);
       
-      const scale2 = Math.sqrt(2) / (pts2.reduce((s, p) => {
+      const scale2 = Math.sqrt(2) / Math.max(0.001, pts2.reduce((s, p) => {
         const dx = p[0] - mean2[0], dy = p[1] - mean2[1];
         return s + Math.sqrt(dx*dx + dy*dy);
       }, 0) / pts2.length);
@@ -418,19 +422,19 @@
         ]);
       }
       
-      // SVD approximation - méthode des moindres carrés
+      // SVD approximation
       const ATA = multiplyMatrixTranspose(A);
       const h = solveEigenVector(ATA);
       
       if (!h) return null;
       
-      // Dénormalisation
       const Hn = [
         [h[0], h[1], h[2]],
         [h[3], h[4], h[5]],
         [h[6], h[7], h[8]]
       ];
       
+      // Dénormalisation
       const T1inv = [
         [1/scale1, 0, mean1[0]],
         [0, 1/scale1, mean1[1]],
@@ -466,9 +470,8 @@
     }
 
     function solveEigenVector(M) {
-      // Itération de puissance inverse pour trouver le plus petit vecteur propre
       let v = Array(9).fill(0);
-      v[8] = 1; // Initialisation
+      v[8] = 1;
       
       for (let iter = 0; iter < 100; iter++) {
         const Mv = Array(9).fill(0);
@@ -530,6 +533,7 @@
       ];
     }
 
+    // RANSAC
     function ransacHomography(matches, iterations = 500, threshold = 5) {
       if (matches.length < 4) return null;
       
@@ -575,6 +579,7 @@
       return bestH;
     }
 
+    // ASSEMBLAGE PANORAMIQUE CORRECT
     async function assemblePanorama() {
       if (images.length < 2) {
         alert('Veuillez charger au moins 2 images');
@@ -606,190 +611,43 @@
           const keypoints = detectFAST(imageData);
           const descriptors = keypoints.map(kp => computeDescriptor(imageData, kp));
           
-          setProgress(`Points clés: image ${idx + 1} → ${keypoints.length} points`);
+          setProgress(`Image ${idx + 1}: ${keypoints.length} points clés détectés`);
           
           return { imageData, keypoints, descriptors, img };
         });
 
-        const brightnesses = features.map(f => {
-          const sum = f.imageData.data.reduce((s, v, i) => i % 4 === 3 ? s : s + v, 0);
-          return sum / (f.imageData.data.length * 3 / 4);
-        });
-        const avgBrightness = brightnesses.reduce((a, b) => a + b) / brightnesses.length;
+        // IMAGE CENTRALE = RÉFÉRENCE
+        const refIdx = Math.floor(features.length / 2);
+        setProgress(`Image de référence: #${refIdx + 1}`);
 
-        setProgress('Calcul des correspondances...');
-        
-        const finalCanvas = document.createElement('canvas');
-        const finalCtx = finalCanvas.getContext('2d');
-        
-        const estimatedWidth = features.reduce((sum, f) => sum + f.img.width, 0) * 0.8;
-        const maxHeight = Math.max(...features.map(f => f.img.height));
-        
-        finalCanvas.width = estimatedWidth;
-        finalCanvas.height = maxHeight * 1.2;
-        
-        let currentX = estimatedWidth / 4;
-        const currentY = maxHeight * 0.1;
-        
-        finalCtx.drawImage(features[0].img, currentX, currentY);
-        
+        // Calculer homographies vers la référence
+        const homographies = Array(features.length).fill(null);
+        homographies[refIdx] = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]; // Identité pour la référence
+
         let matchInfo = [];
-        
-        for (let i = 1; i < features.length; i++) {
-          setProgress(`Assemblage image ${i + 1}/${features.length}...`);
+
+        // Gauche vers référence (composition)
+        for (let i = refIdx - 1; i >= 0; i--) {
+          setProgress(`Calcul homographie image ${i + 1} → référence...`);
           
           const matches = matchDescriptors(
-            features[i - 1].descriptors,
             features[i].descriptors,
-            features[i - 1].keypoints,
-            features[i].keypoints
+            features[i + 1].descriptors,
+            features[i].keypoints,
+            features[i + 1].keypoints
           );
           
-          matchInfo.push(`Image ${i}→${i + 1}: ${matches.length} corresp.`);
+          matchInfo.push(`${i + 1}→${i + 2}: ${matches.length} corresp`);
           
           if (matches.length >= 10) {
-            // Calculer l'homographie
-            const H = ransacHomography(matches);
-            
-            if (H) {
-              // Trouver les coins transformés pour déterminer la taille
-              const corners = [
-                [0, 0],
-                [features[i].img.width, 0],
-                [features[i].img.width, features[i].img.height],
-                [0, features[i].img.height]
-              ];
-              
-              let minX = Infinity, maxX = -Infinity;
-              let minY = Infinity, maxY = -Infinity;
-              
-              for (const [x, y] of corners) {
-                const [tx, ty] = applyHomography(H, x, y);
-                minX = Math.min(minX, tx);
-                maxX = Math.max(maxX, tx);
-                minY = Math.min(minY, ty);
-                maxY = Math.max(maxY, ty);
-              }
-              
-              // Warping de l'image avec homographie
-              const warpedCanvas = document.createElement('canvas');
-              warpedCanvas.width = Math.ceil(maxX - minX);
-              warpedCanvas.height = Math.ceil(maxY - minY);
-              const warpCtx = warpedCanvas.getContext('2d');
-              
-              // Inverse de l'homographie pour backward warping
-              const Hinv = invertHomography(H);
-              
-              if (Hinv) {
-                const srcCanvas = document.createElement('canvas');
-                srcCanvas.width = features[i].img.width;
-                srcCanvas.height = features[i].img.height;
-                const srcCtx = srcCanvas.getContext('2d');
-                srcCtx.drawImage(features[i].img, 0, 0);
-                const srcData = srcCtx.getImageData(0, 0, srcCanvas.width, srcCanvas.height);
-                
-                const dstData = warpCtx.createImageData(warpedCanvas.width, warpedCanvas.height);
-                
-                // Warping pixel par pixel
-                for (let y = 0; y < warpedCanvas.height; y++) {
-                  for (let x = 0; x < warpedCanvas.width; x++) {
-                    const [sx, sy] = applyHomography(Hinv, x + minX, y + minY);
-                    
-                    if (sx >= 0 && sx < srcCanvas.width - 1 && sy >= 0 && sy < srcCanvas.height - 1) {
-                      // Interpolation bilinéaire
-                      const x0 = Math.floor(sx), y0 = Math.floor(sy);
-                      const x1 = x0 + 1, y1 = y0 + 1;
-                      const dx = sx - x0, dy = sy - y0;
-                      
-                      const idx00 = (y0 * srcCanvas.width + x0) * 4;
-                      const idx01 = (y0 * srcCanvas.width + x1) * 4;
-                      const idx10 = (y1 * srcCanvas.width + x0) * 4;
-                      const idx11 = (y1 * srcCanvas.width + x1) * 4;
-                      
-                      const dstIdx = (y * warpedCanvas.width + x) * 4;
-                      
-                      for (let c = 0; c < 3; c++) {
-                        const v00 = srcData.data[idx00 + c];
-                        const v01 = srcData.data[idx01 + c];
-                        const v10 = srcData.data[idx10 + c];
-                        const v11 = srcData.data[idx11 + c];
-                        
-                        const v0 = v00 * (1 - dx) + v01 * dx;
-                        const v1 = v10 * (1 - dx) + v11 * dx;
-                        const v = v0 * (1 - dy) + v1 * dy;
-                        
-                        dstData.data[dstIdx + c] = Math.min(255, v * (avgBrightness / brightnesses[i]));
-                      }
-                      dstData.data[dstIdx + 3] = 255;
-                    }
-                  }
-                }
-                
-                warpCtx.putImageData(dstData, 0, 0);
-                
-                // Positionner l'image warpée
-                const offsetX = currentX + minX;
-                const offsetY = currentY + minY;
-                
-                // Blend avec feathering
-                finalCtx.globalCompositeOperation = 'source-over';
-                finalCtx.drawImage(warpedCanvas, offsetX, offsetY);
-                
-                currentX = offsetX + warpedCanvas.width * 0.7;
-              } else {
-                // Fallback: collage simple
-                currentX += features[i - 1].img.width * 0.7;
-                finalCtx.drawImage(features[i].img, currentX, currentY);
-              }
-            } else {
-              // Pas d'homographie valide
-              currentX += features[i - 1].img.width * 0.7;
-              finalCtx.drawImage(features[i].img, currentX, currentY);
+            const H_i_to_iplus1 = ransacHomography(matches);
+            if (H_i_to_iplus1 && homographies[i + 1]) {
+              // Composer: H_i_to_ref = H_iplus1_to_ref * H_i_to_iplus1
+              homographies[i] = multiplyMatrix3x3(homographies[i + 1], H_i_to_iplus1);
             }
-          } else {
-            // Pas assez de correspondances - collage simple
-            currentX += features[i - 1].img.width * 0.7;
-            const factor = avgBrightness / brightnesses[i];
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = features[i].img.width;
-            tempCanvas.height = features[i].img.height;
-            const tempCtx = tempCanvas.getContext('2d');
-            tempCtx.drawImage(features[i].img, 0, 0);
-            
-            const tempData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-            for (let j = 0; j < tempData.data.length; j += 4) {
-              tempData.data[j] = Math.min(255, tempData.data[j] * factor);
-              tempData.data[j + 1] = Math.min(255, tempData.data[j + 1] * factor);
-              tempData.data[j + 2] = Math.min(255, tempData.data[j + 2] * factor);
-            }
-            tempCtx.putImageData(tempData, 0, 0);
-            
-            finalCtx.drawImage(tempCanvas, currentX, currentY);
           }
         }
 
-        setMatches(matchInfo.join(' | '));
-        setProgress('Assemblage terminé !');
-        
-        resultDataUrl = finalCanvas.toDataURL('image/png');
-        resultImage.src = resultDataUrl;
-        resultContainer.classList.remove('hidden');
-        
-      } catch (error) {
-        console.error('Erreur:', error);
-        setProgress('Erreur: ' + error.message);
-      } finally {
-        assembleBtn.disabled = false;
-      }
-    }
-
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-          .then(reg => console.log('SW enregistré', reg))
-          .catch(err => console.log('SW erreur', err));
-      });
-    }
-  </script>
-</body>
-</html>
+        // Droite vers référence (composition)
+        for (let i = refIdx + 1; i < features.length; i++) {
+          setProgress(`Calcul homographie image ${i + 1} → référence...`);
