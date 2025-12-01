@@ -1,0 +1,81 @@
+/* css/styles.css */
+
+/* Style global */
+body {
+  font-family: system-ui, sans-serif;
+  background: #111;
+  color: #eee;
+  margin: 0;
+  padding: 0;
+}
+
+/* En-tête */
+header {
+  background: #222;
+  padding: 16px;
+  text-align: center;
+  border-bottom: 2px solid #333;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.8em;
+  color: #9fd;
+}
+
+header p {
+  margin: 8px 0 0;
+  font-size: 1em;
+  color: #ccc;
+}
+
+/* Contenu principal */
+main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Boutons et inputs */
+button {
+  padding: 8px 12px;
+  background: #444;
+  color: #eee;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #666;
+}
+
+input[type="file"] {
+  color: #eee;
+}
+
+input[type="range"] {
+  width: 100%;
+}
+
+/* Canvas */
+canvas {
+  width: 100%;
+  height: auto;
+  background: #222;
+  border: 1px solid #333;
+  margin-top: 12px;
+}
+
+/* Zone de statut */
+#status {
+  margin-top: 8px;
+  color: #9fd;
+  font-style: italic;
+}
