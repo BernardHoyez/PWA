@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>grostext</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    #rotateWarning {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: white;
+      color: black;
+      font-size: 6vw;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+    }
+    @media screen and (orientation: portrait) {
+      #rotateWarning {
+        display: flex;
+      }
+      #mainContent {
+        display: none;
+      }
+    }
+    #inputZone {
+      padding: 1rem;
+      background: #f2f2f2;
+      border-bottom: 1px solid #ccc;
+    }
+    #inputZone input {
+      width: 100%;
+      font-size: 1.2rem;
+      padding: 0.5rem;
+    }
+    #output {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+      color: black;
+      background: white;
+      font-size: 10vw;
+      text-align: center;
+      padding: 1rem;
+      word-wrap: break-word;
+    }
+  </style>
+</head>
+<body>
+  <div id="rotateWarning">Veuillez pivoter votre appareil en mode paysage.</div>
+  <div id="mainContent">
+    <div id="inputZone">
+      <input id="textInput" type="text" placeholder="Entrez votre texte ici..." />
+    </div>
+    <div id="output"></div>
+  </div>
+  <script>
+    const input = document.getElementById("textInput");
+    const output = document.getElementById("output");
+    input.addEventListener("input", () => {
+      output.textContent = input.value;
+    });
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js");
+    }
+  </script>
+</body>
+</html>
