@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>trace-Rolleville-8.33km-2025-12-09</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+body{margin:0;font-family:system-ui}
+#map{height:100vh}
+.controls{position:absolute;top:10px;left:10px;z-index:1000;background:white;padding:15px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.2);max-width:90vw}
+.controls button{margin:5px;padding:12px 18px;border:none;border-radius:5px;cursor:pointer;background:#007bff;color:white;font-size:15px;font-weight:600;white-space:nowrap}
+.controls button:hover{background:#0056b3}
+.controls button:active{transform:scale(0.95)}
+.stats{position:absolute;bottom:10px;left:10px;z-index:1000;background:white;padding:15px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.2);font-size:14px;max-width:90vw}
+.stats h3{margin:0 0 10px 0;font-size:16px}
+.stats p{margin:5px 0}
+@media (max-width: 768px){
+  .controls{padding:10px;display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+  .controls button{margin:0;padding:16px 24px;font-size:17px;min-width:140px;flex:1 1 calc(50% - 5px);font-weight:700}
+  .stats{font-size:13px;padding:12px}
+  .stats h3{font-size:15px}
+}
+@media print{.controls{display:none}.stats{bottom:auto;top:10px;right:10px;left:auto}}
+</style>
+</head><body>
+<div id="map"></div>
+<div class="controls">
+<button onclick="download('gpx')">📥 GPX</button>
+<button onclick="download('kml')">📥 KML</button>
+<button onclick="download('geojson')">📥 GeoJSON</button>
+<button onclick="share()">🔗 Partager</button>
+<button onclick="window.print()">🖨️ Imprimer</button>
+<button onclick="exportPDF()">📄 PDF</button>
+</div>
+<div class="stats">
+<h3>📊 Statistiques</h3>
+<p><strong>Distance:</strong> 8.33 km</p>
+
+
+
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/togpx@0.5.4/togpx.js"></script>
+<script src="https://unpkg.com/tokml@0.4.0/tokml.js"></script>
+<script>
+const g = {"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Point","coordinates":[0.21291,49.581589]},"properties":{"name":"Arrivée","description":"\u003cp\u003e\u003cbr /\u003e\u003ch3\u003eNom: Segment: 1\u003c/h3\u003e\u003cbr /\u003e\nDistance: 8,3km (02:56)\u003cbr/\u003eTemps déplacement: 02:18\u003cbr/\u003e\nAltitude minimale: 20 m\u003cbr/\u003eAltitude maximale: 103 m\u003cbr/\u003e\n","styleUrl":"#1512","styleHash":"50407bbc","styleMapHash":"{\"normal\":\"#1500\",\"highlight\":\"#152\"}"},"id":"zngIX"},{"type":"Feature","geometry":{"type":"Point","coordinates":[0.204307,49.563864]},"properties":{"name":"Bouleau","description":"{{https://live.staticflickr.com/65535/51133790099_5494a89ae0_b.jpg|800}}\n\n[[https://live.staticflickr.com/65535/51133790099_5494a89ae0_b.jpg|Agrandir l\'image (image zoomable)]]\n\nTexte du commentaire\n\n","styleUrl":"#345","styleHash":"2c106ff3","styleMapHash":"{\"normal\":\"#34\",\"highlight\":\"#30\"}"},"id":"0OKpx"},{"type":"Feature","geometry":{"type":"Point","coordinates":[0.202744,49.574358]},"properties":{"name":"Château d\'eau","description":"{{https://live.staticflickr.com/65535/51132341472_140239b0b9_b.jpg|800}}\n\n[[https://live.staticflickr.com/65535/51132341472_140239b0b9_b.jpg|Agrandir l\'image (image zoomable)]]\n\nTexte du commentaire\n\n","styleUrl":"#330","styleHash":"557d6150","styleMapHash":"{\"normal\":\"#37\",\"highlight\":\"#315\"}"},"id":"DauKR"},{"type":"Feature","geometry":{"type":"Point","coordinates":[0.215094,49.574582]},"properties":{"name":"Chemin des Baudes","description":"{{https://live.staticflickr.com/65535/51133789959_cff0948f8a_b.jpg|800}}\n\n[[https://live.staticflickr.com/65535/51133789959_cff0948f8a_b.jpg|Agrandir l\'image (image zoomable)]]\n\nTexte du commentaire\n","styleUrl":"#334","styleHash":"-9417a74","styleMapHash":"{\"normal\":\"#350\",\"highlight\":\"#35\"}"},"id":"TqGr4"},{"type":"Feature","geometry":{"type":"Point","coordinates":[0.196655,49.554463]},"properties":{"name":"Colza","description":"{{https://live.staticflickr.com/65535/51133014031_a24b466d03_b.jpg|800}}\n\n[[https://live.staticflickr.com/65535/51133014031_a24b466d03_b.jpg|Agrandir l\'image (image zoomable)]]\n\nTexte du commentaire\n\n","styleUrl":"#341","styleHash":"45672e03","styleMapHash":"{\"normal\":\"#326\",\"highlight\":\"#316\"}"},"id":"GAD9Y"},{"type":"Feature","geometry":{"type":"Point","coordinates":[0.193778,49.557975]},"properties":{"name":"Cressonnière","description":"{{https://live.staticflickr.com/65535/51133790544_bbd609fbe0_b.jpg|800}}\n\n[[https://live.staticflickr.com/65535/51133790544_bbd609fbe0_b.jpg|Agrandir l\'image (image zoomable)]]\n\nTexte du commentaire\n\n","styleUrl":"#3","styleHash":"29c937c5","styleMapHash":"{\"normal\":\"#324\",\"highlight\":\"#351\"}"},"id":"NqYo1"},{"type":"Feature","geometry":{"type":"Point","coordinates":[0.212824,49.58164]},"properties":{"name":"Départ","styleUrl":"#381","styleHash":"-233dad5e","styleMapHash":"{\"normal\":\"#380\",\"highlight\":\"#382\"}"},"id":"sIpxB"},{"type":"Feature","geometry":{"type":"Point","coordinates":[0.202614,49.561903]},"properties":{"name":"Ferme des frênes","description":"{{https://live.staticflickr.com/65535/51133790199_25aa292088_b.jpg|800}}\n\n[[https://live.staticflickr.com/65535/51133790199_25aa292088_b.jpg|Agrandir l\'image (image zoomable)]]\n\nTexte du commentaire\n","styleUrl":"#312","styleHash":"-45c455b8","styleMapHash":"{\"normal\":\"#332\",\"highlight\":\"#39\"}"},"id":"rcYmr"},{"type":"Feature","geometry":{"type":"Point","coordinates":[0.196274,49.554568]},"properties":{"name":"Fontenay","description":"{{https://live.staticflickr.com/65535/51134126670_3ff9dbbd1c_b.jpg|800}}\n\n[[https://live.staticflickr.com/65535/51134126670_3ff9dbbd1c_b.jpg|Agrandir l\'image (image zoomable)]]\n\nTexte du commentaire\n\n","styleUrl":"#335","styleHash":"4aae1ccb","styleMapHash":"{\"normal\":\"#340\",\"highlight\":\"#343\"}"},"id":"0kbMb"},{"type":"Feature","geometry":{"type":"Point","coordinates":[0.214937,49.572827]},"properties":{"name":"Jacinthe","description":"{{https://live.staticflickr.com/65535/51133227658_d5dd265836_b.jpg|800}}\n\n[[https://live.staticflickr.com/65535/51133227658_d5dd265836_b.jpg|Agrandir l\'image (image zoomable)]]\n\nTexte du commentaire\n","styleUrl":"#313","styleHash":"-54a9055c","styleMapHash":"{\"normal\":\"#347\",\"highlight\":\"#339\"}"},"id":"UDvGi"},{"type":"Feature","geometry":{"type":"Point","coordinates":[0.212097,49.581148]},"properties":{"name":"Manoir","description":"{{https://live.staticflickr.com/65535/51133227518_5c1f8a3390_b.jpg|800}}\n\n[[https://live.staticflickr.com/65535/51133227518_5c1f8a3390_b.jpg|Agrandir l\'image (image zoomable)]]\n\nLe manoir de Rolleville fut bâti par Guillemette de La Platière, \nabbesse de Montivilliers et soeur de Imbert de La Platière de Bourdillon, maréchal de France.\nCommencé en 1560, il ne fut achevé - sans doute à cause des guerres de religion - que seize ans après. \nL\'abbesse en fit sa maison de campagne, et le maréchal y vint à plusieurs reprises. \nCe manoir, de la Renaissance, est construit en assises de pierres blanches et de cailloux noirs taillés. \nSes fenêtres sont garnies de grilles de fer, en saillie sur la façade; ses deux portes, bardées de ferrures, sont ornées de clous à facettes.\n L\'une d\'elles a conservé sur son fronton sculpté la date de 1576. \nA l\'intérieur, la cheminée de cuisine est remarquable par son architecture et ses dimensions. \n(Les deux montants, ou jambages, ont dû être remplacés pour cause de délabrement, \naprès avoir été reproduits avec une exactitude rigoureuse.) \nAu premier étage, deux autres cheminées monumentales portent, comme celle de la cuisine,\n les écussons armoriés de Louise de l\' Hospital, qui fut abbesse de Montivilliers après Guillemette de La Platière. \nMais on doit à cette dernière le joli colombier, sur lequel on lit encore la date 1584. \nVendu en 1791 comme bien national, le manoir, depuis lors, changea souvent de propriétaire. . \nJe signalerai seulement que Hugues Le Roux, l\'écrivain bien connu, y passa plusieurs années de son enfance.\n C\'est sans doute son séjour à Rolleville qui lui donna le goût des paysanneries.\nCelles qu\'il conta dans les petits journaux havrais, lors de ses débuts littéraires, faisaient prévoir le futur écrivain. \n\n","styleUrl":"#319","styleHash":"-d72b4b7","styleMapHash":"{\"normal\":\"#320\",\"highlight\":\"#344\"}"},"id":"aOBCl"},{"type":"Feature","geometry":{"type":"Point","coordinates":[0.194849,49.553114]},"properties":{"name":"Merle noir","description":"\n{{{https://www.youtube.com/embed/U7MIb3t-lHE}}}\n\nhttps://www.youtube.com/embed/U7MIb3t-lHE","styleUrl":"#1511","styleHash":"-5aaaab02","styleMapHash":"{\"normal\":\"#150\",\"highlight\":\"#15\"}"},"id":"qG4n5"},{"type":"Feature","geometry":{"type":"Point","coordinates":[0.199471,49.573068]},"properties":{"name":"Moineau","description":"{{{https://www.youtube.com/embed/7UbVTu2LFdc}}}\n\n","styleUrl":"#1513","styleHash":"387c9bfd","styleMapHash":"{\"normal\":\"#1501\",\"highlight\":\"#151\"}"},"id":"xkan4"},{"type":"Feature","geometry":{"type":"LineString","coordinates":[[0.212824,49.58164],[0.212706,49.581807],[0.212422,49.581776],[0.212155,49.581722],[0.212167,49.581538],[0.212209,49.581354],[0.212092,49.581183],[0.211919,49.581033],[0.211825,49.580855],[0.21154,49.580841],[0.211253,49.580836],[0.210976,49.580837],[0.210701,49.580788],[0.210412,49.580798],[0.210135,49.580848],[0.209865,49.580895],[0.209594,49.580853],[0.209345,49.580749],[0.209131,49.58063],[0.208993,49.580464],[0.20888,49.580295],[0.208747,49.580133],[0.208632,49.579966],[0.208561,49.579784],[0.208496,49.579602],[0.208337,49.579454],[0.208287,49.579271],[0.208226,49.579089],[0.208096,49.578926],[0.207934,49.578773],[0.207795,49.578611],[0.207637,49.578459],[0.207447,49.578312],[0.207283,49.57816],[0.207101,49.578017],[0.2069,49.577882],[0.206696,49.577757],[0.206493,49.577634],[0.206299,49.577492],[0.206114,49.577353],[0.205953,49.577205],[0.205815,49.577043],[0.205675,49.576871],[0.205533,49.576711],[0.205401,49.576552],[0.205307,49.576377],[0.205205,49.576207],[0.205129,49.576027],[0.205034,49.575848],[0.204873,49.575696],[0.20468,49.575559],[0.204493,49.575425],[0.2043,49.575288],[0.204091,49.575161],[0.203876,49.575038],[0.203649,49.574915],[0.203453,49.574776],[0.203251,49.574628],[0.203035,49.57451],[0.202823,49.574389],[0.202595,49.574273],[0.202379,49.574155],[0.202138,49.574049],[0.201912,49.573937],[0.201673,49.573842],[0.2014,49.573773],[0.201125,49.573708],[0.200858,49.573636],[0.200605,49.573551],[0.200376,49.573443],[0.200135,49.573343],[0.199895,49.573241],[0.199667,49.573131],[0.199421,49.573038],[0.19922,49.572905],[0.199022,49.572768],[0.198822,49.572618],[0.19866,49.572472],[0.198469,49.572325],[0.198233,49.572228],[0.197978,49.572137],[0.19772,49.572055],[0.197469,49.571973],[0.197226,49.571881],[0.196958,49.571803],[0.196754,49.571678],[0.196811,49.571493],[0.196876,49.571313],[0.196977,49.571135],[0.196979,49.570948],[0.196952,49.57076],[0.196949,49.570578],[0.196937,49.570393],[0.196863,49.570215],[0.196707,49.570065],[0.196539,49.569911],[0.196374,49.569757],[0.196236,49.569598],[0.196101,49.56943],[0.195969,49.569266],[0.195866,49.569098],[0.19578,49.568924],[0.195782,49.56874],[0.195693,49.568563],[0.195623,49.568386],[0.195475,49.568231],[0.195328,49.568069],[0.195184,49.567903],[0.195028,49.567752],[0.194794,49.567649],[0.194847,49.567472],[0.194562,49.567467],[0.194802,49.567376],[0.194992,49.567244],[0.194992,49.567057],[0.195083,49.566876],[0.195206,49.566706],[0.195285,49.56653],[0.195314,49.566341],[0.195327,49.566156],[0.195316,49.565967],[0.195327,49.565781],[0.19531,49.565594],[0.195338,49.565406],[0.195306,49.565227],[0.195263,49.565048],[0.195185,49.564861],[0.195074,49.564687],[0.194992,49.564511],[0.1949,49.56434],[0.194735,49.564191],[0.19467,49.56401],[0.194581,49.563834],[0.194522,49.563658],[0.19447,49.563478],[0.19447,49.563297],[0.194431,49.563111],[0.194396,49.562923],[0.194335,49.562741],[0.194311,49.562554],[0.194305,49.562371],[0.194374,49.562193],[0.194605,49.562076],[0.194866,49.562],[0.195121,49.561927],[0.195366,49.561836],[0.195609,49.561745],[0.195871,49.56167],[0.1961,49.56156],[0.196295,49.56143],[0.196453,49.561282],[0.196547,49.5611],[0.196541,49.56091],[0.196489,49.560726],[0.196439,49.560547],[0.196304,49.560386],[0.196154,49.560226],[0.195997,49.560071],[0.19583,49.559924],[0.195669,49.559766],[0.195511,49.559617],[0.19535,49.559469],[0.195184,49.559313],[0.195048,49.559145],[0.194884,49.558996],[0.194752,49.558832],[0.194626,49.55866],[0.194491,49.558503],[0.194315,49.558352],[0.194128,49.558212],[0.193958,49.558068],[0.193773,49.55792],[0.193687,49.557742],[0.193647,49.557559],[0.193599,49.557376],[0.19355,49.557191],[0.193448,49.557016],[0.193353,49.556843],[0.193165,49.556709],[0.192944,49.556594],[0.193144,49.556465],[0.193365,49.556345],[0.193559,49.556203],[0.193752,49.556065],[0.193941,49.555932],[0.194118,49.555786],[0.194266,49.555627],[0.194346,49.555451],[0.194334,49.555266],[0.194277,49.555085],[0.19421,49.554904],[0.194159,49.554719],[0.194101,49.554538],[0.194037,49.554354],[0.193981,49.554174],[0.19393,49.553997],[0.193885,49.553815],[0.193813,49.553638],[0.19375,49.553455],[0.193708,49.553276],[0.193652,49.553098],[0.193577,49.552921],[0.193498,49.552742],[0.193373,49.552574],[0.193599,49.55268],[0.193839,49.552771],[0.194089,49.552859],[0.194344,49.552935],[0.194607,49.553016],[0.19485,49.553113],[0.195081,49.553227],[0.195252,49.553369],[0.195423,49.553518],[0.195571,49.553671],[0.195733,49.553822],[0.195885,49.55398],[0.196036,49.554136],[0.196175,49.554295],[0.196295,49.554467],[0.19657,49.554504],[0.19676,49.554362],[0.196915,49.554205],[0.197087,49.554053],[0.197275,49.55419],[0.197311,49.55437],[0.197345,49.554562],[0.197386,49.554746],[0.197459,49.55493],[0.19757,49.555097],[0.19768,49.555263],[0.197807,49.555423],[0.197929,49.555592],[0.198054,49.555766],[0.198175,49.555929],[0.198298,49.556099],[0.198414,49.556271],[0.198536,49.556443],[0.198642,49.556614],[0.198769,49.556776],[0.198846,49.556953],[0.198918,49.557129],[0.199007,49.557305],[0.199085,49.557481],[0.199185,49.557652],[0.199323,49.557815],[0.19949,49.55797],[0.199652,49.55812],[0.199826,49.558264],[0.199992,49.558421],[0.20017,49.558569],[0.200345,49.558721],[0.200508,49.558878],[0.200687,49.559016],[0.200854,49.559163],[0.200987,49.559327],[0.201151,49.559476],[0.201291,49.559632],[0.201438,49.559788],[0.201579,49.559945],[0.20171,49.560107],[0.201825,49.56028],[0.201923,49.560448],[0.202017,49.56062],[0.202119,49.560792],[0.202211,49.560969],[0.202312,49.561142],[0.202412,49.56131],[0.202506,49.56149],[0.202595,49.561669],[0.202622,49.561858],[0.202782,49.562014],[0.202867,49.562196],[0.20294,49.56237],[0.203042,49.562542],[0.203161,49.562712],[0.203292,49.562872],[0.203399,49.563041],[0.2036,49.56318],[0.203758,49.56333],[0.203938,49.563476],[0.204088,49.563635],[0.204267,49.563781],[0.204403,49.563945],[0.204587,49.564099],[0.204756,49.564244],[0.204956,49.564373],[0.205148,49.56451],[0.205364,49.564636],[0.20552,49.564788],[0.205726,49.564909],[0.205928,49.565048],[0.206126,49.565189],[0.206325,49.565329],[0.206523,49.565467],[0.206726,49.565605],[0.206904,49.565743],[0.207097,49.56588],[0.207292,49.566018],[0.207486,49.566149],[0.20768,49.566283],[0.207879,49.566409],[0.208085,49.566533],[0.208291,49.566662],[0.208491,49.5668],[0.208663,49.566947],[0.208856,49.567083],[0.209045,49.567222],[0.209231,49.567364],[0.209457,49.567476],[0.209716,49.567546],[0.209988,49.567622],[0.210245,49.567703],[0.210507,49.567768],[0.210782,49.567836],[0.211041,49.567904],[0.21131,49.567967],[0.211578,49.568032],[0.211846,49.568091],[0.212103,49.568161],[0.212167,49.56834],[0.212068,49.568508],[0.211962,49.568678],[0.211872,49.568855],[0.21177,49.569031],[0.211694,49.569214],[0.211594,49.569391],[0.211503,49.569568],[0.211574,49.569751],[0.211757,49.569898],[0.211944,49.570042],[0.21212,49.570195],[0.212278,49.570343],[0.212457,49.570486],[0.2126,49.570649],[0.212783,49.57079],[0.212946,49.570941],[0.213118,49.571089],[0.213271,49.571241],[0.213416,49.571405],[0.213615,49.571535],[0.213755,49.571693],[0.213923,49.571844],[0.214066,49.572001],[0.214235,49.572147],[0.214426,49.572284],[0.214606,49.572427],[0.214779,49.572577],[0.214908,49.572744],[0.214997,49.572926],[0.215061,49.573103],[0.215067,49.573287],[0.21495,49.573459],[0.214937,49.573651],[0.21488,49.573835],[0.214917,49.57402],[0.214911,49.574201],[0.214954,49.574382],[0.215071,49.574553],[0.215231,49.574704],[0.215491,49.574782],[0.215761,49.574841],[0.215914,49.574992],[0.215859,49.575171],[0.216104,49.57526],[0.216388,49.575247],[0.216684,49.575252],[0.216732,49.575436],[0.21664,49.575614],[0.216557,49.575796],[0.216469,49.575967],[0.216372,49.576137],[0.216283,49.576312],[0.216191,49.576489],[0.216096,49.576664],[0.215995,49.576844],[0.215908,49.577022],[0.2158,49.577196],[0.215698,49.577376],[0.215568,49.577545],[0.215473,49.577714],[0.215446,49.577895],[0.215346,49.578066],[0.215222,49.578228],[0.215072,49.578389],[0.214921,49.578555],[0.214784,49.57872],[0.214627,49.578879],[0.214485,49.579044],[0.214325,49.579203],[0.214192,49.579361],[0.214009,49.579504],[0.213839,49.57965],[0.213683,49.579806],[0.213571,49.579979],[0.21342,49.580138],[0.213283,49.580301],[0.213146,49.58046],[0.212988,49.580621],[0.212838,49.580777],[0.212701,49.580935],[0.212571,49.581105],[0.21242,49.581257],[0.212654,49.58136],[0.212928,49.581427],[0.212874,49.581609]]},"properties":{"name":"Parcours","styleUrl":"#stylemap_id0","styleHash":"-15285262","styleMapHash":"{\"normal\":\"#style0\",\"highlight\":\"#style\"}","stroke":"#ffff00","stroke-opacity":"1","stroke-width":"4"},"id":"je7W6"},{"type":"Feature","geometry":{"type":"Point","coordinates":[0.193533,49.557309]},"properties":{"name":"Pigeonnier","description":"{{https://live.staticflickr.com/65535/51133228123_1155bfb1b6_b.jpg|800}}\n\n[[https://live.staticflickr.com/65535/51133228123_1155bfb1b6_b.jpg|Agrandir l\'image (image zoomable)]]\n\nTexte du commentaire\n","styleUrl":"#323","styleHash":"-4b0b4480","styleMapHash":"{\"normal\":\"#318\",\"highlight\":\"#352\"}"},"id":"E74rK"},{"type":"Feature","geometry":{"type":"Point","coordinates":[0.192944,49.556682]},"properties":{"name":"Portail","description":"{{https://live.staticflickr.com/65535/51133014141_95c94b3cf1_b.jpg|800}}\n\n[[https://live.staticflickr.com/65535/51133014141_95c94b3cf1_b.jpg|Agrandir l\'image (image zoomable)]]\n\nTexte du commentaire\n\n","styleUrl":"#328","styleHash":"-6278007b","styleMapHash":"{\"normal\":\"#346\",\"highlight\":\"#327\"}"},"id":"728lP"},{"type":"Feature","geometry":{"type":"Point","coordinates":[0.199054,49.557341]},"properties":{"name":"Réservoir","description":"{{https://live.staticflickr.com/65535/51132341802_c5a0d3cfd4_b.jpg|800}}\n\n[[https://live.staticflickr.com/65535/51132341802_c5a0d3cfd4_b.jpg|Agrandir l\'image (image zoomable)]]\n\nTexte du commentaire\n\n","styleUrl":"#310","styleHash":"-e88693c","styleMapHash":"{\"normal\":\"#336\",\"highlight\":\"#322\"}"},"id":"HuxCZ"},{"type":"Feature","geometry":{"type":"Point","coordinates":[0.194847,49.56312]},"properties":{"name":"Rouge Gorge","description":"{{{https://www.youtube.com/embed/eBxOrUQtGUQ}}}\n\nhttps://www.youtube.com/embed/eBxOrUQtGUQ","styleUrl":"#1510","styleHash":"20b8bc3e","styleMapHash":"{\"normal\":\"#1502\",\"highlight\":\"#153\"}"},"id":"ZP4m7"},{"type":"Feature","geometry":{"type":"Point","coordinates":[0.193473,49.557066]},"properties":{"name":"Ruisseau","description":"{{https://live.staticflickr.com/65535/51133790404_b2747bab59_b.jpg|800}}\n\n[[https://live.staticflickr.com/65535/51133790404_b2747bab59_b.jpg|Agrandir l\'image (image zoomable)]]\n\nTexte du commentaire\n","styleUrl":"#348","styleHash":"-539350d7","styleMapHash":"{\"normal\":\"#331\",\"highlight\":\"#342\"}"},"id":"FyAF8"},{"type":"Feature","geometry":{"type":"Point","coordinates":[0.203349,49.562994]},"properties":{"name":"Silène dioïque","description":"{{https://live.staticflickr.com/65535/51133227783_bc0ffbf7c8_b.jpg|800}}\n\n[[https://live.staticflickr.com/65535/51133227783_bc0ffbf7c8_b.jpg|Agrandir l\'image (image zoomable)]]\n\nTexte du commentaire\n","styleUrl":"#321","styleHash":"-b96e1d","styleMapHash":"{\"normal\":\"#337\",\"highlight\":\"#317\"}"},"id":"7O4jM"},{"type":"Feature","geometry":{"type":"Point","coordinates":[0.19521,49.566673]},"properties":{"name":"Sous-bois","description":"{{https://live.staticflickr.com/65535/51132342292_7395340ff8_b.jpg|800}}\n\n[[https://live.staticflickr.com/65535/51132342292_7395340ff8_b.jpg|Agrandir l\'image (image zoomable)]]\n\nTexte du commentaire\n","styleUrl":"#36","styleHash":"6ed41f60","styleMapHash":"{\"normal\":\"#329\",\"highlight\":\"#32\"}"},"id":"ixMpq"},{"type":"Feature","geometry":{"type":"Point","coordinates":[0.194945,49.564385]},"properties":{"name":"Sous-bois 2","description":"{{https://live.staticflickr.com/65535/51133014401_cf76e05d54_b.jpg|800}}\n\n[[https://live.staticflickr.com/65535/51133014401_cf76e05d54_b.jpg|Agrandir l\'image (image zoomable)]]\n\nTexte du commentaire\n\n","styleUrl":"#31","styleHash":"1e4174d4","styleMapHash":"{\"normal\":\"#33\",\"highlight\":\"#311\"}"},"id":"BDYWx"},{"type":"Feature","geometry":{"type":"Point","coordinates":[0.196896,49.57029]},"properties":{"name":"Tête du vallon","description":"{{https://live.staticflickr.com/65535/51132342397_4198dc30c9_b.jpg|800}}\n\n[[https://live.staticflickr.com/65535/51132342397_4198dc30c9_b.jpg|Agrandir l\'image (image zoomable)]]\n\nTexte du commentaire\n","styleUrl":"#338","styleHash":"-37f55a99","styleMapHash":"{\"normal\":\"#333\",\"highlight\":\"#38\"}"},"id":"4YOJW"}]};
+
+const map = L.map('map').fitBounds(L.geoJSON(g).getBounds());
+L.tileLayer('https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}',{attribution:'&copy; IGN - Plan v2',maxZoom:19}).addTo(map);
+L.geoJSON(g,{
+  style:{color:'#c00',weight:6},
+  filter: function(feature) {
+    return feature.geometry.type !== 'Point';
+  }
+}).addTo(map);
+
+function download(f){
+  let data, ext, type;
+  if(f==='gpx'){data=togpx(g);ext='gpx';type='application/gpx+xml';}
+  if(f==='kml'){data=tokml(g);ext='kml';type='application/vnd.google-earth.kml+xml';}
+  if(f==='geojson'){data=JSON.stringify(g,null,2);ext='geojson';type='application/geo+json';}
+  
+  const blob = new Blob([data],{type});
+  
+  // Essayer d'utiliser l'API File System Access (Chrome/Edge)
+  if ('showSaveFilePicker' in window) {
+    const opts = {
+      suggestedName: 'trace-Rolleville-8.33km-2025-12-09.' + ext,
+      types: [{
+        description: ext.toUpperCase() + ' File',
+        accept: {[type]: ['.' + ext]}
+      }],
+      startIn: 'documents'
+    };
+    
+    window.showSaveFilePicker(opts).then(fileHandle => {
+      return fileHandle.createWritable();
+    }).then(writable => {
+      writable.write(blob);
+      return writable.close();
+    }).catch(err => {
+      // Si annulé ou erreur, téléchargement classique
+      if (err.name !== 'AbortError') {
+        const a=document.createElement('a');
+        a.href=URL.createObjectURL(blob);
+        a.download='trace-Rolleville-8.33km-2025-12-09.'+ext;
+        a.click();
+      }
+    });
+  } else {
+    // Téléchargement classique pour les navigateurs non compatibles
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='trace-Rolleville-8.33km-2025-12-09.'+ext;
+    a.click();
+  }
+}
+
+function share(){
+  const blob = new Blob([document.documentElement.outerHTML], {type: 'text/html'});
+  const file = new File([blob], 'trace-Rolleville-8.33km-2025-12-09.html', {type: 'text/html'});
+  
+  // Essayer d'utiliser l'API File System Access pour sauvegarder
+  if ('showSaveFilePicker' in window) {
+    const opts = {
+      suggestedName: 'trace-Rolleville-8.33km-2025-12-09.html',
+      types: [{
+        description: 'HTML File',
+        accept: {'text/html': ['.html']}
+      }],
+      startIn: 'documents'
+    };
+    
+    window.showSaveFilePicker(opts).then(fileHandle => {
+      return fileHandle.createWritable();
+    }).then(writable => {
+      writable.write(blob);
+      return writable.close();
+    }).then(() => {
+      alert('Fichier HTML sauvegardé avec succès !');
+    }).catch(err => {
+      // Si annulé, essayer Web Share API
+      if (err.name === 'AbortError') {
+        return;
+      }
+      // Fallback sur Web Share ou téléchargement
+      if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+        navigator.share({files:[file],title:'trace-Rolleville-8.33km-2025-12-09',text:'Découvrez ma trace GPS'})
+          .catch(err=>console.log('Partage annulé'));
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'trace-Rolleville-8.33km-2025-12-09.html';
+        a.click();
+        URL.revokeObjectURL(url);
+        alert('Fichier téléchargé. Vous pouvez le partager par email ou autre moyen.');
+      }
+    });
+  } else if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+    navigator.share({files:[file],title:'trace-Rolleville-8.33km-2025-12-09',text:'Découvrez ma trace GPS'})
+      .catch(err=>console.log('Partage annulé'));
+  } else {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'trace-Rolleville-8.33km-2025-12-09.html';
+    a.click();
+    URL.revokeObjectURL(url);
+    alert('Fichier téléchargé. Vous pouvez le partager par email ou autre moyen.');
+  }
+}
+
+async function exportPDF(){
+  const btn = event.target;
+  btn.textContent = '⏳ Génération...';
+  btn.disabled = true;
+  
+  try{
+    if (typeof window.jspdf === 'undefined') {
+      throw new Error('jsPDF non chargé');
+    }
+    
+    // Attendre que toutes les tuiles soient chargées
+    await new Promise(resolve => {
+      let tilesLoading = 0;
+      map.eachLayer(layer => {
+        if (layer._tiles) {
+          Object.keys(layer._tiles).forEach(key => {
+            const tile = layer._tiles[key];
+            if (!tile.complete) {
+              tilesLoading++;
+              tile.onload = () => {
+                tilesLoading--;
+                if (tilesLoading === 0) resolve();
+              };
+            }
+          });
+        }
+      });
+      if (tilesLoading === 0) resolve();
+      // Timeout de sécurité après 5 secondes
+      setTimeout(resolve, 5000);
+    });
+    
+    // Petite pause supplémentaire pour être sûr
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const canvas = await html2canvas(document.body, {
+      useCORS: true,
+      allowTaint: false,
+      logging: false,
+      scale: 2,
+      backgroundColor: '#ffffff'
+    });
+    
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const { jsPDF } = window.jspdf;
+    
+    const orientation = canvas.width > canvas.height ? 'l' : 'p';
+    const pdf = new jsPDF({
+      orientation: orientation,
+      unit: 'mm',
+      format: 'a4'
+    });
+    
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = pageWidth;
+    const imgHeight = (canvas.height * pageWidth) / canvas.width;
+    
+    let finalWidth = imgWidth;
+    let finalHeight = imgHeight;
+    if (imgHeight > pageHeight) {
+      finalHeight = pageHeight;
+      finalWidth = (canvas.width * pageHeight) / canvas.height;
+    }
+    
+    pdf.addImage(imgData, 'JPEG', 0, 0, finalWidth, finalHeight);
+    
+    // Essayer de sauvegarder avec File System Access API
+    if ('showSaveFilePicker' in window) {
+      const pdfBlob = pdf.output('blob');
+      const opts = {
+        suggestedName: 'trace-Rolleville-8.33km-2025-12-09.pdf',
+        types: [{
+          description: 'PDF Document',
+          accept: {'application/pdf': ['.pdf']}
+        }],
+        startIn: 'documents'
+      };
+      
+      try {
+        const fileHandle = await window.showSaveFilePicker(opts);
+        const writable = await fileHandle.createWritable();
+        await writable.write(pdfBlob);
+        await writable.close();
+        
+        btn.textContent = '✅ PDF sauvegardé';
+      } catch(saveErr) {
+        if (saveErr.name !== 'AbortError') {
+          // Fallback sur téléchargement classique
+          pdf.save('trace-Rolleville-8.33km-2025-12-09.pdf');
+          btn.textContent = '✅ PDF créé';
+        } else {
+          btn.textContent = '📄 PDF';
+        }
+      }
+    } else {
+      pdf.save('trace-Rolleville-8.33km-2025-12-09.pdf');
+      btn.textContent = '✅ PDF créé';
+    }
+    
+    setTimeout(() => {
+      btn.textContent = '📄 PDF';
+    }, 2000);
+  } catch(err){
+    console.error('Erreur PDF:', err);
+    try {
+      const canvas = await html2canvas(document.body, {
+        useCORS: true,
+        allowTaint: false,
+        logging: false,
+        scale: 2
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = 'trace-Rolleville-8.33km-2025-12-09.png';
+      link.href = imgData;
+      link.click();
+      alert('Export PDF non disponible, image PNG générée à la place.');
+    } catch(err2) {
+      alert('Erreur lors de la génération: ' + err2.message);
+    }
+    btn.textContent = '📄 PDF';
+  } finally{
+    btn.disabled = false;
+  }
+}
+</script>
+</body></html>
