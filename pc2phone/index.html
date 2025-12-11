@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Transférez des fichiers sans fil entre PC et smartphone">
+    <meta name="theme-color" content="#4F46E5">
+    <title>pc2phone - Transfert de Fichiers</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon512.png">
+    <link rel="apple-touch-icon" href="icon192.png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-2xl shadow-xl p-6 mb-6 fade-in">
+            <!-- En-tête -->
+            <div class="flex items-center justify-between mb-6">
+                <h1 class="text-3xl font-bold text-gray-800">📱 pc2phone</h1>
+                <div id="connectionStatus" class="flex items-center gap-2 text-gray-400">
+                    <span class="text-2xl">📡</span>
+                    <span class="font-medium">Déconnecté</span>
+                </div>
+            </div>
+
+            <!-- Votre ID -->
+            <div class="bg-blue-50 rounded-lg p-4 mb-6">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-xl">💻</span>
+                    <span class="font-semibold text-gray-700">Votre ID :</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <code id="peerId" class="bg-white px-4 py-2 rounded text-2xl font-mono font-bold text-blue-600 flex-1">
+                        ------
+                    </code>
+                    <button onclick="copyPeerId()" class="p-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+                        📋
+                    </button>
+                </div>
+            </div>
+
+            <!-- Zone de connexion -->
+            <div id="connectionZone">
+                <button onclick="createConnection()" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition mb-4">
+                    🔗 Créer une connexion
+                </button>
+
+                <!-- Étape 1 : Offre générée -->
+                <div id="offerBox" class="hidden bg-green-50 border-2 border-green-200 rounded-lg p-4 mb-4">
+                    <p class="font-semibold text-green-800 mb-2">✅ Étape 1 : Copiez ce code</p>
+                    <textarea id="generatedOffer" readonly class="w-full h-24 p-2 border rounded font-mono text-xs mb-2"></textarea>
+                    <button onclick="copyOffer()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mb-4">
+                        📋 Copier
+                    </button>
+
+                    <p class="font-semibold text-green-800 mb-2">✅ Étape 2 : Collez la réponse ici</p>
+                    <textarea id="answerInput" placeholder="Collez la réponse reçue..." class="w-full h-24 p-2 border rounded font-mono text-xs mb-2"></textarea>
+                    <button onclick="handleAnswerPaste()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                        🔌 Se connecter
+                    </button>
+                </div>
+
+                <!-- Ou recevoir une offre -->
+                <div class="border-t pt-4">
+                    <p class="font-semibold text-gray-700 mb-2">Ou collez un code reçu :</p>
+                    <textarea id="offerInput" placeholder="Collez le code de connexion ici..." class="w-full h-24 p-2 border rounded font-mono text-xs mb-2"></textarea>
+                    <button onclick="handleOfferPaste()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+                        💬 Répondre
+                    </button>
+
+                    <!-- Réponse générée -->
+                    <div id="answerBox" class="hidden mt-4 bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                        <p class="font-semibold text-blue-800 mb-2">📤 Envoyez ce code en réponse :</p>
+                        <textarea id="generatedAnswer" readonly class="w-full h-24 p-2 border rounded font-mono text-xs mb-2"></textarea>
+                        <button onclick="copyAnswer()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                            📋 Copier
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Connecté à -->
+            <div id="connectedTo" class="hidden bg-green-50 rounded-lg p-4 mb-6">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">📱</span>
+                    <span class="font-semibold text-gray-700">Connecté à :</span>
+                    <code id="remotePeerId" class="font-mono font-bold text-green-600"></code>
+                </div>
+            </div>
+
+            <!-- Zone d'upload -->
+            <div id="uploadZone" class="hidden border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <div class="text-6xl mb-4">📤</div>
+                <p class="text-gray-600 mb-4">Glissez des fichiers ici ou cliquez pour sélectionner</p>
+                <input type="file" multiple id="fileInput" class="hidden" onchange="handleFileSelect(event)">
+                <label for="fileInput" class="inline-block bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold cursor-pointer hover:bg-indigo-700 transition">
+                    📁 Sélectionner des fichiers
+                </label>
+            </div>
+
+            <!-- Transferts en cours -->
+            <div id="transfersZone" class="hidden mt-6">
+                <h3 class="font-semibold text-gray-700 mb-3">⏳ Transferts en cours</h3>
+                <div id="transfersList"></div>
+            </div>
+
+            <!-- Fichiers reçus -->
+            <div id="receivedZone" class="hidden mt-6">
+                <h3 class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                    <span class="text-xl">📥</span>
+                    Fichiers reçus
+                </h3>
+                <div id="receivedList" class="space-y-2"></div>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="bg-white rounded-lg shadow p-4 text-sm text-gray-600">
+            <p class="font-semibold mb-2">💡 Comment utiliser :</p>
+            <ol class="list-decimal list-inside space-y-1">
+                <li>Cliquez sur "Créer une connexion" sur l'appareil 1</li>
+                <li>Copiez le code et envoyez-le à l'appareil 2 (email, SMS, etc.)</li>
+                <li>Sur l'appareil 2, collez le code et cliquez "Répondre"</li>
+                <li>Copiez la réponse et collez-la sur l'appareil 1</li>
+                <li>Une fois connectés, vous pouvez échanger des fichiers ! 🎉</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        let peerId = '';
+        let remotePeerId = '';
+        let peerConnection = null;
+        let dataChannel = null;
+        let isConnected = false;
+        let fileChunks = {};
+        let transferProgress = {};
+
+        // Configuration WebRTC
+        const rtcConfig = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        };
+
+        // Initialisation
+        window.addEventListener('load', () => {
+            peerId = Math.random().toString(36).substring(2, 8).toUpperCase();
+            document.getElementById('peerId').textContent = peerId;
+            
+            // Enregistrer le Service Worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW enregistré', reg))
+                    .catch(err => console.log('Erreur SW', err));
+            }
+        });
+
+        function updateConnectionStatus(connected) {
+            isConnected = connected;
+            const status = document.getElementById('connectionStatus');
+            if (connected) {
+                status.innerHTML = '<span class="text-2xl">✅</span><span class="font-medium text-green-600">Connecté</span>';
+                document.getElementById('connectionZone').classList.add('hidden');
+                document.getElementById('connectedTo').classList.remove('hidden');
+                document.getElementById('uploadZone').classList.remove('hidden');
+            } else {
+                status.innerHTML = '<span class="text-2xl">📡</span><span class="font-medium text-gray-400">Déconnecté</span>';
+            }
+        }
+
+        function createPeerConnection() {
+            const pc = new RTCPeerConnection(rtcConfig);
+            
+            pc.onicecandidate = (e) => {
+                if (e.candidate) console.log('ICE Candidate:', e.candidate);
+            };
+
+            pc.onconnectionstatechange = () => {
+                console.log('Connection state:', pc.connectionState);
+                if (pc.connectionState === 'connected') {
+                    updateConnectionStatus(true);
+                } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+                    updateConnectionStatus(false);
+                }
+            };
+
+            return pc;
+        }
+
+        function setupDataChannel(channel) {
+            channel.binaryType = 'arraybuffer';
+            
+            channel.onopen = () => {
+                console.log('Data channel ouvert');
+                updateConnectionStatus(true);
+            };
+
+            channel.onclose = () => {
+                console.log('Data channel fermé');
+                updateConnectionStatus(false);
+            };
+
+            channel.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    
+                    if (data.type === 'file-meta') {
+                        fileChunks[data.id] = {
+                            name: data.name,
+                            size: data.size,
+                            mimeType: data.mimeType,
+                            chunks: [],
+                            received: 0
+                        };
+                        addTransferProgress(data.id, data.name, 0);
+                    } else if (data.type === 'file-chunk') {
+                        const fileData = fileChunks[data.id];
+                        if (fileData) {
+                            fileData.chunks.push(data.chunk);
+                            fileData.received += data.chunk.length;
+                            const progress = (fileData.received / fileData.size) * 100;
+                            updateTransferProgress(data.id, progress);
+                            
+                            if (fileData.received >= fileData.size) {
+                                const blob = new Blob(fileData.chunks, { type: fileData.mimeType });
+                                const url = URL.createObjectURL(blob);
+                                addReceivedFile(data.id, fileData.name, fileData.size, url);
+                                removeTransferProgress(data.id);
+                                delete fileChunks[data.id];
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error('Erreur parsing message:', e);
+                }
+            };
+
+            dataChannel = channel;
+        }
+
+        async function createConnection() {
+            try {
+                peerConnection = createPeerConnection();
+                const channel = peerConnection.createDataChannel('fileTransfer', { ordered: true });
+                setupDataChannel(channel);
+
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+
+                const offerData = JSON.stringify({
+                    type: 'offer',
+                    sdp: offer.sdp,
+                    peerId: peerId
+                });
+
+                document.getElementById('generatedOffer').value = offerData;
+                document.getElementById('offerBox').classList.remove('hidden');
+            } catch (error) {
+                console.error('Erreur création offre:', error);
+                alert('Erreur lors de la création de la connexion');
+            }
+        }
+
+        async function handleOfferPaste() {
+            const offerText = document.getElementById('offerInput').value.trim();
+            if (!offerText) {
+                alert('Veuillez coller un code de connexion');
+                return;
+            }
+
+            try {
+                const data = JSON.parse(offerText);
+                peerConnection = createPeerConnection();
+
+                peerConnection.ondatachannel = (event) => {
+                    setupDataChannel(event.channel);
+                };
+
+                await peerConnection.setRemoteDescription(new RTCSessionDescription({
+                    type: 'offer',
+                    sdp: data.sdp
+                }));
+
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+
+                remotePeerId = data.peerId;
+                document.getElementById('remotePeerId').textContent = remotePeerId;
+
+                const answerData = JSON.stringify({
+                    type: 'answer',
+                    sdp: answer.sdp,
+                    peerId: peerId
+                });
+
+                document.getElementById('generatedAnswer').value = answerData;
+                document.getElementById('answerBox').classList.remove('hidden');
+            } catch (error) {
+                console.error('Erreur traitement offre:', error);
+                alert('Code invalide ou erreur de connexion');
+            }
+        }
+
+        async function handleAnswerPaste() {
+            const answerText = document.getElementById('answerInput').value.trim();
+            if (!answerText) {
+                alert('Veuillez coller la réponse');
+                return;
+            }
+
+            try {
+                const data = JSON.parse(answerText);
+                await peerConnection.setRemoteDescription(new RTCSessionDescription({
+                    type: 'answer',
+                    sdp: data.sdp
+                }));
+                remotePeerId = data.peerId;
+                document.getElementById('remotePeerId').textContent = remotePeerId;
+            } catch (error) {
+                console.error('Erreur traitement réponse:', error);
+                alert('Réponse invalide ou erreur de connexion');
+            }
+        }
+
+        function copyPeerId() {
+            navigator.clipboard.writeText(peerId);
+            alert('✅ ID copié !');
+        }
+
+        function copyOffer() {
+            const offer = document.getElementById('generatedOffer').value;
+            navigator.clipboard.writeText(offer);
+            alert('✅ Code copié ! Envoyez-le à l\'autre appareil.');
+        }
+
+        function copyAnswer() {
+            const answer = document.getElementById('generatedAnswer').value;
+            navigator.clipboard.writeText(answer);
+            alert('✅ Réponse copiée ! Envoyez-la à l\'autre appareil.');
+        }
+
+        function handleFileSelect(event) {
+            const files = Array.from(event.target.files);
+            files.forEach(file => sendFile(file));
+        }
+
+        async function sendFile(file) {
+            if (!dataChannel || dataChannel.readyState !== 'open') {
+                alert('❌ Pas de connexion active');
+                return;
+            }
+
+            const fileId = Math.random().toString(36).substring(2);
+            const chunkSize = 16384;
+
+            dataChannel.send(JSON.stringify({
+                type: 'file-meta',
+                id: fileId,
+                name: file.name,
+                size: file.size,
+                mimeType: file.type
+            }));
+
+            const reader = new FileReader();
+            let offset = 0;
+
+            addTransferProgress(fileId, file.name, 0);
+
+            const readSlice = () => {
+                const slice = file.slice(offset, offset + chunkSize);
+                reader.readAsArrayBuffer(slice);
+            };
+
+            reader.onload = (e) => {
+                const chunk = new Uint8Array(e.target.result);
+                dataChannel.send(JSON.stringify({
+                    type: 'file-chunk',
+                    id: fileId,
+                    chunk: Array.from(chunk)
+                }));
+
+                offset += chunk.length;
+                const progress = (offset / file.size) * 100;
+                updateTransferProgress(fileId, progress);
+
+                if (offset < file.size) {
+                    readSlice();
+                } else {
+                    setTimeout(() => removeTransferProgress(fileId), 1000);
+                }
+            };
+
+            readSlice();
+        }
+
+        function addTransferProgress(id, name, progress) {
+            const zone = document.getElementById('transfersZone');
+            const list = document.getElementById('transfersList');
+            zone.classList.remove('hidden');
+
+            const div = document.createElement('div');
+            div.id = 'transfer-' + id;
+            div.className = 'bg-gray-50 rounded-lg p-3 mb-2';
+            div.innerHTML = `
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-600">${name}</span>
+                    <span class="text-gray-600" id="progress-${id}">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="bar-${id}" class="bg-indigo-600 h-2 rounded-full transition-all" style="width: 0%"></div>
+                </div>
+            `;
+            list.appendChild(div);
+        }
+
+        function updateTransferProgress(id, progress) {
+            const progressText = document.getElementById('progress-' + id);
+            const bar = document.getElementById('bar-' + id);
+            if (progressText) progressText.textContent = Math.round(progress) + '%';
+            if (bar) bar.style.width = progress + '%';
+        }
+
+        function removeTransferProgress(id) {
+            const elem = document.getElementById('transfer-' + id);
+            if (elem) elem.remove();
+            
+            const list = document.getElementById('transfersList');
+            if (list.children.length === 0) {
+                document.getElementById('transfersZone').classList.add('hidden');
+            }
+        }
+
+        function addReceivedFile(id, name, size, url) {
+            const zone = document.getElementById('receivedZone');
+            const list = document.getElementById('receivedList');
+            zone.classList.remove('hidden');
+
+            const div = document.createElement('div');
+            div.className = 'bg-green-50 rounded-lg p-4 flex items-center justify-between';
+            div.innerHTML = `
+                <div>
+                    <p class="font-medium text-gray-800">${name}</p>
+                    <p class="text-sm text-gray-500">${(size / 1024 / 1024).toFixed(2)} MB</p>
+                </div>
+                <a href="${url}" download="${name}" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
+                    💾 Télécharger
+                </a>
+            `;
+            list.appendChild(div);
+        }
+    </script>
+</body>
+</html>
