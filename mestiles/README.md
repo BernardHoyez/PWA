@@ -11,4 +11,6 @@ Guru Maps :
 Cliquer sur l'icône Cartes emîlées
 Puis Aller sur la carte
 
+Locus Maps
+
 [](BernardHoyez.github.io/PWA/mestiles)
