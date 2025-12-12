@@ -4,6 +4,11 @@ On peut choisir le rayon en km autour d'un point central
 Le zoom est limité entre 12 et 16
 On peut choisir de sauvegarder dans un sous-dossier de Downloads et Documents
 
-Ce type de cartes est reconnu par Orux Maps
+Ce type de cartes est reconnu par :
+Orux Maps 
+
+Guru Maps :
+Cliquer sur l'icône Cartes emîlées
+Puis Aller sur la carte
 
 [](BernardHoyez.github.io/PWA/mestiles)
