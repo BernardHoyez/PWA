@@ -5,6 +5,7 @@ Le zoom est limité entre 12 et 16
 On peut choisir de sauvegarder dans un sous-dossier de Downloads et Documents
 
 Ce type de cartes est reconnu par :
+
 Orux Maps 
 
 Guru Maps :
