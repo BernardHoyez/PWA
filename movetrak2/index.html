@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Animez vos traces GPS et exportez en HTML">
+    <meta name="theme-color" content="#2563eb">
+    <title>MoveTrak2</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            background: #f3f4f6;
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            padding: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .controls {
+            background: white;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        select {
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+
+        #map {
+            flex: 1;
+            position: relative;
+        }
+
+        .playback-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .speed-control {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .slider {
+            width: 150px;
+        }
+
+        .info-panel {
+            background: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            color: #4b5563;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: none;
+            z-index: 10000;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .export-section {
+            border-left: 2px solid #e5e7eb;
+            padding-left: 1rem;
+        }
+
+        .image-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 90vw;
+            max-height: 90vh;
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            display: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+
+        .image-popup.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .image-popup img {
+            max-width: 100%;
+            max-height: 90vh;
+            display: block;
+        }
+
+        .image-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            z-index: 9998;
+        }
+
+        .image-popup-overlay.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .waypoint-marker {
+            background-color: #f59e0b;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .slider {
+                width: 100%;
+            }
+
+            .export-section {
+                border-left: none;
+                border-top: 2px solid #e5e7eb;
+                padding-left: 0;
+                padding-top: 1rem;
+            }
+
+            .image-popup {
+                max-width: 95vw;
+                max-height: 80vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>📍 MoveTrak2</h1>
+        </header>
+
+        <div class="controls">
+            <div class="file-input-wrapper">
+                <label for="fileInput" class="btn btn-primary">
+                    📁 Charger GPX/KML
+                </label>
+                <input type="file" id="fileInput" accept=".gpx,.kml">
+            </div>
+
+            <select id="mapType">
+                <option value="osm">OpenStreetMap</option>
+                <option value="ign">IGN Plan V2</option>
+            </select>
+
+            <div class="playback-controls">
+                <button id="playBtn" class="btn btn-secondary" disabled>▶️ Lecture</button>
+                <button id="pauseBtn" class="btn btn-secondary" disabled style="display:none;">⏸️ Pause</button>
+                <button id="resetBtn" class="btn btn-secondary" disabled>🔄 Réinitialiser</button>
+            </div>
+
+            <div class="speed-control">
+                <label for="speedSlider">Vitesse:</label>
+                <input type="range" id="speedSlider" class="slider" min="1" max="10" value="5" step="1">
+                <span id="speedValue">5x</span>
+            </div>
+
+            <div class="export-section">
+                <button id="exportBtn" class="btn btn-success" disabled>💾 Exporter HTML</button>
+            </div>
+        </div>
+
+        <div id="map"></div>
+
+        <div class="info-panel">
+            <span id="info">Chargez un fichier GPX ou KML pour commencer</span>
+        </div>
+    </div>
+
+    <div class="image-popup-overlay" id="imageOverlay"></div>
+    <div class="image-popup" id="imagePopup">
+        <img id="popupImage" src="" alt="Waypoint image">
+    </div>
+
+    <div class="loading" id="loading">
+        <p>Chargement de la trace...</p>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js');
+        }
+
+        let map;
+        let trackCoordinates = [];
+        let waypoints = [];
+        let trackLine;
+        let marker;
+        let waypointMarkers = [];
+        let currentIndex = 0;
+        let isPlaying = false;
+        let animationTimer;
+        let speed = 5;
+        let currentMapType = 'osm';
+        let originalFileName = '';
+
+        const mapLayers = {
+            osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }),
+            ign: L.tileLayer('https://data.geopf.fr/wmts?layer=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&style=normal&tilematrixset=PM&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image%2Fpng&TileMatrix={z}&TileCol={x}&TileRow={y}', {
+                attribution: '© IGN-F/Geoportail'
+            })
+        };
+
+        map = L.map('map').setView([46.603354, 1.888334], 6);
+        mapLayers.osm.addTo(map);
+
+        const blueIcon = L.divIcon({
+            className: 'custom-marker',
+            html: '<div style="background-color: #2563eb; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+        });
+
+        const waypointIcon = L.divIcon({
+            className: 'waypoint-marker',
+            html: '<div class="waypoint-marker"></div>',
+            iconSize: [12, 12],
+            iconAnchor: [6, 6]
+        });
+
+        document.getElementById('mapType').addEventListener('change', (e) => {
+            currentMapType = e.target.value;
+            map.eachLayer(layer => {
+                if (layer instanceof L.TileLayer) {
+                    map.removeLayer(layer);
+                }
+            });
+            mapLayers[currentMapType].addTo(map);
+        });
+
+        document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+        document.getElementById('playBtn').addEventListener('click', startAnimation);
+        document.getElementById('pauseBtn').addEventListener('click', pauseAnimation);
+        document.getElementById('resetBtn').addEventListener('click', resetAnimation);
+        document.getElementById('exportBtn').addEventListener('click', exportToHTML);
+        document.getElementById('speedSlider').addEventListener('input', (e) => {
+            speed = parseInt(e.target.value);
+            document.getElementById('speedValue').textContent = speed + 'x';
+            if (isPlaying) {
+                pauseAnimation();
+                startAnimation();
+            }
+        });
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            originalFileName = file.name.replace(/\.(gpx|kml)$/i, '');
+            document.getElementById('loading').classList.add('active');
+            const reader = new FileReader();
+
+            reader.onload = (event) => {
+                const content = event.target.result;
+                const extension = file.name.split('.').pop().toLowerCase();
+
+                if (extension === 'gpx') {
+                    parseGPX(content);
+                } else if (extension === 'kml') {
+                    parseKML(content);
+                }
+
+                document.getElementById('loading').classList.remove('active');
+            };
+
+            reader.readAsText(file);
+        }
+
+        function parseGPX(content) {
+            const parser = new DOMParser();
+            const xml = parser.parseFromString(content, 'text/xml');
+            
+            // Parse track points
+            const points = xml.querySelectorAll('trkpt');
+            trackCoordinates = Array.from(points).map(point => [
+                parseFloat(point.getAttribute('lat')),
+                parseFloat(point.getAttribute('lon'))
+            ]);
+
+            // Parse waypoints
+            waypoints = [];
+            const wpts = xml.querySelectorAll('wpt');
+            Array.from(wpts).forEach(wpt => {
+                const lat = parseFloat(wpt.getAttribute('lat'));
+                const lon = parseFloat(wpt.getAttribute('lon'));
+                const name = wpt.querySelector('name')?.textContent || '';
+                
+                // Look for image link in various possible tags
+                let imageUrl = '';
+                const link = wpt.querySelector('link');
+                if (link) {
+                    imageUrl = link.getAttribute('href') || link.textContent;
+                }
+                
+                // Also check in desc, cmt, or extensions
+                if (!imageUrl) {
+                    const desc = wpt.querySelector('desc')?.textContent || '';
+                    const cmt = wpt.querySelector('cmt')?.textContent || '';
+                    const urlMatch = (desc + ' ' + cmt).match(/(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp))/i);
+                    if (urlMatch) {
+                        imageUrl = urlMatch[1];
+                    }
+                }
+
+                waypoints.push({
+                    lat: lat,
+                    lon: lon,
+                    name: name,
+                    imageUrl: imageUrl
+                });
+            });
+
+            displayTrack();
+        }
+
+        function parseKML(content) {
+            const parser = new DOMParser();
+            const xml = parser.parseFromString(content, 'text/xml');
+            
+            // Parse track coordinates
+            const coordinates = xml.querySelector('LineString coordinates');
+            if (coordinates) {
+                const coordText = coordinates.textContent.trim();
+                trackCoordinates = coordText.split(/\s+/).map(coord => {
+                    const [lon, lat] = coord.split(',');
+                    return [parseFloat(lat), parseFloat(lon)];
+                }).filter(coord => !isNaN(coord[0]) && !isNaN(coord[1]));
+            }
+
+            // Parse waypoints (Placemarks with Point)
+            waypoints = [];
+            const placemarks = xml.querySelectorAll('Placemark');
+            Array.from(placemarks).forEach(pm => {
+                const point = pm.querySelector('Point coordinates');
+                if (point) {
+                    const coords = point.textContent.trim().split(',');
+                    const lon = parseFloat(coords[0]);
+                    const lat = parseFloat(coords[1]);
+                    const name = pm.querySelector('name')?.textContent || '';
+                    const desc = pm.querySelector('description')?.textContent || '';
+                    
+                    // Extract image URL from description
+                    let imageUrl = '';
+                    const urlMatch = desc.match(/(https?:\/\/[^\s<>"]+\.(jpg|jpeg|png|gif|webp))/i);
+                    if (urlMatch) {
+                        imageUrl = urlMatch[1];
+                    }
+
+                    waypoints.push({
+                        lat: lat,
+                        lon: lon,
+                        name: name,
+                        imageUrl: imageUrl
+                    });
+                }
+            });
+
+            displayTrack();
+        }
+
+        function displayTrack() {
+            if (trackLine) {
+                map.removeLayer(trackLine);
+            }
+            if (marker) {
+                map.removeLayer(marker);
+            }
+            waypointMarkers.forEach(m => map.removeLayer(m));
+            waypointMarkers = [];
+
+            trackLine = L.polyline(trackCoordinates, {
+                color: '#ef4444',
+                weight: 3,
+                opacity: 0.7
+            }).addTo(map);
+
+            // Add waypoint markers
+            waypoints.forEach(wp => {
+                const wpMarker = L.marker([wp.lat, wp.lon], { icon: waypointIcon })
+                    .bindPopup(`<strong>${wp.name}</strong>${wp.imageUrl ? '<br>📷 Image disponible' : ''}`)
+                    .addTo(map);
+                waypointMarkers.push(wpMarker);
+            });
+
+            map.fitBounds(trackLine.getBounds());
+
+            marker = L.marker(trackCoordinates[0], { icon: blueIcon }).addTo(map);
+
+            currentIndex = 0;
+            document.getElementById('playBtn').disabled = false;
+            document.getElementById('resetBtn').disabled = false;
+            document.getElementById('exportBtn').disabled = false;
+            
+            const waypointInfo = waypoints.length > 0 ? `, ${waypoints.length} waypoint(s)` : '';
+            document.getElementById('info').textContent = `Trace chargée: ${trackCoordinates.length} points${waypointInfo}`;
+        }
+
+        function showWaypointImage(imageUrl) {
+            const overlay = document.getElementById('imageOverlay');
+            const popup = document.getElementById('imagePopup');
+            const img = document.getElementById('popupImage');
+
+            img.src = imageUrl;
+            overlay.classList.add('active');
+            popup.classList.add('active');
+
+            setTimeout(() => {
+                overlay.classList.remove('active');
+                popup.classList.remove('active');
+            }, 3000);
+        }
+
+        function checkWaypointProximity(currentPos) {
+            waypoints.forEach(wp => {
+                const distance = Math.sqrt(
+                    Math.pow(currentPos[0] - wp.lat, 2) + 
+                    Math.pow(currentPos[1] - wp.lon, 2)
+                );
+                
+                // If within approximately 10 meters (very small distance in degrees)
+                if (distance < 0.0001 && wp.imageUrl && !wp.shown) {
+                    wp.shown = true;
+                    showWaypointImage(wp.imageUrl);
+                }
+            });
+        }
+
+        function startAnimation() {
+            if (trackCoordinates.length === 0) return;
+
+            // Reset shown flags
+            waypoints.forEach(wp => wp.shown = false);
+
+            isPlaying = true;
+            document.getElementById('playBtn').style.display = 'none';
+            document.getElementById('pauseBtn').style.display = 'inline-block';
+
+            const interval = 100 / speed;
+
+            animationTimer = setInterval(() => {
+                if (currentIndex >= trackCoordinates.length - 1) {
+                    pauseAnimation();
+                    document.getElementById('info').textContent = 'Animation terminée';
+                    return;
+                }
+
+                currentIndex++;
+                const currentPos = trackCoordinates[currentIndex];
+                marker.setLatLng(currentPos);
+                checkWaypointProximity(currentPos);
+                const progress = ((currentIndex / (trackCoordinates.length - 1)) * 100).toFixed(1);
+                document.getElementById('info').textContent = \`Progression: \${progress}% (\${currentIndex + 1}/\${trackCoordinates.length})\`;Pos = trackCoordinates[currentIndex];
+                marker.setLatLng(currentPos);
+                
+                // Check if near any waypoint
+                checkWaypointProximity(currentPos);
+                
+                const progress = ((currentIndex / (trackCoordinates.length - 1)) * 100).toFixed(1);
+                document.getElementById('info').textContent = `Progression: ${progress}% (${currentIndex + 1}/${trackCoordinates.length})`;
+            }, interval);
+        }
+
+        function pauseAnimation() {
+            isPlaying = false;
+            clearInterval(animationTimer);
+            document.getElementById('playBtn').style.display = 'inline-block';
+            document.getElementById('pauseBtn').style.display = 'none';
+        }
+
+        function resetAnimation() {
+            pauseAnimation();
+            currentIndex = 0;
+            waypoints.forEach(wp => wp.shown = false);
+            if (marker && trackCoordinates.length > 0) {
+                marker.setLatLng(trackCoordinates[0]);
+                const waypointInfo = waypoints.length > 0 ? `, ${waypoints.length} waypoint(s)` : '';
+                document.getElementById('info').textContent = `Trace réinitialisée: ${trackCoordinates.length} points${waypointInfo}`;
+            }
+        }
+
+        function exportToHTML() {
+            if (trackCoordinates.length === 0) return;
+
+            const htmlContent = generateStandaloneHTML();
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${originalFileName || 'trace'}_animation.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            document.getElementById('info').textContent = 'Fichier HTML exporté avec succès !';
+        }
+
+        function generateStandaloneHTML() {
+            const mapLayerUrl = currentMapType === 'osm' 
+                ? 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                : 'https://data.geopf.fr/wmts?layer=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&style=normal&tilematrixset=PM&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image%2Fpng&TileMatrix={z}&TileCol={x}&TileRow={y}';
+            
+            const attribution = currentMapType === 'osm'
+                ? '© OpenStreetMap contributors'
+                : '© IGN-F/Geoportail';
+
+            return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${originalFileName || 'Trace GPS'} - Animation</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; height: 100vh; overflow: hidden; }
+        #app { display: flex; flex-direction: column; height: 100vh; }
+        header { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        h1 { font-size: 1.5rem; font-weight: 600; }
+        .controls { background: white; padding: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+        .btn { padding: 0.5rem 1rem; border: none; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .btn-secondary { background: #6b7280; color: white; }
+        .btn-secondary:hover { background: #4b5563; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        #map { flex: 1; }
+        .speed-control { display: flex; gap: 0.5rem; align-items: center; }
+        .slider { width: 150px; }
+        .info-panel { background: white; padding: 0.5rem 1rem; font-size: 0.875rem; color: #4b5563; border-top: 1px solid #e5e7eb; }
+        .image-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); max-width: 90vw; max-height: 90vh; background: white; border-radius: 0.5rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); display: none; z-index: 9999; overflow: hidden; }
+        .image-popup.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        .image-popup img { max-width: 100%; max-height: 90vh; display: block; }
+        .image-popup-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); display: none; z-index: 9998; }
+        .image-popup-overlay.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .waypoint-marker { background-color: #f59e0b; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        @media (max-width: 768px) { .controls { flex-direction: column; align-items: stretch; } .slider { width: 100%; } .image-popup { max-width: 95vw; max-height: 80vh; } }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header><h1>📍 ${originalFileName || 'Trace GPS'}</h1></header>
+        <div class="controls">
+            <button id="playBtn" class="btn btn-secondary">▶️ Lecture</button>
+            <button id="pauseBtn" class="btn btn-secondary" style="display:none;">⏸️ Pause</button>
+            <button id="resetBtn" class="btn btn-secondary">🔄 Réinitialiser</button>
+            <div class="speed-control">
+                <label for="speedSlider">Vitesse:</label>
+                <input type="range" id="speedSlider" class="slider" min="1" max="10" value="${speed}" step="1">
+                <span id="speedValue">${speed}x</span>
+            </div>
+        </div>
+        <div id="map"></div>
+        <div class="info-panel"><span id="info">Prêt à démarrer l'animation</span></div>
+    </div>
+    <div class="image-popup-overlay" id="imageOverlay"></div>
+    <div class="image-popup" id="imagePopup"><img id="popupImage" src="" alt="Waypoint image"></div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const trackCoordinates = ${JSON.stringify(trackCoordinates)};
+        const waypoints = ${JSON.stringify(waypoints)};
+        let currentIndex = 0;
+        let isPlaying = false;
+        let animationTimer;
+        let speed = ${speed};
+
+        const map = L.map('map');
+        L.tileLayer('${mapLayerUrl}', { attribution: '${attribution}' }).addTo(map);
+
+        const blueIcon = L.divIcon({
+            className: 'custom-marker',
+            html: '<div style="background-color: #2563eb; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+        });
+
+        const waypointIcon = L.divIcon({
+            className: 'waypoint-marker',
+            html: '<div class="waypoint-marker"></div>',
+            iconSize: [12, 12],
+            iconAnchor: [6, 6]
+        });
+
+        const trackLine = L.polyline(trackCoordinates, { color: '#ef4444', weight: 3, opacity: 0.7 }).addTo(map);
+        
+        waypoints.forEach(wp => {
+            L.marker([wp.lat, wp.lon], { icon: waypointIcon })
+                .bindPopup(\`<strong>\${wp.name}</strong>\${wp.imageUrl ? '<br>📷 Image disponible' : ''}\`)
+                .addTo(map);
+        });
+
+        map.fitBounds(trackLine.getBounds());
+        const marker = L.marker(trackCoordinates[0], { icon: blueIcon }).addTo(map);
+
+        function showWaypointImage(imageUrl) {
+            const overlay = document.getElementById('imageOverlay');
+            const popup = document.getElementById('imagePopup');
+            const img = document.getElementById('popupImage');
+            img.src = imageUrl;
+            overlay.classList.add('active');
+            popup.classList.add('active');
+            setTimeout(() => {
+                overlay.classList.remove('active');
+                popup.classList.remove('active');
+            }, 3000);
+        }
+
+        function checkWaypointProximity(currentPos) {
+            waypoints.forEach(wp => {
+                const distance = Math.sqrt(Math.pow(currentPos[0] - wp.lat, 2) + Math.pow(currentPos[1] - wp.lon, 2));
+                if (distance < 0.0001 && wp.imageUrl && !wp.shown) {
+                    wp.shown = true;
+                    showWaypointImage(wp.imageUrl);
+                }
+            });
+        }
+
+        document.getElementById('playBtn').addEventListener('click', startAnimation);
+        document.getElementById('pauseBtn').addEventListener('click', pauseAnimation);
+        document.getElementById('resetBtn').addEventListener('click', resetAnimation);
+        document.getElementById('speedSlider').addEventListener('input', (e) => {
+            speed = parseInt(e.target.value);
+            document.getElementById('speedValue').textContent = speed + 'x';
+            if (isPlaying) { pauseAnimation(); startAnimation(); }
+        });
+
+        function startAnimation() {
+            waypoints.forEach(wp => wp.shown = false);
+            isPlaying = true;
+            document.getElementById('playBtn').style.display = 'none';
+            document.getElementById('pauseBtn').style.display = 'inline-block';
+            const interval = 100 / speed;
+            animationTimer = setInterval(() => {
+                if (currentIndex >= trackCoordinates.length - 1) {
+                    pauseAnimation();
+                    document.getElementById('info').textContent = 'Animation terminée';
+                    return;
+                }
+                currentIndex++;
+                const current
