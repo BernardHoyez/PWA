@@ -1,0 +1,300 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: #f9fafb;
+    color: #1f2937;
+    line-height: 1.5;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.header {
+    background: white;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+}
+
+h1 {
+    font-size: 1.5rem;
+    text-align: center;
+    color: #1f2937;
+}
+
+/* Écran d'upload */
+.upload-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.upload-box {
+    background: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    max-width: 400px;
+    width: 100%;
+}
+
+.upload-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1rem;
+    color: #ef4444;
+}
+
+/* Boutons */
+.btn {
+    background: #ef4444;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.btn:hover {
+    background: #dc2626;
+}
+
+.btn-secondary {
+    background: transparent;
+    color: #ef4444;
+    border: none;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 0.875rem;
+}
+
+.btn-secondary:hover {
+    color: #dc2626;
+}
+
+/* Calendrier */
+.calendar-header {
+    background: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.month-nav {
+    background: transparent;
+    border: none;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.month-nav:hover {
+    background: #f3f4f6;
+}
+
+.month-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.calendar {
+    background: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.25rem;
+}
+
+.day-header {
+    padding: 0.5rem;
+    text-align: center;
+    font-weight: 600;
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.day-cell {
+    min-height: 64px;
+    padding: 0.5rem;
+    text-align: center;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+    border-radius: 0.25rem;
+}
+
+.day-cell:hover {
+    background: #f9fafb;
+}
+
+.day-cell.hike-day {
+    background: #ef4444;
+    color: white;
+    font-weight: 600;
+    border-color: #ef4444;
+}
+
+.day-cell.hike-day:hover {
+    background: #dc2626;
+    border-color: #dc2626;
+}
+
+.day-cell-date {
+    font-size: 0.875rem;
+}
+
+.day-cell-name {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 0.5rem;
+    max-width: 800px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    background: #ef4444;
+    color: white;
+    padding: 1rem;
+    border-radius: 0.5rem 0.5rem 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+}
+
+.modal-header h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.modal-header p {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    width: 2rem;
+    height: 2rem;
+}
+
+.close-btn:hover {
+    opacity: 0.8;
+}
+
+.modal-body {
+    padding: 1rem;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+    .info-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.info-item {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #374151;
+    white-space: nowrap;
+}
+
+.info-value {
+    color: #6b7280;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    h1 {
+        font-size: 1.25rem;
+    }
+    
+    .month-title {
+        font-size: 1rem;
+    }
+    
+    .day-cell {
+        min-height: 50px;
+        padding: 0.25rem;
+    }
+    
+    .day-cell-date {
+        font-size: 0.75rem;
+    }
+    
+    .day-cell-name {
+        font-size: 0.625rem;
+    }
+}
