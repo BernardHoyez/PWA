@@ -1,0 +1,20 @@
+{
+  "name": "traced",
+  "short_name": "traced",
+  "description": "Convertisseur GPX/KML avec waypoints et orthophoto IGN 20cm",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f8f9fa",
+  "theme_color": "#007bff",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icon512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["utilities", "travel", "navigation"],
+  "lang": "fr-FR"
+}
