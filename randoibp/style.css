@@ -1,0 +1,24 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: system-ui, sans-serif;
+}
+
+header {
+  padding: 0.5rem 1rem;
+  background: #0b3d91;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#map {
+  height: 60vh;
+}
+
+#stats {
+  padding: 0.5rem 1rem;
+  background: #f5f5f5;
+}
