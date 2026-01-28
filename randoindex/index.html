@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RandoIndex</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/@tmcw/togeojson@5.0.0/dist/togeojson.umd.js"></script> <!-- Pour parser GPX/KML -->
+</head>
+<body>
+    <h1>RandoIndex</h1>
+    <input type="file" id="fileInput" accept=".gpx,.kml">
+    <select id="mapType">
+        <option value="osm">OpenStreetMap</option>
+        <option value="ign">IGN Plan V2</option>
+    </select>
+    <input type="text" id="ibpKey" placeholder="Clé API IBP (optionnelle)">
+    <button onclick="processFile()">Analyser</button>
+    <div id="map" style="height: 400px;"></div>
+    <div id="results"></div>
+
+    <script src="app.js"></script>
+
+    <!-- Enregistrement du Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(() => console.log('SW registered'));
+        }
+    </script>
+</body>
+</html>
