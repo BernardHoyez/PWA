@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vérification GPX</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #2563eb;
+        }
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .file-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #1e293b;
+            margin-bottom: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background: #f1f5f9;
+            font-weight: 600;
+        }
+        .diff {
+            color: #10b981;
+            font-weight: bold;
+        }
+        .upload-btn {
+            background: #2563eb;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .upload-btn:hover {
+            background: #1d4ed8;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .stats {
+            background: #eff6ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .stat-item {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Vérificateur de correction GPX</h1>
+    <p>Chargez vos fichiers GPX original et corrigé pour comparer les altitudes.</p>
+
+    <div>
+        <label class="upload-btn">
+            📁 Fichier Original
+            <input type="file" id="originalFile" accept=".gpx">
+        </label>
+        <label class="upload-btn">
+            📁 Fichier Corrigé IGN
+            <input type="file" id="correctedFile" accept=".gpx">
+        </label>
+    </div>
+
+    <div class="stats" id="stats" style="display: none;">
+        <div class="stat-item"><strong>Points totaux:</strong> <span id="totalPoints">0</span></div>
+        <div class="stat-item"><strong>Points modifiés:</strong> <span id="modifiedPoints">0</span></div>
+        <div class="stat-item"><strong>Différence moyenne:</strong> <span id="avgDiff">0</span> m</div>
+        <div class="stat-item"><strong>Différence max:</strong> <span id="maxDiff">0</span> m</div>
+    </div>
+
+    <div class="comparison">
+        <div class="file-section">
+            <h2>📄 Fichier Original</h2>
+            <table id="originalTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Latitude</th>
+                        <th>Longitude</th>
+                        <th>Altitude (m)</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div class="file-section">
+            <h2>✅ Fichier Corrigé IGN</h2>
+            <table id="correctedTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Latitude</th>
+                        <th>Longitude</th>
+                        <th>Altitude (m)</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let originalData = null;
+        let correctedData = null;
+
+        document.getElementById('originalFile').addEventListener('change', (e) => {
+            loadFile(e.target.files[0], 'original');
+        });
+
+        document.getElementById('correctedFile').addEventListener('change', (e) => {
+            loadFile(e.target.files[0], 'corrected');
+        });
+
+        function loadFile(file, type) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const parser = new DOMParser();
+                const gpx = parser.parseFromString(e.target.result, 'text/xml');
+                const points = extractPoints(gpx);
+                
+                if (type === 'original') {
+                    originalData = points;
+                    displayPoints(points, 'originalTable');
+                } else {
+                    correctedData = points;
+                    displayPoints(points, 'correctedTable');
+                }
+
+                if (originalData && correctedData) {
+                    compareData();
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function extractPoints(gpx) {
+            const points = [];
+            const trkpts = gpx.querySelectorAll('trkpt');
+            trkpts.forEach((pt, index) => {
+                const ele = pt.querySelector('ele');
+                points.push({
+                    index: index + 1,
+                    lat: parseFloat(pt.getAttribute('lat')).toFixed(4),
+                    lon: parseFloat(pt.getAttribute('lon')).toFixed(4),
+                    ele: ele ? parseFloat(ele.textContent).toFixed(2) : 'N/A'
+                });
+            });
+            return points;
+        }
+
+        function displayPoints(points, tableId) {
+            const tbody = document.querySelector(`#${tableId} tbody`);
+            tbody.innerHTML = '';
+            points.forEach(point => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${point.index}</td>
+                    <td>${point.lat}</td>
+                    <td>${point.lon}</td>
+                    <td>${point.ele}</td>
+                `;
+            });
+        }
+
+        function compareData() {
+            if (!originalData || !correctedData) return;
+            
+            let modified = 0;
+            let totalDiff = 0;
+            let maxDiff = 0;
+
+            for (let i = 0; i < Math.min(originalData.length, correctedData.length); i++) {
+                const orig = parseFloat(originalData[i].ele);
+                const corr = parseFloat(correctedData[i].ele);
+                
+                if (!isNaN(orig) && !isNaN(corr)) {
+                    const diff = Math.abs(corr - orig);
+                    if (diff > 0.01) {
+                        modified++;
+                        totalDiff += diff;
+                        maxDiff = Math.max(maxDiff, diff);
+                    }
+                }
+            }
+
+            const avgDiff = modified > 0 ? (totalDiff / modified).toFixed(2) : 0;
+
+            document.getElementById('stats').style.display = 'block';
+            document.getElementById('totalPoints').textContent = originalData.length;
+            document.getElementById('modifiedPoints').textContent = modified;
+            document.getElementById('avgDiff').textContent = avgDiff;
+            document.getElementById('maxDiff').textContent = maxDiff.toFixed(2);
+        }
+    </script>
+</body>
+</html>
