@@ -1,0 +1,24 @@
+{
+  "name": "RandoEffort",
+  "short_name": "RandoEffort",
+  "description": "Analysez vos parcours GPX/KML avec calcul de l'indice IBP et visualisation de la pente",
+  "start_url": "/PWA/randoeffort/",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#2c5f2d",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icon192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
