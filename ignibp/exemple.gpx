@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="ignibp-example" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>Randonnée exemple - Col de la Croix de Fer</name>
+    <desc>Parcours de test pour l'application ignibp</desc>
+    <time>2026-01-28T10:00:00Z</time>
+  </metadata>
+  <trk>
+    <name>Col de la Croix de Fer</name>
+    <type>hiking</type>
+    <trkseg>
+      <trkpt lat="45.2000" lon="6.1800">
+        <ele>1450</ele>
+      </trkpt>
+      <trkpt lat="45.2010" lon="6.1810">
+        <ele>1465</ele>
+      </trkpt>
+      <trkpt lat="45.2020" lon="6.1820">
+        <ele>1485</ele>
+      </trkpt>
+      <trkpt lat="45.2030" lon="6.1830">
+        <ele>1510</ele>
+      </trkpt>
+      <trkpt lat="45.2040" lon="6.1840">
+        <ele>1540</ele>
+      </trkpt>
+      <trkpt lat="45.2050" lon="6.1850">
+        <ele>1575</ele>
+      </trkpt>
+      <trkpt lat="45.2060" lon="6.1860">
+        <ele>1615</ele>
+      </trkpt>
+      <trkpt lat="45.2070" lon="6.1870">
+        <ele>1660</ele>
+      </trkpt>
+      <trkpt lat="45.2080" lon="6.1880">
+        <ele>1710</ele>
+      </trkpt>
+      <trkpt lat="45.2090" lon="6.1890">
+        <ele>1765</ele>
+      </trkpt>
+      <trkpt lat="45.2100" lon="6.1900">
+        <ele>1825</ele>
+      </trkpt>
+      <trkpt lat="45.2110" lon="6.1910">
+        <ele>1890</ele>
+      </trkpt>
+      <trkpt lat="45.2120" lon="6.1920">
+        <ele>1960</ele>
+      </trkpt>
+      <trkpt lat="45.2130" lon="6.1930">
+        <ele>2030</ele>
+      </trkpt>
+      <trkpt lat="45.2140" lon="6.1940">
+        <ele>2095</ele>
+      </trkpt>
+      <trkpt lat="45.2150" lon="6.1950">
+        <ele>2155</ele>
+      </trkpt>
+      <trkpt lat="45.2160" lon="6.1960">
+        <ele>2210</ele>
+      </trkpt>
+      <trkpt lat="45.2170" lon="6.1970">
+        <ele>2260</ele>
+      </trkpt>
+      <trkpt lat="45.2180" lon="6.1980">
+        <ele>2300</ele>
+      </trkpt>
+      <trkpt lat="45.2190" lon="6.1990">
+        <ele>2335</ele>
+      </trkpt>
+      <trkpt lat="45.2200" lon="6.2000">
+        <ele>2365</ele>
+      </trkpt>
+      <trkpt lat="45.2210" lon="6.2010">
+        <ele>2385</ele>
+      </trkpt>
+      <trkpt lat="45.2220" lon="6.2020">
+        <ele>2400</ele>
+      </trkpt>
+      <trkpt lat="45.2230" lon="6.2030">
+        <ele>2410</ele>
+      </trkpt>
+      <trkpt lat="45.2240" lon="6.2040">
+        <ele>2415</ele>
+      </trkpt>
+      <trkpt lat="45.2250" lon="6.2050">
+        <ele>2418</ele>
+      </trkpt>
+      <trkpt lat="45.2260" lon="6.2060">
+        <ele>2420</ele>
+      </trkpt>
+      <trkpt lat="45.2270" lon="6.2070">
+        <ele>2422</ele>
+      </trkpt>
+      <trkpt lat="45.2280" lon="6.2080">
+        <ele>2425</ele>
+      </trkpt>
+      <trkpt lat="45.2290" lon="6.2090">
+        <ele>2428</ele>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>
