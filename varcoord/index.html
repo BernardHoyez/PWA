@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>varcoord</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2c3e50">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@7.5.2/ol.css">
+
+<style>
+html,body { margin:0; height:100%; font-family: Arial; }
+#map { width:100%; height:100%; }
+
+#panel {
+  position:absolute;
+  top:10px;
+  left:10px;
+  background:white;
+  padding:12px;
+  border-radius:8px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.3);
+  max-width:320px;
+  z-index:1000;
+}
+
+button {
+  width:100%;
+  padding:8px;
+  margin-top:8px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="map"></div>
+
+<div id="panel">
+  <b>Cliquer sur le point pour afficher les coordonnées</b>
+  <div id="coords"></div>
+  <button id="copyBtn" style="display:none;">Copier les coordonnées</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/ol@7.5.2/dist/ol.js"></script>
+
+<script>
+
+// ----------- PLAN IGN V2 WMTS -----------
+
+const ign = new ol.layer.Tile({
+  source: new ol.source.WMTS({
+    url: "https://data.geopf.fr/wmts",
+    layer: "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2",
+    matrixSet: "PM",
+    format: "image/png",
+    style: "normal",
+    tileGrid: new ol.tilegrid.WMTS({
+      origin: [-20037508, 20037508],
+      resolutions: [
+        156543.033928, 78271.516964, 39135.758482,
+        19567.879241, 9783.9396205, 4891.96981025,
+        2445.98490513, 1222.99245256, 611.496226281,
+        305.748113141, 152.87405657, 76.4370282852,
+        38.2185141426, 19.1092570713, 9.55462853565,
+        4.77731426782, 2.38865713391, 1.19432856696,
+        0.597164283478
+      ],
+      matrixIds: [
+        "0","1","2","3","4","5","6","7","8",
+        "9","10","11","12","13","14","15","16","17","18"
+      ]
+    })
+  })
+});
+
+// ----------- CARTE -----------
+
+const map = new ol.Map({
+  target: "map",
+  layers: [ign],
+  view: new ol.View({
+    center: ol.proj.fromLonLat([6.18326, 43.478778]),
+    zoom: 15
+  })
+});
+
+// ----------- SEXAGESIMAL -----------
+
+function toSexa(v,isLat){
+  const d = Math.floor(Math.abs(v));
+  const mF = (Math.abs(v)-d)*60;
+  const m = Math.floor(mF);
+  const s = ((mF-m)*60).toFixed(2);
+  const dir = isLat ? (v>=0?"N":"S") : (v>=0?"E":"W");
+  return `${d}°${m}'${s}"${dir}`;
+}
+
+// ----------- CLIC -----------
+
+map.on("click", e=>{
+  const ll = ol.proj.toLonLat(e.coordinate);
+  const lat = ll[1];
+  const lon = ll[0];
+
+  const dec = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+  const sex = `${toSexa(lat,true)}  ${toSexa(lon,false)}`;
+
+  coords.innerHTML =
+    "<br><b>Décimal :</b><br>"+dec+
+    "<br><br><b>Sexagésimal :</b><br>"+sex;
+
+  copyBtn.style.display="block";
+  copyBtn.onclick=()=>{
+    navigator.clipboard.writeText(dec+"\n"+sex);
+  };
+});
+
+// ----------- SW -----------
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}
+
+</script>
+</body>
+</html>
