@@ -116,6 +116,12 @@
             gap: 10px;
             margin-bottom: 20px;
         }
+        
+        @media (min-width: 640px) {
+            .stats {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
 
         .stat-item {
             background: white;
@@ -309,6 +315,14 @@
                     <div class="stat-label">Points traités</div>
                     <div class="stat-value" id="processedPoints">0</div>
                 </div>
+                <div class="stat-item">
+                    <div class="stat-label">Points corrigés</div>
+                    <div class="stat-value" id="updatedPoints">-</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Points conservés</div>
+                    <div class="stat-value" id="skippedPoints">-</div>
+                </div>
             </div>
 
             <div class="progress-container" id="progressContainer">
@@ -332,7 +346,7 @@
 
         <footer>
             Données altimétriques © IGN<br>
-            Version 1.0.1
+            Version 1.0.2
         </footer>
     </div>
 

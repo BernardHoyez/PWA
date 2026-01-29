@@ -10,6 +10,8 @@ const fileInfo = document.getElementById('fileInfo');
 const fileName = document.getElementById('fileName');
 const totalPoints = document.getElementById('totalPoints');
 const processedPoints = document.getElementById('processedPoints');
+const updatedPoints = document.getElementById('updatedPoints');
+const skippedPoints = document.getElementById('skippedPoints');
 const progressContainer = document.getElementById('progressContainer');
 const progressFill = document.getElementById('progressFill');
 const progressPercent = document.getElementById('progressPercent');
@@ -77,6 +79,8 @@ function handleFile(file) {
             fileName.textContent = originalFileName;
             totalPoints.textContent = points.length;
             processedPoints.textContent = '0';
+            updatedPoints.textContent = '-';
+            skippedPoints.textContent = '-';
             fileInfo.classList.add('visible');
             btnProcess.disabled = false;
             btnDownload.classList.remove('visible');
@@ -133,6 +137,8 @@ async function processGPX() {
 
     const points = getAllTrackPoints(gpxData);
     let processed = 0;
+    let updated = 0;
+    let skipped = 0;
 
     // Créer une copie du document GPX
     processedGPX = gpxData.cloneNode(true);
@@ -143,7 +149,8 @@ async function processGPX() {
         const point = pointsToProcess[i];
         const altitude = await getIGNAltitude(point.lon, point.lat);
 
-        if (altitude !== null) {
+        // Ne mettre à jour que si l'altitude est valide (non null et non zéro)
+        if (altitude !== null && altitude !== 0) {
             // Mettre à jour ou créer l'élément <ele>
             let eleElement = point.element.querySelector('ele');
             if (!eleElement) {
@@ -151,6 +158,10 @@ async function processGPX() {
                 point.element.appendChild(eleElement);
             }
             eleElement.textContent = altitude.toFixed(2);
+            updated++;
+        } else {
+            skipped++;
+            console.log(`Point ${i + 1} ignoré (lat: ${point.lat}, lon: ${point.lon}) - altitude invalide`);
         }
 
         processed++;
@@ -161,6 +172,8 @@ async function processGPX() {
         progressFill.textContent = `${percent}%`;
         progressPercent.textContent = `${percent}%`;
         processedPoints.textContent = processed;
+        updatedPoints.textContent = updated;
+        skippedPoints.textContent = skipped;
 
         // Petit délai pour éviter de surcharger l'API (environ 10 requêtes/seconde)
         if (i < pointsToProcess.length - 1) {
@@ -170,7 +183,12 @@ async function processGPX() {
 
     // Traitement terminé
     btnDownload.classList.add('visible');
-    showStatus(`${processed} points traités avec succès !`, 'success');
+    
+    if (skipped > 0) {
+        showStatus(`${updated} points corrigés, ${skipped} points conservés (altitude IGN indisponible)`, 'info');
+    } else {
+        showStatus(`${updated} points traités avec succès !`, 'success');
+    }
 }
 
 // Télécharger le fichier GPX modifié

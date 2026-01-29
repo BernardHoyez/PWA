@@ -2,6 +2,28 @@
 
 Toutes les modifications notables de ce projet seront documentées dans ce fichier.
 
+## [1.0.2] - 2026-01-28
+
+### 🐛 Correction critique
+- **Filtrage des altitudes invalides** : L'application n'écrit plus les altitudes à zéro
+  - Problème : L'API IGN retourne `0` pour les coordonnées hors couverture (mer, étranger, zones non cartographiées)
+  - Ancien comportement : Les altitudes à `0` étaient écrites dans le fichier → tracés erronés
+  - Nouveau comportement : Les altitudes à `0` ou `null` sont ignorées, l'altitude originale est conservée
+  - Impact : Les fichiers GPX restent cohérents même avec des points hors couverture IGN
+
+### ✨ Améliorations
+- Ajout de statistiques détaillées dans l'interface :
+  - **Points corrigés** : nombre de points avec altitude IGN valide
+  - **Points conservés** : nombre de points avec altitude originale (IGN indisponible)
+- Message informatif si des points sont conservés
+- Logs dans la console pour identifier les points problématiques
+- Interface responsive avec grille 4 colonnes sur desktop
+
+### 📚 Documentation
+- Nouveau fichier `PROBLEME_ALTITUDE_ZERO.md` expliquant le problème et la solution
+- Documentation sur les cas où l'API IGN retourne zéro
+- Recommandations pour les utilisateurs
+
 ## [1.0.1] - 2026-01-28
 
 ### 🐛 Corrections
