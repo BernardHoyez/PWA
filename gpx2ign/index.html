@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>gpx2ign</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2c3e50" />
+
+<style>
+body {
+  font-family: system-ui, Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
+  background:#f4f6f8;
+}
+
+h1 { margin-top:0 }
+
+.card {
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.08);
+  max-width:800px;
+}
+
+button {
+  padding:12px 16px;
+  border:0;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:16px;
+  background:#2c3e50;
+  color:white;
+}
+
+button:disabled { opacity:0.5; cursor:not-allowed }
+
+#progressBar {
+  width:100%;
+  height:22px;
+  background:#ddd;
+  border-radius:12px;
+  overflow:hidden;
+  margin-top:12px;
+}
+
+#progressFill {
+  height:100%;
+  width:0%;
+  background:#27ae60;
+  transition: width 0.2s;
+}
+
+#log {
+  margin-top:16px;
+  background:#111;
+  color:#0f0;
+  padding:12px;
+  border-radius:8px;
+  height:180px;
+  overflow:auto;
+  font-family:monospace;
+  font-size:13px;
+}
+
+.small { font-size:13px; color:#555 }
+</style>
+</head>
+
+<body>
+
+<div class="card">
+<h1>PWA gpx2ign</h1>
+
+<p>Remplacement des altitudes GPX par la BD Altimétrie IGN.</p>
+
+<input type="file" id="fileInput" accept=".gpx" />
+<br><br>
+<button id="processBtn" disabled>Traiter le GPX</button>
+
+<div id="progressBar"><div id="progressFill"></div></div>
+<div class="small" id="progressText">0 %</div>
+
+<div id="log"></div>
+</div>
+
+<script>
+// ==============================
+// API IGN — altitude PAR POINT
+// ==============================
+const IGN_POINT_API =
+ "https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json";
+
+// ==============================
+// UI helpers
+// ==============================
+const logDiv = document.getElementById("log");
+
+function log(msg){
+  logDiv.textContent += msg + "\n";
+  logDiv.scrollTop = logDiv.scrollHeight;
+}
+
+function setProgress(p){
+  document.getElementById("progressFill").style.width = p+"%";
+  document.getElementById("progressText").textContent = p.toFixed(1)+" %";
+}
+
+// ==============================
+// GPX parsing
+// ==============================
+function parseGPX(text){
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(text, "application/xml");
+
+  const pts = [...xml.querySelectorAll("trkpt")].map(pt => ({
+    lat: parseFloat(pt.getAttribute("lat")),
+    lon: parseFloat(pt.getAttribute("lon")),
+    node: pt
+  }));
+
+  return {xml, pts};
+}
+
+// ==============================
+// Chunking
+// ==============================
+function chunkArray(arr, size){
+  const out=[];
+  for(let i=0;i<arr.length;i+=size)
+    out.push(arr.slice(i,i+size));
+  return out;
+}
+
+// ==============================
+// IGN fetch — correspondance stricte
+// ==============================
+async function fetchElevationsChunk(chunk){
+
+  const lon = chunk.map(p=>p.lon).join("|");
+  const lat = chunk.map(p=>p.lat).join("|");
+
+  const url =
+    IGN_POINT_API +
+    `?lon=${lon}&lat=${lat}&resource=ign_rge_alti_wld&delimiter=|`;
+
+  const r = await fetch(url);
+  if(!r.ok) throw new Error("Erreur API IGN " + r.status);
+
+  const j = await r.json();
+
+  if(!j.elevations || !Array.isArray(j.elevations))
+    throw new Error("Réponse IGN invalide");
+
+  if(j.elevations.length !== chunk.length){
+    log(`⚠️ IGN renvoie ${j.elevations.length} altitudes pour ${chunk.length} points`);
+  }
+
+  return j.elevations.map(e => e.z);
+}
+
+// ==============================
+// Main
+// ==============================
+const fileInput = document.getElementById("fileInput");
+const btn = document.getElementById("processBtn");
+
+fileInput.onchange = ()=> btn.disabled = !fileInput.files.length;
+
+btn.onclick = async ()=>{
+
+  logDiv.textContent="";
+  setProgress(0);
+
+  const file = fileInput.files[0];
+  if(!file) return;
+
+  log("Lecture GPX...");
+  const text = await file.text();
+  const {xml, pts} = parseGPX(text);
+
+  if(!pts.length){
+    log("Aucun point trouvé");
+    return;
+  }
+
+  log(`Points détectés : ${pts.length}`);
+
+  const chunks = chunkArray(pts, 200);
+  let done=0;
+
+  for(let i=0;i<chunks.length;i++){
+
+    log(`Chunk ${i+1}/${chunks.length}`);
+
+    try{
+      const elevs = await fetchElevationsChunk(chunks[i]);
+
+      const n = Math.min(elevs.length, chunks[i].length);
+
+      for
