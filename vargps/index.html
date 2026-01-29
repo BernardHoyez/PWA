@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2196F3">
+    <meta name="description" content="Application pour afficher les coordonnées GPS sur carte IGN">
+    <title>VarGPS - Coordonnées IGN</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon512.png">
+    <link rel="apple-touch-icon" href="icon192.png">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+
+        .info-box {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .info-box.initial {
+            background: #2196F3;
+            color: white;
+            font-weight: 500;
+        }
+
+        .coordinates-box {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            max-width: 90%;
+            display: none;
+        }
+
+        .coordinates-box.active {
+            display: block;
+        }
+
+        .coord-row {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 6px;
+        }
+
+        .coord-label {
+            font-weight: 600;
+            color: #555;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .coord-value {
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            color: #2196F3;
+        }
+
+        .copy-btn {
+            width: 100%;
+            margin-top: 15px;
+            padding: 12px 24px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #1976D2;
+        }
+
+        .copy-btn:active {
+            background: #0D47A1;
+        }
+
+        .copy-btn.copied {
+            background: #4CAF50;
+        }
+
+        .marker-popup {
+            text-align: center;
+            font-weight: 600;
+        }
+
+        @media (max-width: 600px) {
+            .info-box {
+                font-size: 14px;
+                padding: 12px 20px;
+            }
+
+            .coordinates-box {
+                bottom: 10px;
+                padding: 15px;
+            }
+
+            .coord-value {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <div class="info-box initial" id="infoBox">
+        📍 Cliquer sur la carte pour afficher les coordonnées
+    </div>
+
+    <div class="coordinates-box" id="coordBox">
+        <div class="coord-row">
+            <div class="coord-label">📐 Sexagésimal (DMS)</div>
+            <div class="coord-value" id="coordDMS"></div>
+        </div>
+        <div class="coord-row">
+            <div class="coord-label">🌐 Degré décimal (DD)</div>
+            <div class="coord-value" id="coordDD"></div>
+        </div>
+        <button class="copy-btn" id="copyBtn">📋 Copier les coordonnées</button>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // Initialisation de la carte
+        const pointA = [43.478778, 6.18326];
+        const map = L.map('map').setView(pointA, 14);
+
+        // Ajout de la couche IGN Scan 25
+        L.tileLayer('https://wxs.ign.fr/essentiels/geoportail/wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/jpeg&LAYER=GEOGRAPHICALGRIDSYSTEMS.MAPS.SCAN25TOUR&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
+            attribution: '© <a href="https://www.ign.fr/">IGN</a>',
+            maxZoom: 18,
+            tileSize: 256
+        }).addTo(map);
+
+        // Marqueur pour le point cliqué
+        let currentMarker = null;
+        let currentCoords = null;
+
+        // Fonction de conversion en sexagésimal
+        function toSexagesimal(deg, isLat) {
+            const absolute = Math.abs(deg);
+            const degrees = Math.floor(absolute);
+            const minutesDecimal = (absolute - degrees) * 60;
+            const minutes = Math.floor(minutesDecimal);
+            const seconds = ((minutesDecimal - minutes) * 60).toFixed(2);
+            
+            const direction = isLat 
+                ? (deg >= 0 ? 'N' : 'S')
+                : (deg >= 0 ? 'E' : 'O');
+            
+            return `${degrees}° ${minutes}' ${seconds}" ${direction}`;
+        }
+
+        // Fonction de formatage des coordonnées
+        function formatCoordinates(lat, lng) {
+            const dms = {
+                lat: toSexagesimal(lat, true),
+                lng: toSexagesimal(lng, false)
+            };
+            
+            const dd = {
+                lat: lat.toFixed(6),
+                lng: lng.toFixed(6)
+            };
+
+            return {
+                dms: `${dms.lat}, ${dms.lng}`,
+                dd: `${dd.lat}, ${dd.lng}`
+            };
+        }
+
+        // Gestion du clic sur la carte
+        map.on('click', function(e) {
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng;
+
+            // Supprimer l'ancien marqueur
+            if (currentMarker) {
+                map.removeLayer(currentMarker);
+            }
+
+            // Ajouter un nouveau marqueur
+            currentMarker = L.marker([lat, lng]).addTo(map);
+            currentMarker.bindPopup(`<div class="marker-popup">📍 Point sélectionné</div>`).openPopup();
+
+            // Formater les coordonnées
+            currentCoords = formatCoordinates(lat, lng);
+
+            // Afficher les coordonnées
+            document.getElementById('coordDMS').textContent = currentCoords.dms;
+            document.getElementById('coordDD').textContent = currentCoords.dd;
+            
+            // Afficher la boîte de coordonnées
+            document.getElementById('coordBox').classList.add('active');
+            
+            // Masquer le message initial
+            document.getElementById('infoBox').style.display = 'none';
+        });
+
+        // Gestion du bouton copier
+        document.getElementById('copyBtn').addEventListener('click', async function() {
+            if (!currentCoords) return;
+
+            const textToCopy = `Coordonnées sexagésimales: ${currentCoords.dms}\nCoordonnées décimales: ${currentCoords.dd}`;
+
+            try {
+                await navigator.clipboard.writeText(textToCopy);
+                
+                // Feedback visuel
+                const btn = this;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '✅ Copié !';
+                btn.classList.add('copied');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
+            } catch (err) {
+                console.error('Erreur de copie:', err);
+                alert('Impossible de copier dans le presse-papiers');
+            }
+        });
+
+        // Enregistrement du Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => console.log('Service Worker enregistré'))
+                    .catch(err => console.log('Erreur Service Worker:', err));
+            });
+        }
+    </script>
+</body>
+</html>

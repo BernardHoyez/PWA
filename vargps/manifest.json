@@ -1,0 +1,27 @@
+{
+  "name": "VarGPS - Coordonnées IGN",
+  "short_name": "VarGPS",
+  "description": "Application pour afficher les coordonnées GPS sur carte IGN Scan 25",
+  "start_url": "/PWA/vargps/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2196F3",
+  "orientation": "any",
+  "scope": "/PWA/vargps/",
+  "icons": [
+    {
+      "src": "icon192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["navigation", "utilities"],
+  "screenshots": []
+}

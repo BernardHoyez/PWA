@@ -1,0 +1,87 @@
+╔════════════════════════════════════════════════════════════════╗
+║         CHECKLIST DE DÉPLOIEMENT - VarGPS PWA                  ║
+╚════════════════════════════════════════════════════════════════╝
+
+📋 AVANT LE DÉPLOIEMENT
+═══════════════════════
+
+☐ Tous les fichiers sont présents (10 fichiers)
+   ☐ index.html
+   ☐ manifest.json
+   ☐ sw.js
+   ☐ icon192.png
+   ☐ icon512.png
+   ☐ README.md
+   ☐ DEPLOIEMENT.md
+   ☐ RESUME.md
+   ☐ DEMARRAGE-RAPIDE.md
+   ☐ presentation.html
+
+☐ Vérification exécutée : bash verifier.sh
+☐ Test local réussi : bash test-local.sh
+
+
+🌐 DÉPLOIEMENT GITHUB
+═════════════════════
+
+☐ Repository créé : BernardHoyez.github.io
+☐ Structure créée : PWA/vargps/
+☐ Fichiers copiés dans PWA/vargps/
+☐ Commit effectué
+☐ Push réussi
+☐ GitHub Pages activé (Settings → Pages)
+☐ Branche : main (ou master)
+☐ Dossier : / (root)
+
+
+✅ VÉRIFICATION POST-DÉPLOIEMENT
+════════════════════════════════
+
+☐ URL accessible : https://BernardHoyez.github.io/PWA/vargps/
+☐ Carte IGN s'affiche correctement
+☐ Centrage sur 43.478778, 6.18326
+☐ Message initial visible
+☐ Clic sur la carte fonctionne
+☐ Marqueur apparaît
+☐ Coordonnées s'affichent (2 formats)
+☐ Bouton "Copier" fonctionne
+☐ Les deux formats sont copiés
+
+
+📱 TEST PWA
+═══════════
+
+☐ Icône d'installation visible (⊕)
+☐ Installation PWA réussie
+☐ Application se lance en standalone
+☐ Icônes personnalisées visibles
+☐ Mode hors-ligne fonctionne
+
+
+🎯 TESTS FONCTIONNELS
+═════════════════════
+
+☐ Test sur Chrome Desktop
+☐ Test sur Firefox Desktop
+☐ Test sur Safari Desktop (Mac)
+☐ Test sur Chrome Mobile (Android)
+☐ Test sur Safari Mobile (iOS)
+☐ Test des coordonnées précises
+☐ Test du format sexagésimal
+☐ Test du format décimal
+☐ Test de la copie dans le presse-papiers
+
+
+📝 NOTES
+════════
+
+URL finale : https://BernardHoyez.github.io/PWA/vargps/
+Point de départ : 43.478778, 6.18326
+Carte : IGN Scan 25
+Date de déploiement : _______________
+Version : 1.0.0
+
+
+🎉 APPLICATION DÉPLOYÉE AVEC SUCCÈS !
+═══════════════════════════════════════
+
