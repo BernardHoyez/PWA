@@ -2,6 +2,27 @@
 
 Toutes les modifications notables de ce projet seront documentées dans ce fichier.
 
+## [1.0.3] - 2026-01-28
+
+### 🐛 Correction critique - Compatibilité gpx.studio
+- **Arrondissement automatique des coordonnées** à 8 décimales avant appel API
+  - Problème identifié : gpx.studio génère des coordonnées avec 14-15 décimales pour les sections sans routage
+  - L'API IGN ne gère pas correctement ces coordonnées trop précises et retourne `0`
+  - Solution : Arrondir automatiquement à 8 décimales (précision ~1mm, largement suffisant)
+  - Impact : Tous les points gpx.studio (avec ou sans routage) sont maintenant correctement traités
+
+### 📚 Documentation
+- Nouveau fichier `PROBLEME_PRECISION_COORDONNEES.md` expliquant :
+  - Pourquoi gpx.studio génère des coordonnées très précises
+  - Comment l'API IGN réagit à ces coordonnées
+  - La solution d'arrondissement automatique
+  - Tableau de référence de précision GPS
+
+### 💡 Technique
+- Précision conservée : 8 décimales = ~1mm (vs 6 décimales = ~11cm pour GPS standard)
+- Aucun impact sur la qualité des données
+- Transparent pour l'utilisateur
+
 ## [1.0.2] - 2026-01-28
 
 ### 🐛 Correction critique

@@ -7,9 +7,27 @@
 **Symptôme :** Après traitement, certains points du tracé ont `<ele>0</ele>`
 
 **Causes possibles :**
+
+#### A. Coordonnées trop précises (gpx.studio) ⚠️ CAUSE FRÉQUENTE
+- **Points créés sans routage** dans gpx.studio
+- Coordonnées avec 14-15 décimales au lieu de 6-8
+- L'API IGN ne gère pas cette précision excessive
+
+**Identification :**
+```xml
+<!-- Point problématique -->
+<trkpt lat="43.47139362172626" lon="6.072181682390492">
+  <ele>0</ele>  ← 14-15 décimales !
+</trkpt>
+```
+
+**Solution (version 1.0.3+) :**
+✅ L'application arrondit automatiquement à 8 décimales
+✅ Plus de problème avec les fichiers gpx.studio
+
+#### B. Points réellement hors couverture
 - Points en mer ou sur la côte
 - Points hors territoire français
-- Coordonnées GPS imprécises (dérive)
 - Zone non couverte par l'IGN
 
 **Solution (version 1.0.2+) :**

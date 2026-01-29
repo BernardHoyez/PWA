@@ -111,7 +111,12 @@ function getAllTrackPoints(gpx) {
 
 // Interroger l'API IGN pour l'altitude
 async function getIGNAltitude(lon, lat) {
-    const url = `https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json?lon=${lon}&lat=${lat}`;
+    // Arrondir les coordonnées à 8 décimales (précision ~1mm, largement suffisant)
+    // L'API IGN ne gère pas bien les coordonnées avec trop de décimales
+    const lonRounded = parseFloat(lon.toFixed(8));
+    const latRounded = parseFloat(lat.toFixed(8));
+    
+    const url = `https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json?lon=${lonRounded}&lat=${latRounded}`;
     
     try {
         const response = await fetch(url);
