@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>varcoord</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2c3e50">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
+
+<style>
+html, body {
+  margin:0;
+  height:100%;
+  font-family: Arial, sans-serif;
+}
+
+#map {
+  width:100%;
+  height:100%;
+}
+
+#panel {
+  position:absolute;
+  top:10px;
+  left:10px;
+  background:white;
+  padding:12px;
+  border-radius:8px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.3);
+  max-width:320px;
+  z-index:1000;
+}
+
+button {
+  width:100%;
+  padding:8px;
+  margin-top:8px;
+  cursor:pointer;
+  font-size:14px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="map"></div>
+
+<div id="panel">
+  <b>Cliquer sur le point pour afficher les coordonnées</b>
+  <div id="coords"></div>
+  <button id="copyBtn" style="display:none;">Copier les coordonnées</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
+
+<script>
+
+// ---------------- PLAN IGN V2 (TMS → {-y}) ----------------
+
+const ignPlan = new ol.layer.Tile({
+  source: new ol.source.XYZ({
+    url: "https://data.geopf.fr/tms/1.0.0/PLAN.IGN/{z}/{x}/{-y}.png",
+    crossOrigin: "anonymous"
+  })
+});
+
+// ---------------- Carte ----------------
+
+const map = new ol.Map({
+  target: "map",
+  layers: [ignPlan],
+  view: new ol.View({
+    center: ol.proj.fromLonLat([6.18326, 43.478778]),
+    zoom: 15
+  })
+});
+
+// ---------------- Conversion sexagésimal ----------------
+
+function toSexa(value, isLat) {
+  const dir = isLat ? (value>=0?"N":"S") : (value>=0?"E":"W");
+  value = Math.abs(value);
+  const d = Math.floor(value);
+  const mFloat = (value - d) * 60;
+  const m = Math.floor(mFloat);
+  const s = ((mFloat - m) * 60).toFixed(2);
+  return `${d}°${m}'${s}"${dir}`;
+}
+
+// ---------------- Clic carte ----------------
+
+map.on("click", evt => {
+
+  const lonlat = ol.proj.toLonLat(evt.coordinate);
+  const lat = lonlat[1];
+  const lon = lonlat[0];
+
+  const dec = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+  const sexa = `${toSexa(lat,true)}  ${toSexa(lon,false)}`;
+
+  document.getElementById("coords").innerHTML =
+    "<br><b>Décimal :</b><br>"+dec+
+    "<br><br><b>Sexagésimal :</b><br>"+sexa;
+
+  const btn = document.getElementById("copyBtn");
+  btn.style.display = "block";
+
+  btn.onclick = () => {
+    navigator.clipboard.writeText(dec + "\n" + sexa);
+    btn.innerText = "Copié ✓";
+    setTimeout(()=>btn.innerText="Copier les coordonnées",1200);
+  };
+
+});
+
+// ---------------- Service Worker ----------------
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}
+
+</script>
+
+</body>
+</html>
