@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>varloc</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1e293b">
+
+<link rel="manifest" href="./manifest.json">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@7.5.2/ol.css">
+
+<style>
+html,body { margin:0; height:100%; font-family:Arial; }
+#map { width:100%; height:100%; }
+
+/* ---------- PANELS ---------- */
+
+.panel {
+  position:absolute;
+  left:8px;
+  right:8px;
+  background:white;
+  border-radius:12px;
+  box-shadow:0 2px 10px rgba(0,0,0,0.35);
+  z-index:1000;
+  overflow:hidden;
+}
+
+.panelHeader {
+  padding:8px 10px;
+  background:#f1f5f9;
+  font-weight:bold;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  cursor:pointer;
+}
+
+.panelBody {
+  padding:8px;
+  display:none;
+}
+
+.panel.open .panelBody {
+  display:block;
+}
+
+#panelA { top:8px; }
+#panelB { bottom:8px; }
+
+/* desktop */
+@media (min-width:700px){
+  #panelA { width:300px; right:auto; }
+  #panelB { width:320px; left:auto; top:8px; bottom:auto; right:8px; }
+}
+
+/* ---------- UI ---------- */
+
+.row { display:flex; gap:6px; margin-top:6px; }
+
+button {
+  flex:1;
+  padding:8px;
+  font-size:14px;
+}
+
+input {
+  width:100%;
+  padding:8px;
+  font-size:14px;
+}
+
+.coordLine {
+  margin-top:4px;
+  word-break:break-all;
+}
+
+#gpsBtn { flex:0 0 46px; font-size:20px; }
+</style>
+</head>
+
+<body>
+
+<!-- PANEL A -->
+
+<div id="panelA" class="panel open">
+  <div class="panelHeader" onclick="togglePanel('panelA')">
+    Coordonnées
+    <span>▾</span>
+  </div>
+  <div class="panelBody">
+    <div id="dec" class="coordLine"></div>
+    <div id="sexa" class="coordLine"></div>
+
+    <div class="row">
+      <button id="copyDec">Déc</button>
+      <button id="copySexa">Sexa</button>
+      <button id="gpsBtn">🧭</button>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL B -->
+
+<div id="panelB" class="panel">
+  <div class="panelHeader" onclick="togglePanel('panelB')">
+    Aller à
+    <span>▾</span>
+  </div>
+  <div class="panelBody">
+    <input id="inputCoord" placeholder="Décimal ou sexagésimal">
+    <div class="row">
+      <button id="goBtn">Aller</button>
+      <button id="gmBtn">GMaps</button>
+      <button id="wazeBtn">Waze</button>
+    </div>
+  </div>
+</div>
+
+<div id="map"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/ol@7.5.2/dist/ol.js"></script>
+
+<script>
+
+// ---------- PANELS ----------
+
+function togglePanel(id){
+  document.getElementById(id).classList.toggle("open");
+}
+
+// ---------- PLAN IGN V2 ----------
+
+const ign = new ol.layer.Tile({
+  source: new ol.source.WMTS({
+    url: "https://data.geopf.fr/wmts",
+    layer: "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2",
+    matrixSet: "PM",
+    format: "image/png",
+    style: "normal",
+    tileGrid: new ol.tilegrid.WMTS({
+      origin: [-20037508,20037508],
+      resolutions: [
+        156543.033928,78271.516964,39135.758482,19567.879241,
+        9783.9396205,4891.96981025,2445.98490513,1222.99245256,
+        611.496226281,305.748113141,152.87405657,76.4370282852,
+        38.2185141426,19.1092570713,9.55462853565,4.77731426782,
+        2.38865713391,1.19432856696,0.597164283478
+      ],
+      matrixIds: Array.from({length:19},(_,i)=>String(i))
+    })
+  })
+});
+
+const markerSource = new ol.source.Vector();
+const markerLayer = new ol.layer.Vector({ source: markerSource });
+
+function setMarker(lon,lat){
+  markerSource.clear();
+  markerSource.addFeature(
+    new ol.Feature({
+      geometry:new ol.geom.Point(
+        ol.proj.fromLonLat([lon,lat])
+      )
+    })
+  );
+}
+
+const map = new ol.Map({
+  target:"map",
+  layers:[ign,markerLayer],
+  view:new ol.View({
+    center: ol.proj.fromLonLat([6.18326,43.478778]),
+    zoom:15
+  })
+});
+
+// ---------- CONVERSIONS ----------
+
+function toSexa(v,isLat){
+  const d=Math.floor(Math.abs(v));
+  const mF=(Math.abs(v)-d)*60;
+  const m=Math.floor(mF);
+  const s=((mF-m)*60).toFixed(2);
+  const dir=isLat?(v>=0?"N":"S"):(v>=0?"E":"W");
+  return `${d}°${m}'${s}"${dir}`;
+}
+
+function parseDec(t){
+  const m=t.match(/(-?\d+\.?\d*)[, ;]+(-?\d+\.?\d*)/);
+  return m?{lat:+m[1],lon:+m[2]}:null;
+}
+
+function parseSexa(t){
+  const r=/(\d+)[° ]+(\d+)[']+([\d.]+)["]?\s*([NSEW])/gi;
+  let m,v=[];
+  while((m=r.exec(t))){
+    let x=+m[1]+m[2]/60+m[3]/3600;
+    if("SW".includes(m[4])) x=-x;
+    v.push(x);
+  }
+  return v.length>=2?{lat:v[0],lon:v[1]}:null;
+}
+
+// ---------- CLICK ----------
+
+let lastLat=null,lastLon=null;
+
+map.on("click",e=>{
+  const ll=ol.proj.toLonLat(e.coordinate);
+  lastLat=ll[1]; lastLon=ll[0];
+
+  dec.textContent = lastLat.toFixed(6)+", "+lastLon.toFixed(6);
+  sexa.textContent = toSexa(lastLat,true)+" "+toSexa(lastLon,false);
+
+  setMarker(lastLon,lastLat);
+});
+
+// ---------- ACTIONS ----------
+
+copyDec.onclick=()=> lastLat &&
+  navigator.clipboard.writeText(dec.textContent);
+
+copySexa.onclick=()=> lastLat &&
+  navigator.clipboard.writeText(sexa.textContent);
+
+goBtn.onclick=()=>{
+  const p=parseDec(inputCoord.value)||parseSexa(inputCoord.value);
+  if(!p) return alert("Format non reconnu");
+  map.getView().animate({
+    center: ol.proj.fromLonLat([p.lon,p.lat]),
+    zoom:16
+  });
+  setMarker(p.lon,p.lat);
+  lastLat=p.lat; lastLon=p.lon;
+};
+
+gmBtn.onclick=()=> lastLat &&
+  window.open(`https://google.com/maps?q=${lastLat},${lastLon}`);
+
+wazeBtn.onclick=()=> lastLat &&
+  window.open(`https://waze.com/ul?ll=${lastLat},${lastLon}&navigate=yes`);
+
+gpsBtn.onclick=()=>{
+  navigator.geolocation?.getCurrentPosition(p=>{
+    const lat=p.coords.latitude;
+    const lon=p.coords.longitude;
+    map.getView().animate({
+      center: ol.proj.fromLonLat([lon,lat]),
+      zoom:16
+    });
+    setMarker(lon,lat);
+    lastLat=lat; lastLon=lon;
+  });
+};
+
+// ---------- SW REGISTER ----------
+
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("./sw.js");
+}
+
+</script>
+</body>
+</html>
