@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>varloc — Documentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  font-family: Arial, sans-serif;
+  margin:40px;
+  max-width:900px;
+  line-height:1.5;
+  color:#1f2937;
+}
+h1,h2,h3{
+  color:#0f172a;
+}
+code, pre{
+  background:#f1f5f9;
+  padding:6px;
+  border-radius:6px;
+  display:block;
+  overflow-x:auto;
+}
+.section{
+  margin-bottom:28px;
+}
+.badge{
+  display:inline-block;
+  background:#e2e8f0;
+  padding:4px 8px;
+  border-radius:6px;
+  font-size:13px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>varloc</h1>
+
+<p class="badge">PWA coordonnées + carte IGN</p>
+
+<div class="section">
+<p>
+<b>varloc</b> est une Progressive Web App (PWA) légère permettant de lire, convertir,
+copier et utiliser des coordonnées géographiques directement sur la carte IGN Plan V2.
+Conçue pour un usage terrain rapide sur smartphone comme sur ordinateur.
+</p>
+</div>
+
+<div class="section">
+<h2>Fonctionnalités</h2>
+<ul>
+<li>Affichage de la carte <b>IGN Plan V2</b> (géoplateforme)</li>
+<li>Clic sur la carte → affichage des coordonnées :</li>
+<ul>
+<li>format décimal</li>
+<li>format sexagésimal</li>
+</ul>
+<li>Copie séparée décimal / sexagésimal</li>
+<li>Saisie de coordonnées décimales ou sexagésimales</li>
+<li>Centrage automatique sur le point saisi</li>
+<li>Ouverture directe vers :</li>
+<ul>
+<li>Google Maps</li>
+<li>Waze</li>
+</ul>
+<li>Affichage de la position GPS courante</li>
+<li>Panneaux repliables optimisés smartphone</li>
+<li>Installation possible comme application (PWA)</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Utilisation</h2>
+
+<h3>Lire des coordonnées</h3>
+<ol>
+<li>Cliquer sur la carte</li>
+<li>Les coordonnées s’affichent</li>
+<li>Copier le format souhaité</li>
+</ol>
+
+<h3>Aller vers un point</h3>
+<ol>
+<li>Ouvrir le panneau « Aller à »</li>
+<li>Coller les coordonnées</li>
+<li>Bouton <b>Aller</b></li>
+</ol>
+
+<h3>Navigation externe</h3>
+<ul>
+<li><b>GMaps</b> → ouvre Google Maps</li>
+<li><b>Waze</b> → ouvre Waze navigation</li>
+</ul>
+
+<h3>Position GPS</h3>
+<p>Bouton 🧭 → centre la carte sur la position actuelle.</p>
+</div>
+
+<div class="section">
+<h2>Formats reconnus</h2>
+
+<h3>Décimal</h3>
+<pre>
+43.478778, 6.18326
+43.478778 6.18326
+</pre>
+
+<h3>Sexagésimal</h3>
+<pre>
+43°28'43.6"N 6°10'59.7"E
+</pre>
+</div>
+
+<div class="section">
+<h2>Technologies</h2>
+<ul>
+<li>OpenLayers</li>
+<li>IGN WMTS Plan V2</li>
+<li>PWA (manifest + service worker)</li>
+<li>JavaScript natif</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Installation PWA</h2>
+<ol>
+<li>Ouvrir l’application dans le navigateur</li>
+<li>Menu → Ajouter à l’écran d’accueil</li>
+<li>L’application fonctionne ensuite comme une app native</li>
+</ol>
+</div>
+
+<div class="section">
+<h2>Déploiement GitHub Pages</h2>
+
+<pre>
+/PWA/varloc/
+    index.html
+    manifest.json
+    sw.js
+    icon192.png
+    icon512.png
+</pre>
+
+<p>URL :</p>
+
+<pre>
+https://BernardHoyez.github.io/PWA/varloc
+</pre>
+</div>
+
+<div class="section">
+<h2>Contraintes connues</h2>
+<ul>
+<li>Précision GPS dépend du smartphone</li>
+<li>Autorisation de géolocalisation requise</li>
+<li>Après mise à jour PWA : vider le cache si nécessaire</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Licence</h2>
+<p>Usage libre pour activités terrain, pédagogiques et personnelles.</p>
+</div>
+
+</body>
+</html>
