@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Carte des randos</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+  </script>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="map"></div>
+
+<script>
+/* =========================
+   Données figées des randos
+   (générées par mytrak)
+   ========================= */
+
+const randos = [
+  {
+    nom: "Rando Verdon",
+    lat: 43.7421,
+    lon: 6.3615
+  },
+  {
+    nom: "Rando Sainte-Baume",
+    lat: 43.3312,
+    lon: 5.7554
+  }
+];
+
+/* =========================
+   Initialisation de la carte
+   ========================= */
+
+const map = L.map('map');
+
+// Fond PLAN IGN V2 (GéoPlateforme, accès public)
+const ignPlan = L.tileLayer(
+  "https://data.geopf.fr/wmts?" +
+  "SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0" +
+  "&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2" +
+  "&STYLE=normal" +
+  "&TILEMATRIXSET=PM" +
+  "&TILEMATRIX={z}" +
+  "&TILEROW={y}" +
+  "&TILECOL={x}" +
+  "&FORMAT=image/png",
+  {
+    maxZoom: 19,
+    attribution: "© IGN – GéoPlateforme"
+  }
+).addTo(map);
+
+/* =========================
+   Ajout des marqueurs
+   ========================= */
+
+const markers = [];
+
+randos.forEach(r => {
+  const marker = L.marker([r.lat, r.lon])
+    .addTo(map)
+    .bindPopup(`<strong>${r.nom}</strong>`);
+
+  markers.push(marker);
+});
+
+/* =========================
+   Ajustement automatique
+   ========================= */
+
+if (markers.length > 0) {
+  const group = L.featureGroup(markers);
+  map.fitBounds(group.getBounds().pad(0.2));
+} else {
+  map.setView([46.5, 2.5], 6); // France par défaut
+}
+
+</script>
+
+</body>
+</html>
