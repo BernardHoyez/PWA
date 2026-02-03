@@ -67,7 +67,7 @@
   <div id="status">Aucun dossier sélectionné</div>
 </header>
 
-<!-- Étape 1 : sélection dossier -->
+<!-- Étape 1 : sélection du dossier -->
 <section id="step-folder">
   <p><strong>Sélectionner le dossier « mes traces de randos »</strong></p>
   <input type="file" id="folderInput" webkitdirectory multiple>
@@ -87,9 +87,7 @@
 <script src="app.js"></script>
 
 <script>
-/* =========================
-   Service Worker
-========================= */
+/* Service Worker */
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js");
 }
