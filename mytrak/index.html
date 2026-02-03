@@ -1,136 +1,73 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<title>MyTrak - Mes Randonnées</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<meta charset="utf-8">
+<title>MyTrak - Carte des départs</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-body{margin:0;font-family:system-ui}
-#map{height:100vh}
-.controls{position:absolute;top:10px;left:10px;z-index:1000;background:white;padding:15px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.2);max-width:90vw}
-.controls button{margin:5px;padding:12px 18px;border:none;border-radius:5px;cursor:pointer;background:#007bff;color:white;font-size:15px;font-weight:600;white-space:nowrap}
-.controls button:hover{background:#0056b3}
-.controls button:active{transform:scale(0.95)}
-.stats{position:absolute;bottom:10px;left:10px;z-index:1000;background:white;padding:15px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.2);font-size:14px;max-width:90vw}
-.stats h3{margin:0 0 10px 0;font-size:16px}
-.stats p{margin:5px 0}
-.leaflet-popup-content{font-size:14px;line-height:1.5}
-.leaflet-popup-content h4{margin:0 0 8px 0;color:#007bff}
+  body { margin:0; font-family:system-ui; }
+  #map { height:100vh; }
+  .leaflet-popup-content { font-size:14px; }
 </style>
 </head>
 <body>
 
 <div id="map"></div>
 
-<div class="controls">
-<button onclick="download('gpx')">📥 GPX</button>
-<button onclick="download('kml')">📥 KML</button>
-<button onclick="download('geojson')">📥 GeoJSON</button>
-<button onclick="share()">🔗 Partager</button>
-<button onclick="window.print()">🖨️ Imprimer</button>
-<button onclick="exportPDF()">📄 PDF</button>
-</div>
-
-<div class="stats">
-<h3>📊 Statistiques</h3>
-<p id="stat-distance"></p>
-<p id="stat-dplus"></p>
-<p id="stat-dmoins"></p>
-<p id="stat-waypoints"></p>
-</div>
-
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/togpx@0.5.4/togpx.js"></script>
-<script src="https://unpkg.com/tokml@0.4.0/tokml.js"></script>
-
 <script>
-// Initialisation de la carte
-const map = L.map('map').setView([43.56, 6.46], 13);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
-
-let allMarkers = [];
-let totalDistance = 0, totalDplus = 0, totalDmoins = 0;
-
-// Fonction pour charger et corriger un fichier HTML de rando
-async function loadRando(file) {
-    const resp = await fetch(file);
-    const text = await resp.text();
-
-    // Extraction du JSON des points depuis le fichier HTML
-    let gpxData = null;
-    try {
-        const match = text.match(/const g\s*=\s*(\{.*\});/s);
-        if(match){
-            gpxData = JSON.parse(match[1]);
-        }
-    } catch(e){ console.error(file,e); return; }
-
-    if(!gpxData || !gpxData.features) return;
-
-    gpxData.features.forEach(f => {
-        if(f.geometry && f.geometry.type==='Point'){
-            let coords = f.geometry.coordinates;
-            if(coords.length<2) return; // coord invalides
-
-            let lat = coords[1];
-            let lng = coords[0];
-            let alt = coords[2] || 0;
-
-            // Correction simple si coordonnées inversées ou alt manquant
-            if(isNaN(lat) || isNaN(lng)) return;
-
-            const iconUrl = f.properties.icon || "https://maps.google.com/mapfiles/ms/icons/blue-dot.png";
-
-            const marker = L.marker([lat,lng],{
-                title: f.properties.name || '',
-            }).addTo(map);
-
-            if(f.properties.description){
-                marker.bindPopup(`<h4>${f.properties.name || ''}</h4>${f.properties.description}`);
-            }
-
-            allMarkers.push(marker);
-        }
-    });
-
-    // Mise à jour des stats
-    document.getElementById("stat-distance").innerText = `Distance: ${gpxData.distance||0} km`;
-    document.getElementById("stat-dplus").innerText = `D+: ${gpxData.dplus||0} m`;
-    document.getElementById("stat-dmoins").innerText = `D-: ${gpxData.dmoins||0} m`;
-    document.getElementById("stat-waypoints").innerText = `📍 Waypoints: ${allMarkers.length}`;
-}
-
-// Liste de tous les fichiers rando à charger
-const files = [
-    'rando/trace-Figanières-16.65km-2026-02-01.html',
-    'rando/trace-Test-Exemple1.html',
-    'rando/trace-Test-Exemple2.html',
-    'rando/trace-AutreRando.html'
+// Liste de tous tes fichiers HTML de rando
+const fichiersRando = [
+  'trace-Figanières-16.65km-2026-02-01.html',
+  'trace-AutreRando.html',
+  'trace-Test.html',
+  'trace-Exemple.html'
 ];
 
-// Chargement séquentiel
-files.forEach(f => loadRando(f));
+// Carte initialisée sur la France
+const map = L.map('map').setView([43.5, 6.5], 10);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '&copy; OpenStreetMap'
+}).addTo(map);
 
-// Fonctions de download/export simplifiées
-function download(format){
-    let features = allMarkers.map(m => {
-        let latlng = m.getLatLng();
-        return {type:'Feature',geometry:{type:'Point',coordinates:[latlng.lng,latlng.lat]},properties:{}};
-    });
-    const fc = {type:'FeatureCollection',features};
-    if(format==='gpx') saveFile(new togpx(fc),'rando.gpx');
-    else if(format==='kml') saveFile(tokml(fc),'rando.kml');
-    else if(format==='geojson') saveFile(JSON.stringify(fc, null,2),'rando.geojson');
+const groupMarkers = L.featureGroup().addTo(map);
+
+// Fonction pour extraire le point de départ
+async function ajouterRando(fichier) {
+  try {
+    const res = await fetch(fichier);
+    const text = await res.text();
+
+    // Chercher le JSON 'g = {...}' dans le fichier
+    const match = text.match(/const g\s*=\s*(\{[\s\S]*?\});/);
+    if (!match) return;
+
+    const geojson = JSON.parse(match[1]);
+    if (!geojson.features || geojson.features.length === 0) return;
+
+    // Trouver le premier point (départ)
+    const pointDepart = geojson.features.find(f => f.geometry?.type === "Point");
+    if (!pointDepart) return;
+
+    const [lon, lat] = pointDepart.geometry.coordinates;
+    const marker = L.marker([lat, lon])
+      .bindPopup(`<strong>${fichier}</strong><br>${pointDepart.properties?.name || ''}`);
+    
+    marker.addTo(groupMarkers);
+  } catch (e) {
+    console.warn('Erreur pour', fichier, e);
+  }
 }
-function saveFile(data,filename){
-    const blob = new Blob([data],{type:'text/plain;charset=utf-8'});
-    const link = document.createElement('a');
-    link.href=URL.createObjectURL(blob);
-    link.download=filename;
-    link.click();
-}
-function share(){alert('Fonction partage non implémentée')}
-function exportPDF(){alert('Fonction PDF non implémentée')}
+
+// Ajouter tous les fichiers et ajuster le zoom sur tous les marqueurs
+Promise.all(fichiersRando.map(f => ajouterRando(f)))
+  .then(() => {
+    if (groupMarkers.getLayers().length > 0) {
+      map.fitBounds(groupMarkers.getBounds().pad(0.2));
+    }
+  });
 </script>
+
 </body>
 </html>
