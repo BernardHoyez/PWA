@@ -1,72 +1,170 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
-<title>MyTrak - Carte des départs</title>
+<meta charset="UTF-8">
+<title>MyTrak – Carte des randonnées</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
 <style>
-  body { margin:0; font-family:system-ui; }
-  #map { height:100vh; }
-  .leaflet-popup-content { font-size:14px; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+header {
+  padding: 10px;
+  background: #2c3e50;
+  color: white;
+}
+#controls {
+  padding: 10px;
+}
+#map {
+  width: 100%;
+  height: calc(100vh - 120px);
+}
+button {
+  padding: 8px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+#status {
+  margin-top: 8px;
+  font-size: 14px;
+}
 </style>
 </head>
+
 <body>
+
+<header>
+  <h2>MyTrak – Carte des randonnées</h2>
+</header>
+
+<div id="controls">
+  <button id="selectFolder">Sélectionner le dossier "mes traces de randos"</button>
+  <div id="status">Aucun dossier sélectionné</div>
+</div>
 
 <div id="map"></div>
 
+<!-- Leaflet -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script>
-// Liste de tous tes fichiers HTML de rando
-const fichiersRando = [
-  'trace-Figanières-16.65km-2026-02-01.html',
-  'trace-AutreRando.html',
-  'trace-Test.html',
-  'trace-Exemple.html'
-];
+/* ================================
+   INITIALISATION DE LA CARTE
+================================ */
 
-// Carte initialisée sur la France
-const map = L.map('map').setView([43.5, 6.5], 10);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19,
-  attribution: '&copy; OpenStreetMap'
-}).addTo(map);
+const map = L.map('map').setView([46.6, 2.4], 6);
 
-const groupMarkers = L.featureGroup().addTo(map);
-
-// Fonction pour extraire le point de départ
-async function ajouterRando(fichier) {
-  try {
-    const res = await fetch(fichier);
-    const text = await res.text();
-
-    // Chercher le JSON 'g = {...}' dans le fichier
-    const match = text.match(/const g\s*=\s*(\{[\s\S]*?\});/);
-    if (!match) return;
-
-    const geojson = JSON.parse(match[1]);
-    if (!geojson.features || geojson.features.length === 0) return;
-
-    // Trouver le premier point (départ)
-    const pointDepart = geojson.features.find(f => f.geometry?.type === "Point");
-    if (!pointDepart) return;
-
-    const [lon, lat] = pointDepart.geometry.coordinates;
-    const marker = L.marker([lat, lon])
-      .bindPopup(`<strong>${fichier}</strong><br>${pointDepart.properties?.name || ''}`);
-    
-    marker.addTo(groupMarkers);
-  } catch (e) {
-    console.warn('Erreur pour', fichier, e);
+L.tileLayer(
+  'https://data.geopf.fr/wmts?' +
+  'SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0' +
+  '&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2' +
+  '&STYLE=normal&FORMAT=image/png' +
+  '&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}',
+  {
+    attribution: '© IGN – Plan V2',
+    maxZoom: 19
   }
+).addTo(map);
+
+const markers = [];
+
+/* ================================
+   EXTRACTION ROBUSTE DES COORDONNÉES
+================================ */
+
+/*
+  Principe :
+  - On lit le fichier HTML comme TEXTE
+  - On cherche la PREMIÈRE paire de coordonnées décimales
+  - On accepte lat,lon ou lon,lat
+*/
+
+function extractFirstLatLon(text) {
+
+  // Regex très tolérante (ex: 44.12345, 6.98765)
+  const regex = /(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/g;
+
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+
+    const a = parseFloat(match[1]);
+    const b = parseFloat(match[2]);
+
+    let lat, lon;
+
+    // Test des plages valides
+    if (Math.abs(a) <= 90 && Math.abs(b) <= 180) {
+      lat = a;
+      lon = b;
+    } else if (Math.abs(b) <= 90 && Math.abs(a) <= 180) {
+      lat = b;
+      lon = a;
+    } else {
+      continue;
+    }
+
+    return { lat, lon };
+  }
+
+  return null;
 }
 
-// Ajouter tous les fichiers et ajuster le zoom sur tous les marqueurs
-Promise.all(fichiersRando.map(f => ajouterRando(f)))
-  .then(() => {
-    if (groupMarkers.getLayers().length > 0) {
-      map.fitBounds(groupMarkers.getBounds().pad(0.2));
+/* ================================
+   SÉLECTION DU DOSSIER
+================================ */
+
+document.getElementById('selectFolder').addEventListener('click', async () => {
+
+  try {
+    const dirHandle = await window.showDirectoryPicker();
+    document.getElementById('status').textContent =
+      `Dossier sélectionné : ${dirHandle.name}`;
+
+    markers.forEach(m => map.removeLayer(m));
+    markers.length = 0;
+
+    let count = 0;
+
+    for await (const entry of dirHandle.values()) {
+
+      if (entry.kind === 'file' && entry.name.toLowerCase().endsWith('.html')) {
+
+        const file = await entry.getFile();
+        const text = await file.text();
+
+        const coords = extractFirstLatLon(text);
+
+        if (coords) {
+          const marker = L.marker([coords.lat, coords.lon])
+            .addTo(map)
+            .bindPopup(entry.name);
+
+          markers.push(marker);
+          count++;
+        }
+      }
     }
-  });
+
+    if (markers.length > 0) {
+      const group = L.featureGroup(markers);
+      map.fitBounds(group.getBounds(), { padding: [30, 30] });
+    }
+
+    document.getElementById('status').textContent =
+      `${count} randonnée(s) localisée(s)`;
+
+  } catch (err) {
+    console.error(err);
+    document.getElementById('status').textContent =
+      'Sélection annulée ou non autorisée';
+  }
+});
 </script>
 
 </body>
