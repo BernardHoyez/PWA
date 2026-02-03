@@ -13,70 +13,38 @@
 <link
   rel="stylesheet"
   href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  integrity="sha256-o9N1j7kP5QwQ0Myo2E2s46F1Otg3OCAXoTr4v0LlwYQ="
   crossorigin=""
 />
 
 <!-- Leaflet JS -->
 <script
   src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-  integrity="sha256-o8EeY0xgQj8sHn+2f5wVJ3R5xTKty+O3O5p3p3p0Xmc="
   crossorigin="">
 </script>
 
 <style>
-  body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-  }
-
-  header {
-    padding: 10px;
-    background: #2c3e50;
-    color: white;
-  }
-
-  section {
-    padding: 10px;
-  }
-
-  #map {
-    height: 60vh;
-    width: 100%;
-    background: #e0e0e0;
-  }
-
-  #validation {
-    padding: 10px;
-    text-align: center;
-  }
-
-  button {
-    margin: 5px;
-    padding: 8px 12px;
-    font-size: 14px;
-    cursor: pointer;
-  }
+  body { margin: 0; font-family: Arial, sans-serif; }
+  header { padding: 10px; background: #2c3e50; color: white; }
+  section { padding: 10px; }
+  #map { height: 60vh; width: 100%; background: #e0e0e0; }
+  #validation { padding: 10px; text-align: center; }
+  button { margin: 5px; padding: 8px 12px; font-size: 14px; cursor: pointer; }
 </style>
 </head>
 
 <body>
-
 <header>
   <h1>mytrak</h1>
   <div id="status">Aucun dossier sélectionné</div>
 </header>
 
-<!-- Étape 1 : sélection du dossier -->
 <section id="step-folder">
   <p><strong>Sélectionner le dossier « mes traces de randos »</strong></p>
   <input type="file" id="folderInput" webkitdirectory multiple>
 </section>
 
-<!-- Étape 2 : carte + validation -->
 <section id="step-map" style="display:none">
   <div id="map"></div>
-
   <div id="validation">
     <p><strong>La représentation vous convient-elle ?</strong></p>
     <button onclick="exportHTML()">Oui, exporter la carte</button>
@@ -87,11 +55,9 @@
 <script src="app.js"></script>
 
 <script>
-/* Service Worker */
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js");
 }
 </script>
-
 </body>
 </html>
