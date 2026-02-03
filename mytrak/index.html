@@ -5,35 +5,15 @@
 <title>MyTrak – Carte des randonnées</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 <style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-}
-header {
-  padding: 10px;
-  background: #2c3e50;
-  color: white;
-}
-#controls {
-  padding: 10px;
-}
-#map {
-  width: 100%;
-  height: calc(100vh - 120px);
-}
-button {
-  padding: 8px 14px;
-  font-size: 14px;
-  cursor: pointer;
-}
-#status {
-  margin-top: 8px;
-  font-size: 14px;
-}
+body { margin:0; font-family: Arial, sans-serif; }
+header { background:#2c3e50; color:white; padding:10px; }
+#controls { padding:10px; }
+#map { height: calc(100vh - 120px); }
+button { padding:8px 14px; font-size:14px; }
+#status { margin-top:8px; }
 </style>
 </head>
 
@@ -50,14 +30,12 @@ button {
 
 <div id="map"></div>
 
-<!-- Leaflet -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
 /* ================================
-   INITIALISATION DE LA CARTE
+   CARTE IGN
 ================================ */
-
 const map = L.map('map').setView([46.6, 2.4], 6);
 
 L.tileLayer(
@@ -66,103 +44,90 @@ L.tileLayer(
   '&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2' +
   '&STYLE=normal&FORMAT=image/png' +
   '&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}',
-  {
-    attribution: '© IGN – Plan V2',
-    maxZoom: 19
-  }
+  { attribution: '© IGN – Plan V2', maxZoom: 19 }
 ).addTo(map);
 
 const markers = [];
 
 /* ================================
-   EXTRACTION ROBUSTE DES COORDONNÉES
+   MÉTHODE 1 : const g = {...}
 ================================ */
+function extractFromGeoJSON(html) {
+  const match = html.match(/const\s+g\s*=\s*(\{[\s\S]*?\});/);
+  if (!match) return null;
 
-/*
-  Principe :
-  - On lit le fichier HTML comme TEXTE
-  - On cherche la PREMIÈRE paire de coordonnées décimales
-  - On accepte lat,lon ou lon,lat
-*/
+  try {
+    const geojson = JSON.parse(match[1]);
+    const coords = geojson.features?.[0]?.geometry?.coordinates;
+    if (!coords || coords.length < 2) return null;
 
-function extractFirstLatLon(text) {
+    return { lat: coords[1], lon: coords[0] };
+  } catch {
+    return null;
+  }
+}
 
-  // Regex très tolérante (ex: 44.12345, 6.98765)
+/* ================================
+   MÉTHODE 2 : coordonnées visibles
+================================ */
+function extractByRegex(html) {
   const regex = /(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/g;
-
   let match;
-  while ((match = regex.exec(text)) !== null) {
 
+  while ((match = regex.exec(html)) !== null) {
     const a = parseFloat(match[1]);
     const b = parseFloat(match[2]);
 
-    let lat, lon;
+    if (Math.abs(a) <= 90 && Math.abs(b) <= 180)
+      return { lat: a, lon: b };
 
-    // Test des plages valides
-    if (Math.abs(a) <= 90 && Math.abs(b) <= 180) {
-      lat = a;
-      lon = b;
-    } else if (Math.abs(b) <= 90 && Math.abs(a) <= 180) {
-      lat = b;
-      lon = a;
-    } else {
-      continue;
-    }
-
-    return { lat, lon };
+    if (Math.abs(b) <= 90 && Math.abs(a) <= 180)
+      return { lat: b, lon: a };
   }
-
   return null;
 }
 
 /* ================================
-   SÉLECTION DU DOSSIER
+   TRAITEMENT DES FICHIERS
 ================================ */
-
 document.getElementById('selectFolder').addEventListener('click', async () => {
-
   try {
-    const dirHandle = await window.showDirectoryPicker();
-    document.getElementById('status').textContent =
-      `Dossier sélectionné : ${dirHandle.name}`;
-
+    const dir = await window.showDirectoryPicker();
     markers.forEach(m => map.removeLayer(m));
     markers.length = 0;
 
-    let count = 0;
+    let total = 0;
 
-    for await (const entry of dirHandle.values()) {
+    for await (const entry of dir.values()) {
+      if (entry.kind !== 'file' || !entry.name.endsWith('.html')) continue;
 
-      if (entry.kind === 'file' && entry.name.toLowerCase().endsWith('.html')) {
+      const file = await entry.getFile();
+      const text = await file.text();
 
-        const file = await entry.getFile();
-        const text = await file.text();
+      let coords =
+        extractFromGeoJSON(text) ||
+        extractByRegex(text);
 
-        const coords = extractFirstLatLon(text);
-
-        if (coords) {
-          const marker = L.marker([coords.lat, coords.lon])
-            .addTo(map)
-            .bindPopup(entry.name);
-
-          markers.push(marker);
-          count++;
-        }
+      if (coords) {
+        const m = L.marker([coords.lat, coords.lon])
+          .addTo(map)
+          .bindPopup(entry.name);
+        markers.push(m);
+        total++;
+      } else {
+        console.warn('Aucune coordonnée trouvée :', entry.name);
       }
     }
 
-    if (markers.length > 0) {
-      const group = L.featureGroup(markers);
-      map.fitBounds(group.getBounds(), { padding: [30, 30] });
+    if (markers.length) {
+      map.fitBounds(L.featureGroup(markers).getBounds(), { padding:[30,30] });
     }
 
     document.getElementById('status').textContent =
-      `${count} randonnée(s) localisée(s)`;
+      `${total} randonnée(s) localisée(s)`;
 
-  } catch (err) {
-    console.error(err);
-    document.getElementById('status').textContent =
-      'Sélection annulée ou non autorisée';
+  } catch (e) {
+    document.getElementById('status').textContent = 'Sélection annulée';
   }
 });
 </script>
