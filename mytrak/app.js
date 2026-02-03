@@ -1,103 +1,120 @@
-// app.js
-
-let directoryHandle;
 let map;
 let markers = [];
 
-/* =========================
-   Sélection ou création dossier
-   ========================= */
+// Initialisation Leaflet + fond PLAN IGN V2
+function initMap() {
+  map = L.map('map');
 
-async function selectFolder(create = false) {
-  directoryHandle = await window.showDirectoryPicker({ mode: "read" });
-
-  document.getElementById("status").textContent =
-    "Dossier sélectionné : " + directoryHandle.name;
-
-  await parseTraces();
-}
-
-/* =========================
-   Parsing des traces HTML
-   ========================= */
-
-async function parseTraces() {
-  markers.forEach(m => map.removeLayer(m));
-  markers = [];
-
-  for await (const entry of directoryHandle.values()) {
-    if (entry.kind === "file" && entry.name.endsWith(".html")) {
-      const file = await entry.getFile();
-      const text = await file.text();
-
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(text, "text/html");
-
-      const gpxScript = doc.querySelector(
-        'script[type="application/gpx+xml"]'
-      );
-      if (!gpxScript) continue;
-
-      const gpxDoc = parser.parseFromString(
-        gpxScript.textContent,
-        "application/xml"
-      );
-
-      const trkpt = gpxDoc.querySelector("trkpt");
-      if (!trkpt) continue;
-
-      const lat = parseFloat(trkpt.getAttribute("lat"));
-      const lon = parseFloat(trkpt.getAttribute("lon"));
-
-      const marker = L.marker([lat, lon])
-        .addTo(map)
-        .bindPopup(entry.name);
-
-      markers.push(marker);
+  L.tileLayer(
+    'https://wxs.ign.fr/plan/geoportail/wmts?layer=GEOGRAPHICALGRIDSYSTEMS.MAPS&style=normal&tilematrixset=PM&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image/jpeg&TileMatrix={z}&TileCol={x}&TileRow={y}',
+    {
+      attribution: '© IGN – Géoportail',
+      minZoom: 0,
+      maxZoom: 18
     }
-  }
-
-  if (markers.length > 0) {
-    const group = L.featureGroup(markers);
-    map.fitBounds(group.getBounds().pad(0.2));
-  }
+  ).addTo(map);
 }
 
-/* =========================
-   Génération HTML export
-   ========================= */
-
+// Export HTML carte_des_randos.html
 function exportHTML() {
-  const data = markers.map(m => {
-    const p = m.getLatLng();
-    return {
-      nom: m.getPopup().getContent(),
-      lat: p.lat,
-      lon: p.lng
-    };
-  });
+  if (!markers || markers.length === 0) {
+    alert("Aucun marqueur à exporter");
+    return;
+  }
 
-  const html = `
-<!DOCTYPE html>
+  let html = `<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<title>Carte des randos</title>
+<title>carte_des_randos</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet"
- href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-html,body,#map{height:100%;margin:0}
+  #map { height: 100vh; width: 100%; }
 </style>
 </head>
 <body>
 <div id="map"></div>
 <script>
-const randos = ${JSON.stringify(data)};
-const map = L.map('map');
-L.tileLayer(
-  "https://data.geopf.fr/wmts?" +
-  "SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0" +
-  "&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2" +
-  "&STYLE=normal&TI
+  const map = L.map('map');
+  L.tileLayer(
+    'https://wxs.ign.fr/plan/geoportail/wmts?layer=GEOGRAPHICALGRIDSYSTEMS.MAPS&style=normal&tilematrixset=PM&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image/jpeg&TileMatrix={z}&TileCol={x}&TileRow={y}',
+    { attribution: '© IGN – Géoportail', minZoom:0, maxZoom:18 }
+  ).addTo(map);
+
+  const markers = [];
+`;
+
+  // Ajouter chaque marqueur
+  markers.forEach((m, i) => {
+    const latlng = m.getLatLng();
+    const popup = m.getPopup() ? m.getPopup().getContent() : "";
+    html += `
+  L.marker([${latlng.lat}, ${latlng.lng}]).addTo(map).bindPopup("${popup}");
+`;
+  });
+
+  html += `
+  const group = L.featureGroup(markers);
+  map.fitBounds(group.getBounds().pad(0.2));
+</script>
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: "text/html" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "carte_des_randos.html";
+  a.click();
+}
+
+/* =========================
+   Événement sélection dossier
+========================= */
+document.getElementById("folderInput").addEventListener("change", async (event) => {
+  const files = Array.from(event.target.files);
+  if (files.length === 0) return;
+
+  document.getElementById("status").textContent =
+    files.length + " fichier(s) détecté(s)";
+
+  markers = [];
+
+  document.getElementById("step-folder").style.display = "none";
+  document.getElementById("step-map").style.display = "block";
+
+  initMap();
+
+  for (const file of files) {
+    if (!file.name.endsWith(".html")) continue;
+
+    const text = await file.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, "text/html");
+
+    const gpxScript = doc.querySelector('script[type="application/gpx+xml"]');
+    if (!gpxScript) continue;
+
+    const gpxDoc = parser.parseFromString(gpxScript.textContent, "application/xml");
+    const trkpt = gpxDoc.querySelector("trkpt");
+    if (!trkpt) continue;
+
+    const lat = parseFloat(trkpt.getAttribute("lat"));
+    const lon = parseFloat(trkpt.getAttribute("lon"));
+
+    const marker = L.marker([lat, lon]).addTo(map).bindPopup(file.name);
+    markers.push(marker);
+  }
+
+  if (markers.length > 0) {
+    map.fitBounds(L.featureGroup(markers).getBounds().pad(0.2));
+  } else {
+    map.setView([46.5, 2.5], 6);
+  }
+
+  setTimeout(() => map.invalidateSize(), 200);
+});
