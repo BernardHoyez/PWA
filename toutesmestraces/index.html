@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2c5f3d">
+    <title>Toutes mes traces</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon512.png">
+    <link rel="apple-touch-icon" href="icon192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --forest-dark: #1a3a2b;
+            --forest-medium: #2c5f3d;
+            --forest-light: #4a8a5f;
+            --earth-warm: #d4a574;
+            --sky-light: #e8f4f0;
+            --accent-red: #c44536;
+            --text-dark: #2d2d2d;
+        }
+
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            background: linear-gradient(135deg, var(--sky-light) 0%, #f8fffe 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--forest-dark) 0%, var(--forest-medium) 100%);
+            color: white;
+            padding: 2rem 1.5rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        h1 {
+            font-family: 'Merriweather', serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 0.3rem;
+            position: relative;
+            z-index: 1;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .step-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 16px rgba(44, 95, 61, 0.08);
+            border-left: 5px solid var(--forest-light);
+            transition: all 0.3s ease;
+            animation: slideUp 0.6s ease backwards;
+        }
+
+        .step-card:nth-child(1) { animation-delay: 0.1s; }
+        .step-card:nth-child(2) { animation-delay: 0.2s; }
+        .step-card:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .step-card:hover {
+            box-shadow: 0 8px 24px rgba(44, 95, 61, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--forest-medium), var(--forest-light));
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-weight: 700;
+            margin-right: 1rem;
+            font-size: 1.2rem;
+            box-shadow: 0 2px 8px rgba(44, 95, 61, 0.3);
+        }
+
+        h2 {
+            font-family: 'Merriweather', serif;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--forest-dark);
+            display: flex;
+            align-items: center;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--forest-medium), var(--forest-light));
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(44, 95, 61, 0.3);
+            font-family: 'Source Sans 3', sans-serif;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(44, 95, 61, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .status.info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border-left: 4px solid #1976d2;
+        }
+
+        .status.success {
+            background: #e8f5e9;
+            color: #388e3c;
+            border-left: 4px solid #388e3c;
+        }
+
+        .status.error {
+            background: #ffebee;
+            color: #d32f2f;
+            border-left: 4px solid #d32f2f;
+        }
+
+        #map {
+            width: 100%;
+            height: 500px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            margin-top: 1.5rem;
+            display: none;
+        }
+
+        #map.visible {
+            display: block;
+            animation: fadeIn 0.6s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .actions {
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .loader {
+            border: 4px solid var(--sky-light);
+            border-top: 4px solid var(--forest-medium);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 1rem auto;
+            display: none;
+        }
+
+        .loader.active {
+            display: block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .trace-info {
+            background: var(--sky-light);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .trace-info.visible {
+            display: block;
+        }
+
+        .trace-info p {
+            margin: 0.5rem 0;
+        }
+
+        .trace-info strong {
+            color: var(--forest-dark);
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .step-card {
+                padding: 1.5rem;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🥾 Toutes mes traces</h1>
+        <p class="subtitle">Visualisez tous vos points de départ de randonnée</p>
+    </div>
+
+    <div class="container">
+        <div class="step-card">
+            <h2>
+                <span class="step-number">1</span>
+                Sélectionner le dossier
+            </h2>
+            <p>Choisissez le dossier contenant vos traces de randonnée au format HTML.</p>
+            <button class="btn" id="selectFolderBtn">
+                📁 Sélectionner "mes traces de randos"
+            </button>
+            <div id="folderStatus" class="status info" style="display: none;"></div>
+        </div>
+
+        <div class="step-card">
+            <h2>
+                <span class="step-number">2</span>
+                Analyser les traces
+            </h2>
+            <p>L'application va extraire les coordonnées GPS des points de départ de chaque trace.</p>
+            <button class="btn" id="parseBtn" disabled>
+                🔍 Analyser les traces
+            </button>
+            <div class="loader" id="loader"></div>
+            <div id="parseStatus" class="status info" style="display: none;"></div>
+            <div id="traceInfo" class="trace-info"></div>
+        </div>
+
+        <div class="step-card">
+            <h2>
+                <span class="step-number">3</span>
+                Visualiser sur la carte
+            </h2>
+            <p>Vos points de départ apparaîtront sur une carte IGN interactive.</p>
+            <div id="map"></div>
+            <div class="actions">
+                <button class="btn" id="saveBtn" disabled style="display: none;">
+                    💾 Sauvegarder la carte
+                </button>
+            </div>
+            <div id="mapStatus" class="status info" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Variables globales
+        let directoryHandle = null;
+        let traces = [];
+        let map = null;
+        let markers = [];
+
+        console.log('Application démarrée');
+
+        // Vérifier le support de l'API
+        if (!('showDirectoryPicker' in window)) {
+            alert('Votre navigateur ne supporte pas la sélection de dossiers. Veuillez utiliser Chrome, Edge ou un navigateur compatible.');
+        }
+
+        // Fonction de sélection de dossier
+        async function selectFolder() {
+            console.log('selectFolder appelée');
+            try {
+                directoryHandle = await window.showDirectoryPicker();
+                const folderStatus = document.getElementById('folderStatus');
+                folderStatus.style.display = 'block';
+                folderStatus.className = 'status success';
+                folderStatus.textContent = '✓ Dossier sélectionné : ' + directoryHandle.name;
+                document.getElementById('parseBtn').disabled = false;
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    const folderStatus = document.getElementById('folderStatus');
+                    folderStatus.style.display = 'block';
+                    folderStatus.className = 'status error';
+                    folderStatus.textContent = '✗ Erreur : ' + err.message;
+                }
+            }
+        }
+
+        // Fonction d'analyse des traces
+        async function parseTraces() {
+            console.log('parseTraces appelée');
+            if (!directoryHandle) return;
+
+            const loader = document.getElementById('loader');
+            const parseStatus = document.getElementById('parseStatus');
+            const traceInfo = document.getElementById('traceInfo');
+            
+            loader.classList.add('active');
+            parseStatus.style.display = 'none';
+            traceInfo.classList.remove('visible');
+            traces = [];
+
+            try {
+                let htmlCount = 0;
+
+                for await (const entry of directoryHandle.values()) {
+                    if (entry.kind === 'file' && entry.name.endsWith('.html')) {
+                        htmlCount++;
+                        const file = await entry.getFile();
+                        const content = await file.text();
+                        
+                        const coords = extractGPSCoordinates(content, entry.name);
+                        if (coords) {
+                            traces.push({
+                                name: entry.name,
+                                lat: coords.lat,
+                                lon: coords.lon
+                            });
+                        }
+                    }
+                }
+
+                loader.classList.remove('active');
+                parseStatus.style.display = 'block';
+                
+                if (traces.length > 0) {
+                    parseStatus.className = 'status success';
+                    parseStatus.textContent = '✓ ' + traces.length + ' trace(s) analysée(s) avec succès sur ' + htmlCount + ' fichier(s) HTML trouvé(s)';
+                    
+                    traceInfo.classList.add('visible');
+                    traceInfo.innerHTML = '<strong>Traces trouvées :</strong><br>' + 
+                        traces.map(t => '• ' + t.name + ' (' + t.lat.toFixed(5) + ', ' + t.lon.toFixed(5) + ')').join('<br>');
+                    
+                    displayMap();
+                } else {
+                    parseStatus.className = 'status error';
+                    parseStatus.textContent = '✗ Aucune coordonnée GPS trouvée dans les ' + htmlCount + ' fichier(s) HTML du dossier';
+                }
+
+            } catch (err) {
+                loader.classList.remove('active');
+                parseStatus.style.display = 'block';
+                parseStatus.className = 'status error';
+                parseStatus.textContent = '✗ Erreur lors de l\'analyse : ' + err.message;
+            }
+        }
+
+        // Fonction d'extraction des coordonnées GPS
+        function extractGPSCoordinates(htmlContent, filename) {
+            // Méthode 1 : Meta tag
+            const metaRegex = /<meta[^>]*geo\.position[^>]*content=["']([^"']+)["']/i;
+            const metaMatch = htmlContent.match(metaRegex);
+            if (metaMatch) {
+                const coords = metaMatch[1].split(';').map(c => c.trim());
+                if (coords.length >= 2) {
+                    return { lat: parseFloat(coords[0]), lon: parseFloat(coords[1]) };
+                }
+            }
+
+            // Méthode 2 : GPX
+            const gpxLatRegex = /<trkpt[^>]*lat=["']([^"']+)["']/i;
+            const gpxLonRegex = /<trkpt[^>]*lon=["']([^"']+)["']/i;
+            const latMatch = htmlContent.match(gpxLatRegex);
+            const lonMatch = htmlContent.match(gpxLonRegex);
+            
+            if (latMatch && lonMatch) {
+                return { lat: parseFloat(latMatch[1]), lon: parseFloat(lonMatch[1]) };
+            }
+
+            // Méthode 3 : JavaScript
+            const jsCoordRegex = /lat(?:itude)?["']?\s*[:=]\s*([0-9.-]+)[\s,;]*lon(?:gitude)?["']?\s*[:=]\s*([0-9.-]+)/i;
+            const jsMatch = htmlContent.match(jsCoordRegex);
+            if (jsMatch) {
+                return { lat: parseFloat(jsMatch[1]), lon: parseFloat(jsMatch[2]) };
+            }
+
+            // Méthode 4 : Coordonnées décimales
+            const decimalRegex = /([0-9]{1,2}\.[0-9]{4,})\s*,?\s*([0-9]{1,2}\.[0-9]{4,})/g;
+            const matches = [...htmlContent.matchAll(decimalRegex)];
+            for (const match of matches) {
+                const lat = parseFloat(match[1]);
+                const lon = parseFloat(match[2]);
+                if (lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+                    return { lat, lon };
+                }
+            }
+
+            console.log('Aucune coordonnée trouvée dans ' + filename);
+            return null;
+        }
+
+        // Fonction d'affichage de la carte
+        function displayMap() {
+            console.log('displayMap appelée');
+            if (traces.length === 0) return;
+
+            const mapDiv = document.getElementById('map');
+            mapDiv.classList.add('visible');
+
+            if (!map) {
+                map = L.map('map');
+                
+                // IGN Plan V2 via data.geopf.fr (pas besoin de clé API)
+                L.tileLayer('https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
+                    attribution: '© IGN - Plan v2',
+                    maxZoom: 19
+                }).addTo(map);
+            } else {
+                markers.forEach(marker => map.removeLayer(marker));
+                markers = [];
+            }
+
+            const bounds = [];
+            traces.forEach((trace) => {
+                const marker = L.marker([trace.lat, trace.lon], {
+                    title: trace.name
+                }).addTo(map);
+                
+                marker.bindPopup('<strong>' + trace.name + '</strong><br>Lat: ' + trace.lat.toFixed(5) + '<br>Lon: ' + trace.lon.toFixed(5));
+                
+                markers.push(marker);
+                bounds.push([trace.lat, trace.lon]);
+            });
+
+            if (bounds.length > 0) {
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+
+            document.getElementById('saveBtn').style.display = 'inline-block';
+            document.getElementById('saveBtn').disabled = false;
+
+            const mapStatus = document.getElementById('mapStatus');
+            mapStatus.style.display = 'block';
+            mapStatus.className = 'status info';
+            mapStatus.textContent = '📍 La carte affiche vos points de départ. Êtes-vous satisfait du résultat ?';
+        }
+
+        // Fonction de sauvegarde
+        async function saveMap() {
+            console.log('saveMap appelée');
+            const mapStatus = document.getElementById('mapStatus');
+            
+            try {
+                const htmlContent = generateMapHTML();
+                const blob = new Blob([htmlContent], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'toutesmestraces_carte.html';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                mapStatus.className = 'status success';
+                mapStatus.textContent = '✓ Carte sauvegardée avec succès !';
+            } catch (err) {
+                mapStatus.className = 'status error';
+                mapStatus.textContent = '✗ Erreur lors de la sauvegarde : ' + err.message;
+            }
+        }
+
+        // Fonction de génération du HTML de la carte
+        function generateMapHTML() {
+            const tracesJSON = JSON.stringify(traces);
+            const traceCount = traces.length;
+            const currentDate = new Date().toLocaleDateString('fr-FR');
+            
+            let html = '<!DOCTYPE html>\n<html lang="fr">\n<head>\n';
+            html += '    <meta charset="UTF-8">\n';
+            html += '    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n';
+            html += '    <title>Mes traces de randonnée</title>\n';
+            html += '    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />\n';
+            html += '    <style>\n';
+            html += '        * { margin: 0; padding: 0; box-sizing: border-box; }\n';
+            html += '        body { font-family: Arial, sans-serif; }\n';
+            html += '        .header { background: linear-gradient(135deg, #1a3a2b 0%, #2c5f3d 100%); color: white; padding: 1.5rem; text-align: center; }\n';
+            html += '        h1 { font-size: 2rem; margin-bottom: 0.5rem; }\n';
+            html += '        #map { width: 100%; height: calc(100vh - 100px); }\n';
+            html += '        .info { position: absolute; bottom: 20px; left: 20px; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 1000; }\n';
+            html += '    </style>\n';
+            html += '</head>\n<body>\n';
+            html += '    <div class="header">\n';
+            html += '        <h1>🥾 Mes traces de randonnée</h1>\n';
+            html += '    </div>\n';
+            html += '    <div id="map"></div>\n';
+            html += '    <div class="info"><strong>' + traceCount + '</strong> point(s) de départ<br><small>Généré le ' + currentDate + '</small></div>\n';
+            html += '    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>\n';
+            html += '    <script>\n';
+            html += '        const traces = ' + tracesJSON + ';\n';
+            html += '        const map = L.map("map");\n';
+            html += '        L.tileLayer("https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}", {\n';
+            html += '            attribution: "© IGN - Plan v2", maxZoom: 19\n';
+            html += '        }).addTo(map);\n';
+            html += '        const bounds = [];\n';
+            html += '        traces.forEach(trace => {\n';
+            html += '            const marker = L.marker([trace.lat, trace.lon]).addTo(map);\n';
+            html += '            marker.bindPopup("<strong>" + trace.name + "<\/strong><br>Lat: " + trace.lat.toFixed(5) + "<br>Lon: " + trace.lon.toFixed(5));\n';
+            html += '            bounds.push([trace.lat, trace.lon]);\n';
+            html += '        });\n';
+            html += '        if (bounds.length > 0) { map.fitBounds(bounds, { padding: [50, 50] }); }\n';
+            html += '    <\/script>\n';
+            html += '<\/body>\n<\/html>';
+            
+            return html;
+        }
+
+        // Initialisation des event listeners
+        console.log('Initialisation des event listeners...');
+        
+        const selectBtn = document.getElementById('selectFolderBtn');
+        const parseBtn = document.getElementById('parseBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        
+        console.log('Bouton select:', selectBtn);
+        console.log('Bouton parse:', parseBtn);
+        console.log('Bouton save:', saveBtn);
+        
+        if (selectBtn) {
+            selectBtn.addEventListener('click', function(e) {
+                console.log('Click sur selectBtn détecté');
+                e.preventDefault();
+                selectFolder();
+            });
+            console.log('Event listener attaché à selectBtn');
+        }
+        
+        if (parseBtn) {
+            parseBtn.addEventListener('click', function(e) {
+                console.log('Click sur parseBtn détecté');
+                e.preventDefault();
+                parseTraces();
+            });
+            console.log('Event listener attaché à parseBtn');
+        }
+        
+        if (saveBtn) {
+            saveBtn.addEventListener('click', function(e) {
+                console.log('Click sur saveBtn détecté');
+                e.preventDefault();
+                saveMap();
+            });
+            console.log('Event listener attaché à saveBtn');
+        }
+
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker enregistré', reg))
+                .catch(err => console.log('Erreur Service Worker', err));
+        }
+        
+        console.log('Initialisation terminée');
+    </script>
+</body>
+</html>
