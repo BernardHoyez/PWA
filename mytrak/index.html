@@ -27,7 +27,7 @@
   <div id="status">Aucun dossier sélectionné</div>
 </header>
 
-<!-- ÉTAPE 1 -->
+<!-- ÉTAPE 1 : sélection du dossier -->
 <section id="step-folder">
   <p><strong>Sélectionner le dossier « mes traces de randos »</strong></p>
 
@@ -39,9 +39,10 @@
   >
 </section>
 
-<!-- ÉTAPE 2 -->
+<!-- ÉTAPE 2 : carte + validation -->
 <section id="step-map" style="display:none">
   <div id="map"></div>
+
   <div style="padding:10px">
     <p><strong>La représentation vous convient-elle ?</strong></p>
     <button onclick="exportHTML()">Oui, exporter la carte</button>
@@ -49,25 +50,37 @@
   </div>
 </section>
 
+<!-- Logique applicative -->
 <script src="app.js"></script>
 
 <script>
 /* =========================
-   Gestion sélection dossier
+   Sélection du dossier
    ========================= */
 
 document.getElementById("folderInput").addEventListener("change", async (event) => {
-  const files = Array.from(event.target.files);
 
+  const files = Array.from(event.target.files);
   if (files.length === 0) return;
 
   document.getElementById("status").textContent =
     files.length + " fichier(s) détecté(s)";
 
-  // Initialisation carte
-  initMap();
+  markers = [];
 
-  // Parsing manuel des fichiers HTML
+  /* =========================
+     Afficher la carte AVANT Leaflet
+     ========================= */
+
+  document.getElementById("step-folder").style.display = "none";
+  document.getElementById("step-map").style.display = "block";
+
+  initMap();   // IMPORTANT : après affichage
+
+  /* =========================
+     Parsing des fichiers HTML
+     ========================= */
+
   for (const file of files) {
     if (!file.name.endsWith(".html")) continue;
 
@@ -98,15 +111,25 @@ document.getElementById("folderInput").addEventListener("change", async (event) 
     markers.push(marker);
   }
 
+  /* =========================
+     Ajustement vue
+     ========================= */
+
   if (markers.length > 0) {
     const group = L.featureGroup(markers);
     map.fitBounds(group.getBounds().pad(0.2));
+  } else {
+    map.setView([46.5, 2.5], 6);
   }
 
-  document.getElementById("step-folder").style.display = "none";
-  document.getElementById("step-map").style.display = "block";
+  // Sécurité Leaflet (conteneur dynamique)
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 200);
 });
-</script>
 
-</body>
-</html>
+/* =========================
+   Service Worker
+   ========================= */
+if ("serviceWorker" in navigator) {
+  navigator.ser
