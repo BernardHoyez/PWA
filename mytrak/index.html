@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
-<title>MyTrak - Carte de randonnée</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<meta charset="UTF-8">
+<title>MyTrak - Mes Randonnées</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
 body{margin:0;font-family:system-ui}
 #map{height:100vh}
@@ -18,80 +16,121 @@ body{margin:0;font-family:system-ui}
 .stats p{margin:5px 0}
 .leaflet-popup-content{font-size:14px;line-height:1.5}
 .leaflet-popup-content h4{margin:0 0 8px 0;color:#007bff}
-@media (max-width: 768px){
-  .controls{padding:10px;display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
-  .controls button{margin:0;padding:16px 24px;font-size:17px;min-width:140px;flex:1 1 calc(50% - 5px);font-weight:700}
-  .stats{font-size:13px;padding:12px}
-  .stats h3{font-size:15px}
-}
-@media print{.controls{display:none}.stats{bottom:auto;top:10px;right:10px;left:auto}}
 </style>
 </head>
 <body>
+
 <div id="map"></div>
 
 <div class="controls">
-  <button onclick="download('gpx')">📥 GPX</button>
-  <button onclick="download('kml')">📥 KML</button>
-  <button onclick="download('geojson')">📥 GeoJSON</button>
-  <button onclick="share()">🔗 Partager</button>
-  <button onclick="window.print()">🖨️ Imprimer</button>
-  <button onclick="exportPDF()">📄 PDF</button>
+<button onclick="download('gpx')">📥 GPX</button>
+<button onclick="download('kml')">📥 KML</button>
+<button onclick="download('geojson')">📥 GeoJSON</button>
+<button onclick="share()">🔗 Partager</button>
+<button onclick="window.print()">🖨️ Imprimer</button>
+<button onclick="exportPDF()">📄 PDF</button>
 </div>
 
 <div class="stats">
 <h3>📊 Statistiques</h3>
-<p><strong>Distance:</strong> 16.65 km</p>
-<p><strong>D+:</strong> 810 m</p>
-<p><strong>D-:</strong> 811 m</p>
-<p><strong>📍 Waypoints:</strong> 27</p>
+<p id="stat-distance"></p>
+<p id="stat-dplus"></p>
+<p id="stat-dmoins"></p>
+<p id="stat-waypoints"></p>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/togpx@0.5.4/togpx.js"></script>
 <script src="https://unpkg.com/tokml@0.4.0/tokml.js"></script>
+
 <script>
 // Initialisation de la carte
-const map = L.map('map').setView([43.56, 6.46], 14);
+const map = L.map('map').setView([43.56, 6.46], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
 
-// Fond de carte IGN
-L.tileLayer('https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
-  attribution: '© IGN - Plan v2',
-  maxZoom: 18
-}).addTo(map);
+let allMarkers = [];
+let totalDistance = 0, totalDplus = 0, totalDmoins = 0;
 
-// Données GeoJSON (tes waypoints)
-const gpxData = {"type":"FeatureCollection","features":[
-  {"type":"Feature","geometry":{"type":"Point","coordinates":[6.46599,43.55685]},"properties":{"name":"Départ"}},
-  {"type":"Feature","geometry":{"type":"Point","coordinates":[6.4625283,43.5565817]},"properties":{"name":"Panorama"}}
-  // … ajouter les autres points
-]};
+// Fonction pour charger et corriger un fichier HTML de rando
+async function loadRando(file) {
+    const resp = await fetch(file);
+    const text = await resp.text();
 
-// Fonction création des marqueurs
-gpxData.features.forEach(f => {
-  const coords = f.geometry.coordinates;
-  const marker = L.marker([coords[1], coords[0]], {
-    icon: L.divIcon({className:'waypoint-marker', html:'<div style="background:#007bff;width:24px;height:24px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>'})
-  }).addTo(map);
-  if(f.properties.name) marker.bindPopup(`<h4>${f.properties.name}</h4>`);
-});
+    // Extraction du JSON des points depuis le fichier HTML
+    let gpxData = null;
+    try {
+        const match = text.match(/const g\s*=\s*(\{.*\});/s);
+        if(match){
+            gpxData = JSON.parse(match[1]);
+        }
+    } catch(e){ console.error(file,e); return; }
 
-// Fonctions boutons export
+    if(!gpxData || !gpxData.features) return;
+
+    gpxData.features.forEach(f => {
+        if(f.geometry && f.geometry.type==='Point'){
+            let coords = f.geometry.coordinates;
+            if(coords.length<2) return; // coord invalides
+
+            let lat = coords[1];
+            let lng = coords[0];
+            let alt = coords[2] || 0;
+
+            // Correction simple si coordonnées inversées ou alt manquant
+            if(isNaN(lat) || isNaN(lng)) return;
+
+            const iconUrl = f.properties.icon || "https://maps.google.com/mapfiles/ms/icons/blue-dot.png";
+
+            const marker = L.marker([lat,lng],{
+                title: f.properties.name || '',
+            }).addTo(map);
+
+            if(f.properties.description){
+                marker.bindPopup(`<h4>${f.properties.name || ''}</h4>${f.properties.description}`);
+            }
+
+            allMarkers.push(marker);
+        }
+    });
+
+    // Mise à jour des stats
+    document.getElementById("stat-distance").innerText = `Distance: ${gpxData.distance||0} km`;
+    document.getElementById("stat-dplus").innerText = `D+: ${gpxData.dplus||0} m`;
+    document.getElementById("stat-dmoins").innerText = `D-: ${gpxData.dmoins||0} m`;
+    document.getElementById("stat-waypoints").innerText = `📍 Waypoints: ${allMarkers.length}`;
+}
+
+// Liste de tous les fichiers rando à charger
+const files = [
+    'rando/trace-Figanières-16.65km-2026-02-01.html',
+    'rando/trace-Test-Exemple1.html',
+    'rando/trace-Test-Exemple2.html',
+    'rando/trace-AutreRando.html'
+];
+
+// Chargement séquentiel
+files.forEach(f => loadRando(f));
+
+// Fonctions de download/export simplifiées
 function download(format){
-  if(format==='gpx') saveAs(new Blob([togpx(gpxData)],{type:"application/gpx+xml"}), "trace.gpx");
-  if(format==='kml') saveAs(new Blob([tokml(gpxData)],{type:"application/vnd.google-earth.kml+xml"}), "trace.kml");
-  if(format==='geojson') saveAs(new Blob([JSON.stringify(gpxData,null,2)],{type:"application/json"}), "trace.geojson");
+    let features = allMarkers.map(m => {
+        let latlng = m.getLatLng();
+        return {type:'Feature',geometry:{type:'Point',coordinates:[latlng.lng,latlng.lat]},properties:{}};
+    });
+    const fc = {type:'FeatureCollection',features};
+    if(format==='gpx') saveFile(new togpx(fc),'rando.gpx');
+    else if(format==='kml') saveFile(tokml(fc),'rando.kml');
+    else if(format==='geojson') saveFile(JSON.stringify(fc, null,2),'rando.geojson');
 }
-
-function share(){navigator.clipboard.writeText(window.location.href); alert("Lien copié !");}
-
-async function exportPDF(){
-  const canvas = await html2canvas(document.querySelector("#map"));
-  const imgData = canvas.toDataURL('image/png');
-  const pdf = new jspdf.jsPDF();
-  pdf.addImage(imgData, 'PNG', 10, 10, 180, 100);
-  pdf.save("carte.pdf");
+function saveFile(data,filename){
+    const blob = new Blob([data],{type:'text/plain;charset=utf-8'});
+    const link = document.createElement('a');
+    link.href=URL.createObjectURL(blob);
+    link.download=filename;
+    link.click();
 }
+function share(){alert('Fonction partage non implémentée')}
+function exportPDF(){alert('Fonction PDF non implémentée')}
 </script>
 </body>
 </html>
