@@ -5,10 +5,11 @@ let markers = [];
 function initMap() {
   map = L.map('map');
 
+  // PLAN IGN V2 libre, sans clé
   L.tileLayer(
-    'https://wxs.ign.fr/plan/geoportail/wmts?layer=GEOGRAPHICALGRIDSYSTEMS.MAPS&style=normal&tilematrixset=PM&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image/jpeg&TileMatrix={z}&TileCol={x}&TileRow={y}',
+    'https://wxs.ign.fr/plan/geoportail/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.MAPS&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/jpeg&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}',
     {
-      attribution: '© IGN – Géoportail',
+      attribution: '© IGN – Plan V2',
       minZoom: 0,
       maxZoom: 18
     }
@@ -28,39 +29,31 @@ function exportHTML() {
 <meta charset="utf-8">
 <title>carte_des_randos</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<style>
-  #map { height: 100vh; width: 100%; }
-</style>
+<style>#map{height:100vh;width:100%;}</style>
 </head>
 <body>
 <div id="map"></div>
 <script>
-  const map = L.map('map');
-  L.tileLayer(
-    'https://wxs.ign.fr/plan/geoportail/wmts?layer=GEOGRAPHICALGRIDSYSTEMS.MAPS&style=normal&tilematrixset=PM&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image/jpeg&TileMatrix={z}&TileCol={x}&TileRow={y}',
-    { attribution: '© IGN – Géoportail', minZoom:0, maxZoom:18 }
-  ).addTo(map);
+const map = L.map('map');
+L.tileLayer(
+  'https://wxs.ign.fr/plan/geoportail/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.MAPS&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/jpeg&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}',
+  { attribution: '© IGN – Plan V2', minZoom:0, maxZoom:18 }
+).addTo(map);
 
-  const markers = [];
+const markers = [];
 `;
 
-  // Ajouter chaque marqueur
-  markers.forEach((m, i) => {
+  markers.forEach((m) => {
     const latlng = m.getLatLng();
     const popup = m.getPopup() ? m.getPopup().getContent() : "";
-    html += `
-  L.marker([${latlng.lat}, ${latlng.lng}]).addTo(map).bindPopup("${popup}");
-`;
+    html += `L.marker([${latlng.lat}, ${latlng.lng}]).addTo(map).bindPopup("${popup}");\n`;
   });
 
   html += `
-  const group = L.featureGroup(markers);
-  map.fitBounds(group.getBounds().pad(0.2));
+const group = L.featureGroup(markers);
+map.fitBounds(group.getBounds().pad(0.2));
 </script>
 </body>
 </html>`;
@@ -72,9 +65,7 @@ function exportHTML() {
   a.click();
 }
 
-/* =========================
-   Événement sélection dossier
-========================= */
+// Sélection dossier + parsing
 document.getElementById("folderInput").addEventListener("change", async (event) => {
   const files = Array.from(event.target.files);
   if (files.length === 0) return;
