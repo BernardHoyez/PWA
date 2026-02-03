@@ -2,61 +2,95 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<title>mytrak</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<!-- PWA -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2c3e50">
-
-<!-- Leaflet CSS -->
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  crossorigin=""
-/>
-
-<!-- Leaflet JS -->
-<script
-  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-  crossorigin="">
-</script>
-
+<title>MyTrak - Carte de randonnée</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-  body { margin: 0; font-family: Arial, sans-serif; }
-  header { padding: 10px; background: #2c3e50; color: white; }
-  section { padding: 10px; }
-  #map { height: 60vh; width: 100%; background: #e0e0e0; }
-  #validation { padding: 10px; text-align: center; }
-  button { margin: 5px; padding: 8px 12px; font-size: 14px; cursor: pointer; }
+body{margin:0;font-family:system-ui}
+#map{height:100vh}
+.controls{position:absolute;top:10px;left:10px;z-index:1000;background:white;padding:15px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.2);max-width:90vw}
+.controls button{margin:5px;padding:12px 18px;border:none;border-radius:5px;cursor:pointer;background:#007bff;color:white;font-size:15px;font-weight:600;white-space:nowrap}
+.controls button:hover{background:#0056b3}
+.controls button:active{transform:scale(0.95)}
+.stats{position:absolute;bottom:10px;left:10px;z-index:1000;background:white;padding:15px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.2);font-size:14px;max-width:90vw}
+.stats h3{margin:0 0 10px 0;font-size:16px}
+.stats p{margin:5px 0}
+.leaflet-popup-content{font-size:14px;line-height:1.5}
+.leaflet-popup-content h4{margin:0 0 8px 0;color:#007bff}
+@media (max-width: 768px){
+  .controls{padding:10px;display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+  .controls button{margin:0;padding:16px 24px;font-size:17px;min-width:140px;flex:1 1 calc(50% - 5px);font-weight:700}
+  .stats{font-size:13px;padding:12px}
+  .stats h3{font-size:15px}
+}
+@media print{.controls{display:none}.stats{bottom:auto;top:10px;right:10px;left:auto}}
 </style>
 </head>
-
 <body>
-<header>
-  <h1>mytrak</h1>
-  <div id="status">Aucun dossier sélectionné</div>
-</header>
+<div id="map"></div>
 
-<section id="step-folder">
-  <p><strong>Sélectionner le dossier « mes traces de randos »</strong></p>
-  <input type="file" id="folderInput" webkitdirectory multiple>
-</section>
+<div class="controls">
+  <button onclick="download('gpx')">📥 GPX</button>
+  <button onclick="download('kml')">📥 KML</button>
+  <button onclick="download('geojson')">📥 GeoJSON</button>
+  <button onclick="share()">🔗 Partager</button>
+  <button onclick="window.print()">🖨️ Imprimer</button>
+  <button onclick="exportPDF()">📄 PDF</button>
+</div>
 
-<section id="step-map" style="display:none">
-  <div id="map"></div>
-  <div id="validation">
-    <p><strong>La représentation vous convient-elle ?</strong></p>
-    <button onclick="exportHTML()">Oui, exporter la carte</button>
-    <button onclick="location.reload()">Non, revenir au dossier</button>
-  </div>
-</section>
+<div class="stats">
+<h3>📊 Statistiques</h3>
+<p><strong>Distance:</strong> 16.65 km</p>
+<p><strong>D+:</strong> 810 m</p>
+<p><strong>D-:</strong> 811 m</p>
+<p><strong>📍 Waypoints:</strong> 27</p>
+</div>
 
-<script src="app.js"></script>
-
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/togpx@0.5.4/togpx.js"></script>
+<script src="https://unpkg.com/tokml@0.4.0/tokml.js"></script>
 <script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js");
+// Initialisation de la carte
+const map = L.map('map').setView([43.56, 6.46], 14);
+
+// Fond de carte IGN
+L.tileLayer('https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
+  attribution: '© IGN - Plan v2',
+  maxZoom: 18
+}).addTo(map);
+
+// Données GeoJSON (tes waypoints)
+const gpxData = {"type":"FeatureCollection","features":[
+  {"type":"Feature","geometry":{"type":"Point","coordinates":[6.46599,43.55685]},"properties":{"name":"Départ"}},
+  {"type":"Feature","geometry":{"type":"Point","coordinates":[6.4625283,43.5565817]},"properties":{"name":"Panorama"}}
+  // … ajouter les autres points
+]};
+
+// Fonction création des marqueurs
+gpxData.features.forEach(f => {
+  const coords = f.geometry.coordinates;
+  const marker = L.marker([coords[1], coords[0]], {
+    icon: L.divIcon({className:'waypoint-marker', html:'<div style="background:#007bff;width:24px;height:24px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>'})
+  }).addTo(map);
+  if(f.properties.name) marker.bindPopup(`<h4>${f.properties.name}</h4>`);
+});
+
+// Fonctions boutons export
+function download(format){
+  if(format==='gpx') saveAs(new Blob([togpx(gpxData)],{type:"application/gpx+xml"}), "trace.gpx");
+  if(format==='kml') saveAs(new Blob([tokml(gpxData)],{type:"application/vnd.google-earth.kml+xml"}), "trace.kml");
+  if(format==='geojson') saveAs(new Blob([JSON.stringify(gpxData,null,2)],{type:"application/json"}), "trace.geojson");
+}
+
+function share(){navigator.clipboard.writeText(window.location.href); alert("Lien copié !");}
+
+async function exportPDF(){
+  const canvas = await html2canvas(document.querySelector("#map"));
+  const imgData = canvas.toDataURL('image/png');
+  const pdf = new jspdf.jsPDF();
+  pdf.addImage(imgData, 'PNG', 10, 10, 180, 100);
+  pdf.save("carte.pdf");
 }
 </script>
 </body>
