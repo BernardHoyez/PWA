@@ -1,22 +1,42 @@
-// sw.js
-
-const CACHE_NAME = "mytrak-v1";
-const ASSETS = [
-  "./",
-  "./index.html",
-  "./app.js",
-  "./manifest.json",
-  "./css/style.css"
+const CACHE_NAME = 'mytrak-cache-v1';
+const urlsToCache = [
+  './',
+  './index.html',
+  './app.js',
+  './manifest.json',
+  './icon192.png',
+  './icon512.png',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
 ];
 
-self.addEventListener("install", e => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
+// Installation : mise en cache des ressources
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(urlsToCache))
   );
+  self.skipWaiting();
 });
 
-self.addEventListener("fetch", e => {
-  e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request))
+// Activation : suppression anciennes caches
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(
+        keys.filter(key => key !== CACHE_NAME)
+            .map(key => caches.delete(key))
+      )
+    )
+  );
+  self.clients.claim();
+});
+
+// Interception des requêtes : récupération depuis cache si possible
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request);
+    })
   );
 });
