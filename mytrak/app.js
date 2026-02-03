@@ -7,11 +7,11 @@ function initMap() {
 
   // PLAN IGN V2 libre, sans clé
   L.tileLayer(
-    'https://wxs.ign.fr/plan/geoportail/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.MAPS&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/jpeg&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}',
+    'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}',
     {
-      attribution: '© IGN – Plan V2',
+      attribution: '© IGN – Plan v2',
       minZoom: 0,
-      maxZoom: 18
+      maxZoom: 19
     }
   ).addTo(map);
 }
@@ -38,8 +38,8 @@ function exportHTML() {
 <script>
 const map = L.map('map');
 L.tileLayer(
-  'https://wxs.ign.fr/plan/geoportail/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.MAPS&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/jpeg&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}',
-  { attribution: '© IGN – Plan V2', minZoom:0, maxZoom:18 }
+  'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}',
+  { attribution:'© IGN – Plan v2', minZoom:0, maxZoom:19 }
 ).addTo(map);
 
 const markers = [];
@@ -65,7 +65,7 @@ map.fitBounds(group.getBounds().pad(0.2));
   a.click();
 }
 
-// Sélection dossier + parsing
+// Sélection du dossier + parsing
 document.getElementById("folderInput").addEventListener("change", async (event) => {
   const files = Array.from(event.target.files);
   if (files.length === 0) return;
@@ -87,6 +87,7 @@ document.getElementById("folderInput").addEventListener("change", async (event) 
     const parser = new DOMParser();
     const doc = parser.parseFromString(text, "text/html");
 
+    // Cherche le script GPX
     const gpxScript = doc.querySelector('script[type="application/gpx+xml"]');
     if (!gpxScript) continue;
 
@@ -101,11 +102,13 @@ document.getElementById("folderInput").addEventListener("change", async (event) 
     markers.push(marker);
   }
 
+  // Zoom sur tous les marqueurs si présents
   if (markers.length > 0) {
     map.fitBounds(L.featureGroup(markers).getBounds().pad(0.2));
   } else {
     map.setView([46.5, 2.5], 6);
   }
 
+  // Sécurité Leaflet
   setTimeout(() => map.invalidateSize(), 200);
 });
