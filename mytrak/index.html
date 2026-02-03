@@ -1,59 +1,63 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <title>mytrak</title>
+<meta charset="utf-8">
+<title>mytrak</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2c3e50">
 
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#2c3e50">
+<!-- Leaflet CSS -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-o9N1j7kP5QwQ0Myo2E2s46F1Otg3OCAXoTr4v0LlwYQ="
+  crossorigin=""
+/>
 
-  <!-- Leaflet CSS obligatoire -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-o9N1j7kP5QwQ0Myo2E2s46F1Otg3OCAXoTr4v0LlwYQ="
-    crossorigin=""
-  />
+<!-- Leaflet JS -->
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-o8EeY0xgQj8sHn+2f5wVJ3R5xTKty+O3O5p3p3p0Xmc="
+  crossorigin="">
+</script>
 
-  <!-- Leaflet JS -->
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-o8EeY0xgQj8sHn+2f5wVJ3R5xTKty+O3O5p3p3p0Xmc="
-    crossorigin="">
-  </script>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+  }
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-    }
+  header {
+    padding: 10px;
+    background: #2c3e50;
+    color: white;
+  }
 
-    header {
-      padding: 10px;
-      background: #2c3e50;
-      color: white;
-    }
+  section {
+    padding: 10px;
+  }
 
-    #map {
-      height: 60vh;           /* hauteur suffisante */
-      width: 100%;
-      background: #e0e0e0;    /* debug visuel */
-    }
+  #map {
+    height: 60vh;
+    width: 100%;
+    background: #e0e0e0;
+  }
 
-    section {
-      padding: 10px;
-    }
+  #validation {
+    padding: 10px;
+    text-align: center;
+  }
 
-    button {
-      margin: 5px;
-      padding: 8px 12px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-  </style>
+  button {
+    margin: 5px;
+    padding: 8px 12px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+</style>
 </head>
 
 <body>
@@ -63,45 +67,33 @@
   <div id="status">Aucun dossier sélectionné</div>
 </header>
 
-<!-- ÉTAPE 1 : sélection du dossier -->
+<!-- Étape 1 : sélection dossier -->
 <section id="step-folder">
   <p><strong>Sélectionner le dossier « mes traces de randos »</strong></p>
   <input type="file" id="folderInput" webkitdirectory multiple>
 </section>
 
-<!-- ÉTAPE 2 : carte + validation -->
+<!-- Étape 2 : carte + validation -->
 <section id="step-map" style="display:none">
   <div id="map"></div>
 
-  <p><strong>La représentation vous convient-elle ?</strong></p>
-  <button onclick="exportHTML()">Oui, exporter la carte</button>
-  <button onclick="location.reload()">Non, revenir au dossier</button>
+  <div id="validation">
+    <p><strong>La représentation vous convient-elle ?</strong></p>
+    <button onclick="exportHTML()">Oui, exporter la carte</button>
+    <button onclick="location.reload()">Non, revenir au dossier</button>
+  </div>
 </section>
 
 <script src="app.js"></script>
 
 <script>
 /* =========================
-   Sélection du dossier + parsing
-   ========================= */
+   Service Worker
+========================= */
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}
+</script>
 
-document.getElementById("folderInput").addEventListener("change", async (event) => {
-
-  const files = Array.from(event.target.files);
-  if (files.length === 0) return;
-
-  document.getElementById("status").textContent =
-    files.length + " fichier(s) détecté(s)";
-
-  markers = [];
-
-  // AFFICHER LA CARTE AVANT INITIALISATION
-  document.getElementById("step-folder").style.display = "none";
-  document.getElementById("step-map").style.display = "block";
-
-  initMap();  // conteneur visible
-
-  for (const file of files) {
-    if (!file.name.endsWith(".html")) continue;
-
-    const text = await
+</body>
+</html>
