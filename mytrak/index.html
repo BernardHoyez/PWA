@@ -29,9 +29,14 @@
 
 <!-- ÉTAPE 1 -->
 <section id="step-folder">
-  <p><strong>Le dossier « mes traces de randos » existe-t-il déjà ?</strong></p>
-  <button id="btn-select">Oui, le sélectionner</button>
-  <button id="btn-create">Non, le créer</button>
+  <p><strong>Sélectionner le dossier « mes traces de randos »</strong></p>
+
+  <input
+    type="file"
+    id="folderInput"
+    webkitdirectory
+    multiple
+  >
 </section>
 
 <!-- ÉTAPE 2 -->
@@ -44,53 +49,63 @@
   </div>
 </section>
 
-<!-- LOGIQUE -->
 <script src="app.js"></script>
 
 <script>
 /* =========================
-   Gestion UI (après app.js)
+   Gestion sélection dossier
    ========================= */
 
-document.getElementById("btn-select").addEventListener("click", async () => {
-  try {
-    await selectFolder(false);
-    afficherCarte();
-  } catch (e) {
-    console.error(e);
-  }
-});
+document.getElementById("folderInput").addEventListener("change", async (event) => {
+  const files = Array.from(event.target.files);
 
-document.getElementById("btn-create").addEventListener("click", async () => {
-  try {
-    const parent = await window.showDirectoryPicker();
-    directoryHandle = await parent.getDirectoryHandle(
-      "mes traces de randos",
-      { create: true }
+  if (files.length === 0) return;
+
+  document.getElementById("status").textContent =
+    files.length + " fichier(s) détecté(s)";
+
+  // Initialisation carte
+  initMap();
+
+  // Parsing manuel des fichiers HTML
+  for (const file of files) {
+    if (!file.name.endsWith(".html")) continue;
+
+    const text = await file.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, "text/html");
+
+    const gpxScript = doc.querySelector(
+      'script[type="application/gpx+xml"]'
+    );
+    if (!gpxScript) continue;
+
+    const gpxDoc = parser.parseFromString(
+      gpxScript.textContent,
+      "application/xml"
     );
 
-    document.getElementById("status").textContent =
-      "Dossier créé : mes traces de randos";
+    const trkpt = gpxDoc.querySelector("trkpt");
+    if (!trkpt) continue;
 
-    await parseTraces();
-    afficherCarte();
-  } catch (e) {
-    console.error(e);
+    const lat = parseFloat(trkpt.getAttribute("lat"));
+    const lon = parseFloat(trkpt.getAttribute("lon"));
+
+    const marker = L.marker([lat, lon])
+      .addTo(map)
+      .bindPopup(file.name);
+
+    markers.push(marker);
   }
-});
 
-function afficherCarte() {
+  if (markers.length > 0) {
+    const group = L.featureGroup(markers);
+    map.fitBounds(group.getBounds().pad(0.2));
+  }
+
   document.getElementById("step-folder").style.display = "none";
   document.getElementById("step-map").style.display = "block";
-  initMap();
-}
-
-/* =========================
-   Service Worker
-   ========================= */
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js");
-}
+});
 </script>
 
 </body>
