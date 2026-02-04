@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CartoRando Pro v3.0 - Documentation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #e8f4f0 0%, #f8fffe 100%);
+            padding: 2rem;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 3rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            font-size: 2.5rem;
+            color: #1a3a2b;
+            margin-bottom: 0.5rem;
+            border-bottom: 4px solid #2c5f3d;
+            padding-bottom: 0.5rem;
+        }
+        .version-badge {
+            display: inline-block;
+            background: #d4a574;
+            color: #1a3a2b;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-left: 1rem;
+        }
+        h2 {
+            font-size: 1.8rem;
+            color: #2c5f3d;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+        h3 {
+            font-size: 1.3rem;
+            color: #4a8a5f;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        p { margin-bottom: 1rem; }
+        ul, ol { margin-left: 2rem; margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+        code {
+            background: #f4f4f4;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #c44536;
+        }
+        .feature-box {
+            background: #e8f4f0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #2c5f3d;
+        }
+        .warning-box {
+            background: #fff3cd;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #c44536;
+        }
+        .info-box {
+            background: #e3f2fd;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #1976d2;
+        }
+        .new-badge {
+            background: #4caf50;
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-left: 0.5rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #2c5f3d;
+            color: white;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🥾 CartoRando <span class="version-badge">PRO v3.0</span></h1>
+        
+        <p><strong>CartoRando Pro</strong> est l'évolution majeure de CartoRando, avec des fonctionnalités professionnelles : clusters intelligents, export GPX et génération de PDF.</p>
+
+        <h2>🆕 Nouveautés de la version 3.0</h2>
+        
+        <div class="feature-box">
+            <h3>🎯 Clusters de marqueurs <span class="new-badge">NOUVEAU</span></h3>
+            <p>Regroupement automatique et intelligent des marqueurs proches pour une meilleure lisibilité :</p>
+            <ul>
+                <li><strong>Groupes colorés</strong> : Plus il y a de traces dans un cluster, plus la couleur est foncée</li>
+                <li><strong>Zoom progressif</strong> : Cliquez sur un cluster pour zoomer et voir les détails</li>
+                <li><strong>Spiderfy</strong> : Au zoom maximum, les marqueurs s'écartent en éventail pour faciliter la sélection</li>
+                <li><strong>Optimisé</strong> : Performant même avec des centaines de traces</li>
+            </ul>
+        </div>
+
+        <div class="feature-box">
+            <h3>📍 Export GPX <span class="new-badge">NOUVEAU</span></h3>
+            <p>Exportez tous vos points de départ dans un fichier GPX standard :</p>
+            <ul>
+                <li><strong>Format universel</strong> : Compatible avec tous les GPS et applications de randonnée (Garmin, Suunto, Komoot, etc.)</li>
+                <li><strong>Métadonnées</strong> : Chaque point contient son nom et sa description</li>
+                <li><strong>Waypoints</strong> : Tous les points sont exportés comme waypoints</li>
+                <li><strong>Import facile</strong> : Ouvrez le fichier dans votre application GPS favorite</li>
+            </ul>
+        </div>
+
+        <div class="feature-box">
+            <h3>📄 Export PDF <span class="new-badge">NOUVEAU</span></h3>
+            <p>Générez un document PDF professionnel avec la liste complète de vos traces :</p>
+            <ul>
+                <li><strong>Mise en page soignée</strong> : Titre, statistiques, liste détaillée</li>
+                <li><strong>Coordonnées précises</strong> : Latitude et longitude pour chaque trace</li>
+                <li><strong>Multi-pages</strong> : Gestion automatique des pages pour les longues listes</li>
+                <li><strong>Imprimable</strong> : Format A4 prêt à imprimer</li>
+                <li><strong>Portable</strong> : Partagez facilement vos traces par email</li>
+            </ul>
+        </div>
+
+        <h2>✨ Fonctionnalités héritées de la v2.0</h2>
+        
+        <ul>
+            <li>📁 <strong>Sélection de dossier</strong> via l'API File System Access</li>
+            <li>🔍 <strong>Analyse automatique</strong> de 4 formats de coordonnées GPS</li>
+            <li>🗺️ <strong>3 fonds de carte</strong> : IGN Plan V2, IGN Satellite, OpenStreetMap</li>
+            <li>💾 <strong>Sauvegarde HTML</strong> avec clusters et fond de carte personnalisé</li>
+            <li>📱 <strong>Progressive Web App</strong> : installable et fonctionnement hors ligne</li>
+            <li>🎨 <strong>Interface élégante</strong> et responsive</li>
+        </ul>
+
+        <h2>🚀 Guide d'utilisation rapide</h2>
+
+        <h3>1. Sélectionner et analyser</h3>
+        <ol>
+            <li>Cliquez sur <strong>"📁 Sélectionner mes traces de randos"</strong></li>
+            <li>Choisissez votre dossier contenant les fichiers HTML</li>
+            <li>Cliquez sur <strong>"🔍 Analyser les traces"</strong></li>
+            <li>Attendez l'extraction des coordonnées</li>
+        </ol>
+
+        <h3>2. Visualiser avec clusters</h3>
+        <p>La carte s'affiche automatiquement avec vos points regroupés intelligemment :</p>
+        <ul>
+            <li><strong>Clusters verts</strong> : Groupes de marqueurs proches</li>
+            <li><strong>Nombre affiché</strong> : Indique combien de traces sont dans le groupe</li>
+            <li><strong>Cliquez pour zoomer</strong> : Les clusters se séparent progressivement</li>
+            <li><strong>Changez de fond</strong> : Utilisez les boutons 🗺️ 🛰️ 🌍</li>
+        </ul>
+
+        <h3>3. Exporter vos données</h3>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Bouton</th>
+                    <th>Format</th>
+                    <th>Utilisation</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>💾 Sauvegarder HTML</td>
+                    <td>Fichier HTML autonome</td>
+                    <td>Visualisation dans un navigateur avec clusters</td>
+                </tr>
+                <tr>
+                    <td>📍 Export GPX</td>
+                    <td>Fichier GPX standard</td>
+                    <td>Import dans GPS, applications rando</td>
+                </tr>
+                <tr>
+                    <td>📄 Export PDF</td>
+                    <td>Document PDF</td>
+                    <td>Impression, partage, archivage</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>📍 Utiliser le fichier GPX</h2>
+
+        <h3>Avec Garmin</h3>
+        <ol>
+            <li>Connectez votre GPS Garmin à l'ordinateur</li>
+            <li>Copiez le fichier <code>cartorando_traces.gpx</code> dans le dossier <code>GPX</code></li>
+            <li>Éjectez le GPS</li>
+            <li>Les waypoints apparaissent dans votre GPS</li>
+        </ol>
+
+        <h3>Avec des applications mobiles</h3>
+        <ul>
+            <li><strong>Komoot</strong> : Menu → Planification → Importer GPX</li>
+            <li><strong>Strava</strong> : Créer un itinéraire → Importer un fichier</li>
+            <li><strong>ViewRanger</strong> : Mes itinéraires → Importer</li>
+            <li><strong>OruxMaps</strong> : Fichiers → Importer</li>
+        </ul>
+
+        <h2>📄 Contenu du fichier PDF</h2>
+
+        <p>Le PDF généré contient :</p>
+        <ul>
+            <li><strong>Page de garde</strong> avec titre et date de génération</li>
+            <li><strong>Statistiques</strong> : nombre de traces, fond de carte utilisé</li>
+            <li><strong>Liste complète</strong> des traces avec :
+                <ul>
+                    <li>Numéro d'ordre</li>
+                    <li>Nom du fichier</li>
+                    <li>Coordonnées GPS précises (5 décimales)</li>
+                </ul>
+            </li>
+            <li><strong>Pagination automatique</strong> : plusieurs pages si nécessaire</li>
+            <li><strong>Pied de page</strong> : numérotation et version de l'application</li>
+        </ul>
+
+        <div class="info-box">
+            <p><strong>💡 Astuce :</strong> Imprimez le PDF pour avoir une copie physique de vos traces, utile en cas de panne de batterie lors d'une randonnée !</p>
+        </div>
+
+        <h2>🎨 Comprendre les clusters</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Taille du cluster</th>
+                    <th>Couleur</th>
+                    <th>Nombre de traces</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Petit</td>
+                    <td style="color: #4a8a5f;">🟢 Vert clair</td>
+                    <td>2 à 9 traces</td>
+                </tr>
+                <tr>
+                    <td>Moyen</td>
+                    <td style="color: #2c5f3d;">🟢 Vert moyen</td>
+                    <td>10 à 49 traces</td>
+                </tr>
+                <tr>
+                    <td>Grand</td>
+                    <td style="color: #1a3a2b;">🟢 Vert foncé</td>
+                    <td>50+ traces</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>💻 Compatibilité</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Fonctionnalité</th>
+                    <th>Chrome/Edge</th>
+                    <th>Firefox</th>
+                    <th>Safari</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Sélection de dossier</td>
+                    <td>✅ Complet</td>
+                    <td>⚠️ Partiel</td>
+                    <td>⚠️ Partiel</td>
+                </tr>
+                <tr>
+                    <td>Clusters</td>
+                    <td>✅ Complet</td>
+                    <td>✅ Complet</td>
+                    <td>✅ Complet</td>
+                </tr>
+                <tr>
+                    <td>Export GPX</td>
+                    <td>✅ Complet</td>
+                    <td>✅ Complet</td>
+                    <td>✅ Complet</td>
+                </tr>
+                <tr>
+                    <td>Export PDF</td>
+                    <td>✅ Complet</td>
+                    <td>✅ Complet</td>
+                    <td>✅ Complet</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>🔧 Fichiers inclus</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Fichier</th>
+                    <th>Taille</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>index.html</code></td>
+                    <td>~40 KB</td>
+                    <td>Application principale avec toutes les fonctionnalités</td>
+                </tr>
+                <tr>
+                    <td><code>manifest.json</code></td>
+                    <td>~300 B</td>
+                    <td>Configuration PWA</td>
+                </tr>
+                <tr>
+                    <td><code>sw.js</code></td>
+                    <td>~2 KB</td>
+                    <td>Service Worker pour mode hors ligne</td>
+                </tr>
+                <tr>
+                    <td><code>icon192.png</code></td>
+                    <td>~8 KB</td>
+                    <td>Icône 192x192 pixels</td>
+                </tr>
+                <tr>
+                    <td><code>icon512.png</code></td>
+                    <td>~20 KB</td>
+                    <td>Icône 512x512 pixels</td>
+                </tr>
+                <tr>
+                    <td><code>README.html</code></td>
+                    <td>~15 KB</td>
+                    <td>Cette documentation</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>📊 Bibliothèques utilisées</h2>
+
+        <ul>
+            <li><strong>Leaflet 1.9.4</strong> - Cartographie interactive</li>
+            <li><strong>Leaflet.markercluster 1.5.3</strong> - Gestion des clusters</li>
+            <li><strong>jsPDF 2.5.1</strong> - Génération de PDF</li>
+            <li><strong>IGN Géoportail</strong> - Fonds de carte IGN</li>
+            <li><strong>OpenStreetMap</strong> - Fond de carte collaboratif</li>
+        </ul>
+
+        <h2>🌐 Déploiement</h2>
+
+        <p>Pour déployer sur GitHub Pages :</p>
+        <ol>
+            <li>Créez un dossier <code>cartorando-v3/</code> dans votre dépôt <code>PWA</code></li>
+            <li>Uploadez tous les fichiers</li>
+            <li>Accédez à : <code>https://VotreNom.github.io/PWA/cartorando-v3/</code></li>
+        </ol>
+
+        <h2>❓ FAQ</h2>
+
+        <h3>Pourquoi certains marqueurs sont regroupés ?</h3>
+        <p>C'est le système de clusters qui regroupe les marqueurs proches pour améliorer la lisibilité. Zoomez pour les séparer.</p>
+
+        <h3>Le fichier GPX ne s'importe pas dans mon GPS</h3>
+        <p>Vérifiez que votre GPS supporte le format GPX 1.1. Certains anciens modèles nécessitent une conversion.</p>
+
+        <h3>Le PDF est incomplet</h3>
+        <p>Si vous avez énormément de traces (500+), la génération peut prendre du temps. Patientez quelques secondes.</p>
+
+        <h3>Les clusters ne se séparent pas</h3>
+        <p>Continuez à zoomer. Au maximum, les marqueurs s'écartent automatiquement en éventail (spiderfy).</p>
+
+        <h2>🆚 Comparaison des versions</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Fonctionnalité</th>
+                    <th>v1.0</th>
+                    <th>v2.0</th>
+                    <th>v3.0 PRO</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Carte IGN Plan</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                </tr>
+                <tr>
+                    <td>Sélecteur de carte</td>
+                    <td>❌</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                </tr>
+                <tr>
+                    <td>Export HTML</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                    <td>✅</td>
+                </tr>
+                <tr>
+                    <td>Clusters</td>
+                    <td>❌</td>
+                    <td>❌</td>
+                    <td>✅</td>
+                </tr>
+                <tr>
+                    <td>Export GPX</td>
+                    <td>❌</td>
+                    <td>❌</td>
+                    <td>✅</td>
+                </tr>
+                <tr>
+                    <td>Export PDF</td>
+                    <td>❌</td>
+                    <td>❌</td>
+                    <td>✅</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>📄 Licence</h2>
+        <p>MIT License - Libre d'utilisation et de modification</p>
+
+        <hr style="margin: 2rem 0; border: none; border-top: 2px solid #e0e0e0;">
+
+        <p style="text-align: center; color: #666;">
+            <strong>Créé avec ❤️ pour les passionnés de randonnée</strong><br>
+            Version 3.0 PRO - CartoRando<br>
+            <small>Clusters • GPX • PDF</small>
+        </p>
+    </div>
+</body>
+</html>
