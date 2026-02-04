@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CartoRando - Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #e8f4f0 0%, #f8fffe 100%);
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 3rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #1a3a2b;
+            margin-bottom: 0.5rem;
+            border-bottom: 4px solid #2c5f3d;
+            padding-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: #2c5f3d;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            color: #4a8a5f;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        ul, ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #c44536;
+        }
+
+        .feature-box {
+            background: #e8f4f0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #2c5f3d;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #c44536;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #1976d2;
+        }
+
+        .emoji {
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #2c5f3d;
+            color: white;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .version {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        a {
+            color: #2c5f3d;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🥾 CartoRando</h1>
+        <p class="version">Version 2.0 - Avec sélecteur de fond de carte</p>
+        
+        <p><strong>CartoRando</strong> est une application web progressive (PWA) qui vous permet de visualiser tous vos points de départ de randonnée sur une carte interactive. L'application analyse automatiquement vos fichiers HTML contenant des traces GPS et affiche les points de départ sur différents fonds de carte.</p>
+
+        <h2>✨ Fonctionnalités principales</h2>
+        
+        <div class="feature-box">
+            <h3><span class="emoji">📁</span> Sélection de dossier</h3>
+            <p>Sélectionnez facilement le dossier contenant vos traces de randonnée au format HTML grâce à l'API File System Access.</p>
+        </div>
+
+        <div class="feature-box">
+            <h3><span class="emoji">🔍</span> Analyse automatique</h3>
+            <p>L'application analyse automatiquement vos fichiers HTML et extrait les coordonnées GPS en utilisant 4 méthodes différentes :</p>
+            <ul>
+                <li><strong>Meta tags</strong> : <code>&lt;meta name="geo.position" content="lat;lon"&gt;</code></li>
+                <li><strong>Format GPX</strong> : <code>&lt;trkpt lat="..." lon="..."&gt;</code></li>
+                <li><strong>Variables JavaScript</strong> : <code>lat = 43.5; lon = 5.4;</code></li>
+                <li><strong>Coordonnées décimales</strong> : détection automatique avec correction d'inversion lat/lon</li>
+            </ul>
+        </div>
+
+        <div class="feature-box">
+            <h3><span class="emoji">🗺️</span> Sélecteur de fond de carte (NOUVEAU !)</h3>
+            <p>Choisissez parmi 3 fonds de carte différents :</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fond de carte</th>
+                        <th>Description</th>
+                        <th>Bouton</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>IGN Plan V2</strong></td>
+                        <td>Carte topographique détaillée de l'IGN (par défaut)</td>
+                        <td>🗺️ IGN Plan</td>
+                    </tr>
+                    <tr>
+                        <td><strong>IGN Satellite</strong></td>
+                        <td>Vues aériennes et orthophotos haute résolution</td>
+                        <td>🛰️ Satellite</td>
+                    </tr>
+                    <tr>
+                        <td><strong>OpenStreetMap</strong></td>
+                        <td>Carte collaborative mondiale</td>
+                        <td>🌍 OSM</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><strong>Utilisation :</strong> Cliquez simplement sur les boutons en haut à droite de la carte pour changer de fond instantanément !</p>
+        </div>
+
+        <div class="feature-box">
+            <h3><span class="emoji">💾</span> Sauvegarde de la carte</h3>
+            <p>Sauvegardez votre carte avec tous vos marqueurs dans un fichier HTML autonome. Le fond de carte actuellement affiché sera conservé dans le fichier sauvegardé.</p>
+        </div>
+
+        <div class="feature-box">
+            <h3><span class="emoji">📱</span> Progressive Web App (PWA)</h3>
+            <ul>
+                <li>Installable sur mobile et desktop</li>
+                <li>Fonctionne hors ligne (après la première visite)</li>
+                <li>Icônes personnalisées</li>
+            </ul>
+        </div>
+
+        <h2>🚀 Utilisation</h2>
+
+        <h3>Étape 1 : Sélectionner le dossier</h3>
+        <ol>
+            <li>Cliquez sur le bouton <strong>"📁 Sélectionner mes traces de randos"</strong></li>
+            <li>Naviguez jusqu'au dossier contenant vos fichiers HTML de traces</li>
+            <li>Sélectionnez le dossier</li>
+            <li>Un message de confirmation s'affiche</li>
+        </ol>
+
+        <h3>Étape 2 : Analyser les traces</h3>
+        <ol>
+            <li>Cliquez sur le bouton <strong>"🔍 Analyser les traces"</strong></li>
+            <li>L'application parcourt tous les fichiers HTML du dossier</li>
+            <li>Les coordonnées GPS sont extraites automatiquement</li>
+            <li>Un récapitulatif des traces trouvées s'affiche</li>
+        </ol>
+
+        <h3>Étape 3 : Visualiser et explorer</h3>
+        <ol>
+            <li>La carte s'affiche automatiquement avec tous vos points de départ</li>
+            <li><strong>Changez de fond de carte</strong> en cliquant sur les boutons :
+                <ul>
+                    <li>🗺️ <strong>IGN Plan</strong> : pour une vue topographique</li>
+                    <li>🛰️ <strong>Satellite</strong> : pour des vues aériennes</li>
+                    <li>🌍 <strong>OSM</strong> : pour une carte alternative</li>
+                </ul>
+            </li>
+            <li>Cliquez sur un marqueur pour voir le nom du fichier et les coordonnées</li>
+            <li>Zoomez et déplacez-vous sur la carte</li>
+            <li>Sauvegardez la carte avec le bouton <strong>"💾 Sauvegarder la carte"</strong></li>
+        </ol>
+
+        <h2>💻 Compatibilité</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Navigateur</th>
+                    <th>Support</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Chrome 86+</td>
+                    <td>✅ Complet</td>
+                    <td>Recommandé</td>
+                </tr>
+                <tr>
+                    <td>Edge 86+</td>
+                    <td>✅ Complet</td>
+                    <td>Recommandé</td>
+                </tr>
+                <tr>
+                    <td>Safari 15.4+</td>
+                    <td>⚠️ Partiel</td>
+                    <td>API File System limitée</td>
+                </tr>
+                <tr>
+                    <td>Firefox</td>
+                    <td>⚠️ Partiel</td>
+                    <td>Activation manuelle requise</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="warning-box">
+            <p><strong>⚠️ Important :</strong> L'API File System Access n'est pas supportée sur tous les navigateurs. Pour une expérience optimale, utilisez <strong>Chrome</strong> ou <strong>Edge</strong>.</p>
+        </div>
+
+        <h2>📦 Installation</h2>
+
+        <h3>En tant qu'application web</h3>
+        <ol>
+            <li>Ouvrez <code>index.html</code> dans votre navigateur</li>
+            <li>L'application fonctionne immédiatement</li>
+        </ol>
+
+        <h3>Installation comme PWA (Mobile)</h3>
+        <ol>
+            <li>Ouvrez l'application dans <strong>Chrome</strong> ou <strong>Safari</strong></li>
+            <li>Appuyez sur le menu (⋮) ou le bouton Partager</li>
+            <li>Choisissez <strong>"Ajouter à l'écran d'accueil"</strong></li>
+            <li>L'icône apparaît sur votre écran d'accueil</li>
+        </ol>
+
+        <h3>Installation comme PWA (Desktop)</h3>
+        <ol>
+            <li>Ouvrez l'application dans <strong>Chrome</strong> ou <strong>Edge</strong></li>
+            <li>Cliquez sur l'icône d'installation dans la barre d'adresse (+)</li>
+            <li>Confirmez l'installation</li>
+            <li>L'application s'ouvre dans sa propre fenêtre</li>
+        </ol>
+
+        <h2>🌐 Déploiement sur GitHub Pages</h2>
+
+        <h3>Configuration rapide</h3>
+        <ol>
+            <li>Créez un dépôt GitHub nommé <code>PWA</code></li>
+            <li>Uploadez tous les fichiers dans un sous-dossier <code>cartorando/</code></li>
+            <li>Activez GitHub Pages dans Settings → Pages</li>
+            <li>Votre app sera accessible à : <code>https://VotreNom.github.io/PWA/cartorando/</code></li>
+        </ol>
+
+        <div class="info-box">
+            <p><strong>💡 Astuce :</strong> Après le déploiement, attendez 2-3 minutes que GitHub Pages se mette à jour, puis ouvrez l'URL en navigation privée pour éviter les problèmes de cache.</p>
+        </div>
+
+        <h2>🔧 Fichiers inclus</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Fichier</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>index.html</code></td>
+                    <td>Application principale avec sélecteur de fond de carte</td>
+                </tr>
+                <tr>
+                    <td><code>manifest.json</code></td>
+                    <td>Configuration PWA</td>
+                </tr>
+                <tr>
+                    <td><code>sw.js</code></td>
+                    <td>Service Worker pour le mode hors ligne</td>
+                </tr>
+                <tr>
+                    <td><code>icon192.png</code></td>
+                    <td>Icône 192x192 pixels</td>
+                </tr>
+                <tr>
+                    <td><code>icon512.png</code></td>
+                    <td>Icône 512x512 pixels</td>
+                </tr>
+                <tr>
+                    <td><code>README.html</code></td>
+                    <td>Cette documentation</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>🆕 Nouveautés de la version 2.0</h2>
+
+        <ul>
+            <li>✅ <strong>Sélecteur de fond de carte</strong> avec 3 options (IGN Plan, IGN Satellite, OSM)</li>
+            <li>✅ Interface améliorée avec boutons de sélection en haut à droite de la carte</li>
+            <li>✅ Sauvegarde de la carte avec le fond actuellement sélectionné</li>
+            <li>✅ Changement instantané de fond de carte sans recharger</li>
+            <li>✅ Design responsive optimisé pour mobile</li>
+        </ul>
+
+        <h2>❓ Dépannage</h2>
+
+        <h3>La carte ne s'affiche pas</h3>
+        <ul>
+            <li>Vérifiez votre connexion internet (nécessaire pour charger les tuiles)</li>
+            <li>Videz le cache du navigateur (Ctrl+Shift+R)</li>
+            <li>Essayez un autre fond de carte</li>
+        </ul>
+
+        <h3>Les marqueurs sont mal placés</h3>
+        <ul>
+            <li>L'application détecte et corrige automatiquement les inversions lat/lon</li>
+            <li>Vérifiez que vos fichiers HTML contiennent bien des coordonnées GPS valides</li>
+        </ul>
+
+        <h3>Le sélecteur de dossier ne fonctionne pas</h3>
+        <ul>
+            <li>Utilisez Chrome ou Edge (meilleur support)</li>
+            <li>Vérifiez que vous n'êtes pas en navigation privée</li>
+        </ul>
+
+        <h2>📄 Licence</h2>
+        <p>MIT License - Libre d'utilisation et de modification</p>
+
+        <h2>🙏 Remerciements</h2>
+        <ul>
+            <li><strong>Leaflet.js</strong> - Bibliothèque de cartographie</li>
+            <li><strong>IGN Géoportail</strong> - Fonds de carte IGN</li>
+            <li><strong>OpenStreetMap</strong> - Fond de carte collaboratif</li>
+        </ul>
+
+        <hr style="margin: 2rem 0; border: none; border-top: 2px solid #e0e0e0;">
+
+        <p style="text-align: center; color: #666;">
+            <strong>Créé avec ❤️ pour les passionnés de randonnée</strong><br>
+            Version 2.0 - CartoRando
+        </p>
+    </div>
+</body>
+</html>
