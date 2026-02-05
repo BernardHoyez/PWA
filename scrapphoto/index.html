@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>scrapphoto</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+</head>
+<body>
+
+<h1>scrapphoto</h1>
+
+<h2>1. HTML de la galerie imgbox</h2>
+<textarea id="htmlInput" rows="10" style="width:100%"
+  placeholder="Collez ici le code source HTML de la galerie imgbox"></textarea>
+
+<button onclick="extract()">Extraire les liens</button>
+
+<h2>2. Liens extraits</h2>
+<pre id="linksOutput"></pre>
+
+<h2>3. Waypoints (lon,lat par ligne)</h2>
+<textarea id="wpInput" rows="6" style="width:100%"
+  placeholder="6.12345,44.98765"></textarea>
+
+<button onclick="generate()">Générer le KML</button>
+
+<script src="parser.js"></script>
+<script src="kml.js"></script>
+<script src="app.js"></script>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}
+</script>
+</body>
+</html>
