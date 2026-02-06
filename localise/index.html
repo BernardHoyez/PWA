@@ -15,30 +15,39 @@
 
 <div id="map"></div>
 
-<!-- ================= BOÎTE COORDONNÉES ================= -->
-<div id="coordBox" class="hidden">
+<div id="coordBox">
   <div class="title">Cliquer sur la carte pour définir une position</div>
 
-  <div id="coords"></div>
+  <div id="coords">—</div>
+
+  <hr>
+
+  <div class="subtitle">Fixer vos coordonnées</div>
+
+  <div class="row">
+    <label><input type="radio" name="fmt" value="dec" checked> Décimal</label>
+    <label><input type="radio" name="fmt" value="sexa"> Sexagésimal</label>
+  </div>
+
+  <input id="latInput" placeholder="Latitude">
+  <input id="lonInput" placeholder="Longitude">
 
   <div class="buttons">
-    <!-- EXISTANT (inchangé) -->
+    <button id="btnGo">Aller</button>
+    <button id="btnGMaps">GMaps</button>
+    <button id="btnWaze">Waze</button>
+  </div>
+
+  <hr>
+
+  <div class="buttons">
     <button id="btnDec">Dec</button>
     <button id="btnSexa">Sexa</button>
     <button id="btnLocate">🧭</button>
-
-    <!-- AJOUTS -->
     <button id="btnGPX">GPX</button>
     <button id="btnHTML">HTML</button>
   </div>
 </div>
-
-<!-- ================= BOÎTE "ALLER À" ================= -->
-<!--
-⚠️ À COPIER STRICTEMENT depuis varloc
-⚠️ Aucun changement ici
--->
-<!-- [code existant de varloc] -->
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="app.js"></script>
