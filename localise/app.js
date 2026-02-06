@@ -1,73 +1,63 @@
-// ================= CARTE =================
-let map = L.map('map').setView([43.5, 6.3], 8);
+// ================= CARTE : IGN PLAN V2 (WMTS PUBLIC) =================
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap'
-}).addTo(map);
+const map = L.map('map').setView([43.5, 6.3], 8);
 
+L.tileLayer(
+  "https://data.geopf.fr/wmts?" +
+  "SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0" +
+  "&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2" +
+  "&STYLE=normal" +
+  "&TILEMATRIXSET=PM" +
+  "&FORMAT=image/png" +
+  "&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}",
+  {
+    attribution: "© IGN – Géoplateforme",
+    maxZoom: 18
+  }
+).addTo(map);
+
+// ================= ÉTAT =================
+
+let marker = null;
 let lastLat = null;
 let lastLon = null;
-let marker = null;
 
 // ================= CLIC CARTE =================
+
 map.on('click', e => {
-  lastLat = e.latlng.lat;
-  lastLon = e.latlng.lng;
-
-  if (marker) map.removeLayer(marker);
-  marker = L.marker(e.latlng).addTo(map);
-
-  document.getElementById('coords').textContent =
-    lastLat.toFixed(6) + " , " + lastLon.toFixed(6);
-
-  document.getElementById('coordBox').classList.remove('hidden');
+  setPoint(e.latlng.lat, e.latlng.lng);
 });
 
-// ================= FORMAT SEXAGÉSIMAL DMS =================
-function toDMS(value, isLat) {
-  const abs = Math.abs(value);
-  const deg = Math.floor(abs);
-  const minFloat = (abs - deg) * 60;
-  const min = Math.floor(minFloat);
-  const sec = (minFloat - min) * 60;
+// ================= UTILITAIRES =================
 
-  const dir = isLat
-    ? (value >= 0 ? "N" : "S")
-    : (value >= 0 ? "E" : "W");
+function setPoint(lat, lon) {
+  lastLat = lat;
+  lastLon = lon;
 
-  return `${deg}°${min}′${sec.toFixed(2)}″${dir}`;
+  if (marker) map.removeLayer(marker);
+  marker = L.marker([lat, lon]).addTo(map);
+
+  document.getElementById('coords').textContent =
+    lat.toFixed(6) + " , " + lon.toFixed(6);
+
+  latInput.value = lat.toFixed(6);
+  lonInput.value = lon.toFixed(6);
+
+  map.setView([lat, lon], 15);
 }
 
-// ================= BOUTONS EXISTANTS =================
-document.getElementById('btnDec').onclick = () => {
-  navigator.clipboard.writeText(
-    lastLat.toFixed(6) + "," + lastLon.toFixed(6)
-  );
-};
+function toDMS(v, isLat) {
+  const a = Math.abs(v);
+  const d = Math.floor(a);
+  const m = Math.floor((a - d) * 60);
+  const s = ((a - d) * 60 - m) * 60;
+  const dir = isLat ? (v >= 0 ? "N" : "S") : (v >= 0 ? "E" : "W");
+  return `${d}°${m}′${s.toFixed(2)}″${dir}`;
+}
 
-document.getElementById('btnSexa').onclick = () => {
-  const txt =
-    toDMS(lastLat, true) + " " +
-    toDMS(lastLon, false);
-  navigator.clipboard.writeText(txt);
-};
-
-document.getElementById('btnLocate').onclick = () => {
-  navigator.geolocation.getCurrentPosition(pos => {
-    map.setView(
-      [pos.coords.latitude, pos.coords.longitude],
-      15
-    );
-  });
-};
-
-// ================= UTILITAIRES =================
 function today() {
   const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const da = String(d.getDate()).padStart(2, '0');
-  return `${y}_${m}_${da}`;
+  return `${d.getFullYear()}_${String(d.getMonth()+1).padStart(2,'0')}_${String(d.getDate()).padStart(2,'0')}`;
 }
 
 function saveFile(name, content, type) {
@@ -76,54 +66,63 @@ function saveFile(name, content, type) {
   a.href = URL.createObjectURL(blob);
   a.download = name;
   a.click();
-  URL.revokeObjectURL(a.href);
 }
 
-// ================= EXPORT GPX =================
-document.getElementById('btnGPX').onclick = () => {
-  const gpx = `<?xml version="1.0" encoding="UTF-8"?>
+// ================= FIXER COORDONNÉES =================
+
+btnGo.onclick = () => {
+  const lat = parseFloat(latInput.value);
+  const lon = parseFloat(lonInput.value);
+  if (!isNaN(lat) && !isNaN(lon)) setPoint(lat, lon);
+};
+
+// ================= NAVIGATION =================
+
+btnGMaps.onclick = () => {
+  window.open(
+    `https://www.google.com/maps/dir/?api=1&destination=${lastLat},${lastLon}`,
+    "_blank"
+  );
+};
+
+btnWaze.onclick = () => {
+  window.open(
+    `https://waze.com/ul?ll=${lastLat},${lastLon}&navigate=yes`,
+    "_blank"
+  );
+};
+
+// ================= BOUTONS EXISTANTS =================
+
+btnDec.onclick = () =>
+  navigator.clipboard.writeText(`${lastLat},${lastLon}`);
+
+btnSexa.onclick = () =>
+  navigator.clipboard.writeText(
+    `${toDMS(lastLat,true)} ${toDMS(lastLon,false)}`
+  );
+
+btnLocate.onclick = () =>
+  navigator.geolocation.getCurrentPosition(p =>
+    setPoint(p.coords.latitude, p.coords.longitude)
+  );
+
+// ================= EXPORTS =================
+
+btnGPX.onclick = () => saveFile(
+  `${today()}_${lastLat.toFixed(5)}_${lastLon.toFixed(5)}.gpx`,
+  `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="localise"
  xmlns="http://www.topografix.com/GPX/1/1">
 <wpt lat="${lastLat}" lon="${lastLon}">
   <name>Point localisé</name>
 </wpt>
-</gpx>`;
+</gpx>`,
+  "application/gpx+xml"
+);
 
-  saveFile(
-    `${today()}_${lastLat.toFixed(5)}_${lastLon.toFixed(5)}.gpx`,
-    gpx,
-    "application/gpx+xml"
-  );
-};
-
-// ================= EXPORT HTML =================
-document.getElementById('btnHTML').onclick = () => {
-  const html = `<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<title>localise</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
-<style>#map{height:100vh}</style>
-</head>
-<body>
-<div id="map"></div>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script>
-const lat=${lastLat};
-const lon=${lastLon};
-const map=L.map('map').setView([lat,lon],15);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-  attribution:'© OpenStreetMap'
-}).addTo(map);
-L.marker([lat,lon]).addTo(map);
-</script>
-</body>
-</html>`;
-
-  saveFile(
-    `${today()}_${lastLat.toFixed(5)}_${lastLon.toFixed(5)}.html`,
-    html,
-    "text/html"
-  );
-};
+btnHTML.onclick = () => saveFile(
+  `${today()}_${lastLat.toFixed(5)}_${lastLon.toFixed(5)}.html`,
+  document.documentElement.outerHTML,
+  "text/html"
+);
