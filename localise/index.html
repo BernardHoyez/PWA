@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>localise</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="manifest.json">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div id="map"></div>
+
+<!-- ================= BOÎTE COORDONNÉES ================= -->
+<div id="coordBox" class="hidden">
+  <div class="title">Cliquer sur la carte pour définir une position</div>
+
+  <div id="coords"></div>
+
+  <div class="buttons">
+    <!-- EXISTANT (inchangé) -->
+    <button id="btnDec">Dec</button>
+    <button id="btnSexa">Sexa</button>
+    <button id="btnLocate">🧭</button>
+
+    <!-- AJOUTS -->
+    <button id="btnGPX">GPX</button>
+    <button id="btnHTML">HTML</button>
+  </div>
+</div>
+
+<!-- ================= BOÎTE "ALLER À" ================= -->
+<!--
+⚠️ À COPIER STRICTEMENT depuis varloc
+⚠️ Aucun changement ici
+-->
+<!-- [code existant de varloc] -->
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
