@@ -1,8 +1,6 @@
-// ================= CARTE : IGN PLAN V2 (WMTS PUBLIC) =================
+// ================= FONDS DE CARTE =================
 
-const map = L.map('map').setView([43.5, 6.3], 8);
-
-L.tileLayer(
+const ign = L.tileLayer(
   "https://data.geopf.fr/wmts?" +
   "SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0" +
   "&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2" +
@@ -10,10 +8,26 @@ L.tileLayer(
   "&TILEMATRIXSET=PM" +
   "&FORMAT=image/png" +
   "&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}",
-  {
-    attribution: "© IGN – Géoplateforme",
-    maxZoom: 18
-  }
+  { attribution: "© IGN – Géoplateforme", maxZoom: 18 }
+);
+
+const osm = L.tileLayer(
+  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  { attribution: "© OpenStreetMap", maxZoom: 19 }
+);
+
+// ================= CARTE =================
+
+const map = L.map('map', {
+  center: [43.5, 6.3],
+  zoom: 8,
+  layers: [ign]
+});
+
+L.control.layers(
+  { "IGN Plan V2": ign, "OSM": osm },
+  null,
+  { position: "topright" }
 ).addTo(map);
 
 // ================= ÉTAT =================
@@ -21,12 +35,6 @@ L.tileLayer(
 let marker = null;
 let lastLat = null;
 let lastLon = null;
-
-// ================= CLIC CARTE =================
-
-map.on('click', e => {
-  setPoint(e.latlng.lat, e.latlng.lng);
-});
 
 // ================= UTILITAIRES =================
 
@@ -37,9 +45,7 @@ function setPoint(lat, lon) {
   if (marker) map.removeLayer(marker);
   marker = L.marker([lat, lon]).addTo(map);
 
-  document.getElementById('coords').textContent =
-    lat.toFixed(6) + " , " + lon.toFixed(6);
-
+  coords.textContent = lat.toFixed(6) + " , " + lon.toFixed(6);
   latInput.value = lat.toFixed(6);
   lonInput.value = lon.toFixed(6);
 
@@ -68,7 +74,9 @@ function saveFile(name, content, type) {
   a.click();
 }
 
-// ================= FIXER COORDONNÉES =================
+// ================= INTERACTIONS =================
+
+map.on('click', e => setPoint(e.latlng.lat, e.latlng.lng));
 
 btnGo.onclick = () => {
   const lat = parseFloat(latInput.value);
@@ -76,23 +84,10 @@ btnGo.onclick = () => {
   if (!isNaN(lat) && !isNaN(lon)) setPoint(lat, lon);
 };
 
-// ================= NAVIGATION =================
-
-btnGMaps.onclick = () => {
-  window.open(
-    `https://www.google.com/maps/dir/?api=1&destination=${lastLat},${lastLon}`,
-    "_blank"
+btnLocate.onclick = () =>
+  navigator.geolocation.getCurrentPosition(p =>
+    setPoint(p.coords.latitude, p.coords.longitude)
   );
-};
-
-btnWaze.onclick = () => {
-  window.open(
-    `https://waze.com/ul?ll=${lastLat},${lastLon}&navigate=yes`,
-    "_blank"
-  );
-};
-
-// ================= BOUTONS EXISTANTS =================
 
 btnDec.onclick = () =>
   navigator.clipboard.writeText(`${lastLat},${lastLon}`);
@@ -102,27 +97,105 @@ btnSexa.onclick = () =>
     `${toDMS(lastLat,true)} ${toDMS(lastLon,false)}`
   );
 
-btnLocate.onclick = () =>
-  navigator.geolocation.getCurrentPosition(p =>
-    setPoint(p.coords.latitude, p.coords.longitude)
+btnGMaps.onclick = () =>
+  window.open(
+    `https://www.google.com/maps/dir/?api=1&destination=${lastLat},${lastLon}`,
+    "_blank"
   );
 
-// ================= EXPORTS =================
+btnWaze.onclick = () =>
+  window.open(
+    `https://waze.com/ul?ll=${lastLat},${lastLon}&navigate=yes`,
+    "_blank"
+  );
 
-btnGPX.onclick = () => saveFile(
-  `${today()}_${lastLat.toFixed(5)}_${lastLon.toFixed(5)}.gpx`,
-  `<?xml version="1.0" encoding="UTF-8"?>
+// ================= EXPORT GPX =================
+
+btnGPX.onclick = () => {
+  const gpx = `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="localise"
  xmlns="http://www.topografix.com/GPX/1/1">
 <wpt lat="${lastLat}" lon="${lastLon}">
   <name>Point localisé</name>
 </wpt>
-</gpx>`,
-  "application/gpx+xml"
+</gpx>`;
+
+  saveFile(
+    `${today()}_${lastLat.toFixed(5)}_${lastLon.toFixed(5)}.gpx`,
+    gpx,
+    "application/gpx+xml"
+  );
+};
+
+// ================= EXPORT HTML (GPX EMBARQUÉ) =================
+
+btnHTML.onclick = () => {
+
+  const gpx = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="localise"
+ xmlns="http://www.topografix.com/GPX/1/1">
+<wpt lat="${lastLat}" lon="${lastLon}">
+  <name>Point localisé</name>
+</wpt>
+</gpx>`;
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Localisation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<style>html,body,#map{height:100%;margin:0}</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<script type="application/gpx+xml" id="gpxData">
+${gpx}
+</script>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+const xml = new DOMParser()
+  .parseFromString(
+    document.getElementById("gpxData").textContent,
+    "application/xml"
+  );
+
+const wpt = xml.querySelector("wpt");
+const lat = parseFloat(wpt.getAttribute("lat"));
+const lon = parseFloat(wpt.getAttribute("lon"));
+
+const ign = L.tileLayer(
+  "https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0" +
+  "&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&TILEMATRIXSET=PM" +
+  "&FORMAT=image/png&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}",
+  { attribution:"© IGN – Géoplateforme", maxZoom:18 }
 );
 
-btnHTML.onclick = () => saveFile(
-  `${today()}_${lastLat.toFixed(5)}_${lastLon.toFixed(5)}.html`,
-  document.documentElement.outerHTML,
-  "text/html"
+const osm = L.tileLayer(
+  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  { attribution:"© OpenStreetMap", maxZoom:19 }
 );
+
+const map = L.map("map",{center:[lat,lon],zoom:15,layers:[ign]});
+
+L.control.layers(
+  {"IGN Plan V2":ign,"OSM":osm},
+  null
+).addTo(map);
+
+L.marker([lat,lon]).addTo(map).openPopup();
+</script>
+
+</body>
+</html>`;
+
+  saveFile(
+    `${today()}_${lastLat.toFixed(5)}_${lastLon.toFixed(5)}.html`,
+    html,
+    "text/html"
+  );
+};
