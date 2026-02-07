@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KMZ Converter</title>
+
+  <link rel="manifest" href="manifest.json">
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; }
+    input, button { margin: 1rem 0; }
+  </style>
+</head>
+<body>
+  <h1>Conversion KMZ (images hébergées)</h1>
+
+  <p>Cette application remplace les images locales d’un KMZ par des liens GitHub Pages.</p>
+
+  <label>Choisir un fichier KMZ :</label><br>
+  <input type="file" id="kmzInput" accept=".kmz" />
+
+  <br>
+  <label>Dossier GitHub Pages :</label><br>
+  <input type="text" id="baseUrl"
+         value="https://bernardhoyez.github.io/APP/kmz-photos/files/"
+         size="80" />
+
+  <br>
+  <button onclick="convertKmz()">Convertir</button>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js');
+    }
+
+    async function convertKmz() {
+      const fileInput = document.getElementById('kmzInput');
+      const baseUrl = document.getElementById('baseUrl').value;
+
+      if (!fileInput.files.length) {
+        alert('Choisis un KMZ');
+        return;
+      }
+
+      const kmzFile = fileInput.files[0];
+      const arrayBuffer = await kmzFile.arrayBuffer();
+
+      const zip = await JSZip.loadAsync(arrayBuffer);
+      const kmlFile = zip.file(/\.kml$/i)[0];
+
+      if (!kmlFile) {
+        alert('Aucun fichier KML trouvé');
+        return;
+      }
+
+      let kmlText = await kmlFile.async('text');
+
+      kmlText = kmlText.replace(/files\/([^"'>]+)/g,
+        (_, f) => baseUrl + f
+      );
+
+      zip.file(kmlFile.name, kmlText);
+
+      Object.keys(zip.files).forEach(name => {
+        if (name.startsWith('files/')) zip.remove(name);
+      });
+
+      const newKmz = await zip.generateAsync({ type: 'blob' });
+
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(newKmz);
+      a.download = kmzFile.name.replace('.kmz', '_remote.kmz');
+      a.click();
+    }
+  </script>
+</body>
+</html>
