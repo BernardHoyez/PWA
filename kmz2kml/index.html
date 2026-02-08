@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>kmz2kml</title>
+
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2e7d32">
+
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 720px;
+      margin: auto;
+      padding: 1rem;
+    }
+    h1 { font-size: 1.4rem; }
+    button {
+      padding: 0.6rem 1rem;
+      margin-top: 1rem;
+    }
+    input {
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+    #log {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+      background: #f5f5f5;
+      padding: 0.5rem;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>kmz2kml</h1>
+
+  <p>Importer un fichier KMZ de randonnée (Orux Maps).</p>
+
+  <input type="file" id="kmzInput" accept=".kmz">
+
+  <button id="processBtn" disabled>
+    Télécharger le KMZ modifié
+  </button>
+
+  <div id="log"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
