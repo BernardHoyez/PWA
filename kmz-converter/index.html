@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Convertisseur KMZ - Extraire et optimiser les photos de vos traces de randonnée">
+    <title>KMZ Converter - Extracteur de photos</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA2hpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDcuMi1jMDAwIDc5LjFiNjVhNzliNCwgMjAyMi8wNi8xMy0yMjowMTowMSAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIDIzLjUgKE1hY2ludG9zaCkiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6OEY3RjExNzQ0N0Y0MTFFREIzQjlGRjBDMEVERjY2NkIiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6OEY3RjExNzU0N0Y0MTFFREIzQjlGRjBDMEVERjY2NkIiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo4RjdGMTE3MjQ3RjQxMUVEQjNCOUZGMEMwRURGNjY2QiIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo4RjdGMTE3MzQ3RjQxMUVEQjNCOUZGMEMwRURGNjY2QiIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PkKN8UcAAAKbSURBVHja7JdNaBNBGIafTZqmadI0aZr+pDVt0x+11VqtWi2KQj0IHjx48OJBEDx58OjRgwdBvHjw4EHwIIIXQfDgQRBBEEFQxINYq7VqrVpb26Rpm6RJm2Y3yY4zZLJsNpvdJHgQhQ+GzGZ25n2/73u/mR2Lx+PBBvwsGzYA/AeAZSNA6HcgHA5jsVjWLDKZDDabDavV+nvA8+fP0dDQAKfTueoCysvL0dPTg7q6utwBent7sWfPHthstvwAtra2oqOjIzcAMzMz2Lp1a14ABQUF6OjowJ49e/TzXgMYHR1FMBhESUlJfgADAwOoq6uDxWLJz6WpqQkPHz6E3++H2+1eOwCHw4GioqL8ABoaGtDZ2Ym5uTmUlpbmB9Df349169bB5XLx/KJlMpnw4MEDLC4uIhAI5AcwOTmJ6upqLCwsoLKyMj8Aq9WK+fl5FBYW5g8gNRwOY3x8HMXFxat3F0RIADk5bFw0ABKC/PQtqwYA/VsGQIZuRYiU2mwqvL6RNlsZLiUuyi9auQBWcpG8rRpAuiLJAEaAUqlMNHNSjOiH2VFytVLAcpfMbIAVBUxlANckgEcSwJwE8F0CeDIwMA4ZoJ4BPCAA7gkAniSAUfLAMANYJAB9cwFArwAQUwDGU5dgRAHQ1P1NL/gdBUCTByF/s6qKjsfjI6kAp/IESEzwJJKW00l9lOvL1Y1OO+ji+hJtVvL55kMXV/sVXF5w+S3m4lNcfp7LW1zey+WNKvOBzV8KQL/q/DPu/nk9AP1qAP26B5jcA/yYFMwuFyCa+8W10G8lL+QlmV+SXyi7fmEtACzL/gMAlvMBTgpJY9wAAAAASUVORK5CYII=">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🗺️ KMZ Converter</h1>
+            <p class="subtitle">Extraire et optimiser les photos de vos traces de randonnée</p>
+        </header>
+
+        <main>
+            <div id="upload-zone" class="upload-zone">
+                <input type="file" id="file-input" accept=".kmz" hidden>
+                <div class="upload-content">
+                    <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <h2>Glissez votre fichier KMZ ici</h2>
+                    <p>ou cliquez pour sélectionner</p>
+                    <button type="button" id="select-btn" class="btn btn-primary">Sélectionner un fichier</button>
+                </div>
+            </div>
+
+            <div id="processing" class="processing" style="display: none;">
+                <div class="spinner"></div>
+                <p id="status-text">Extraction en cours...</p>
+                <div class="progress-bar">
+                    <div id="progress" class="progress-fill"></div>
+                </div>
+                <p id="progress-text" class="progress-text">0%</p>
+            </div>
+
+            <div id="results" class="results" style="display: none;">
+                <div class="results-header">
+                    <h2>✅ Extraction terminée</h2>
+                    <p id="results-summary"></p>
+                </div>
+
+                <div class="image-grid" id="image-preview"></div>
+
+                <div class="github-config">
+                    <h3>🔗 Configuration GitHub</h3>
+                    <p>Pour générer un KML avec liens vers GitHub, indiquez l'URL de base :</p>
+                    <div class="input-group">
+                        <input 
+                            type="text" 
+                            id="github-url" 
+                            class="github-input"
+                            placeholder="https://bernardhoyez.github.io/PWA/kmz-photos/"
+                            value="https://bernardhoyez.github.io/PWA/kmz-photos/"
+                        >
+                        <span class="url-suffix" id="url-suffix"></span>
+                    </div>
+                    <p class="help-text">Les photos seront accessibles via : <code id="full-url"></code></p>
+                </div>
+
+                <div class="kml-options">
+                    <h3>⚙️ Options KML</h3>
+                    <div class="option-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="edit-waypoints" checked>
+                            <span>Renommer les waypoints avec noms personnalisés</span>
+                        </label>
+                        <p class="option-help">Donnez un nom explicite à chaque photo au lieu du numéro automatique</p>
+                    </div>
+                    <div class="option-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="add-image-links" checked>
+                            <span>Ajouter lien "Agrandir l'image" dans les pop-ups</span>
+                        </label>
+                        <p class="option-help">Permet d'ouvrir l'image en taille réelle dans une nouvelle fenêtre</p>
+                    </div>
+                </div>
+
+                <div id="waypoint-editor" class="waypoint-editor" style="display: none;">
+                    <h3>✏️ Nommer les waypoints</h3>
+                    <p class="editor-help">Cliquez sur une photo pour lui donner un nom personnalisé</p>
+                    <div id="waypoint-list" class="waypoint-list"></div>
+                    <button id="save-names-btn" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Valider les noms
+                    </button>
+                </div>
+
+                <div class="actions">
+                    <button id="download-btn" class="btn btn-success">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Télécharger le dossier optimisé (ZIP)
+                    </button>
+                    <button id="download-kml-raw-btn" class="btn btn-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        KML brut (liens GitHub)
+                    </button>
+                    <button id="download-kml-btn" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        KML modifié (avec noms)
+                    </button>
+                    <button id="reset-btn" class="btn btn-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Nouveau fichier
+                    </button>
+                </div>
+
+                <div class="info-box">
+                    <h3>📋 Instructions GitHub</h3>
+                    <ol>
+                        <li>Téléchargez et extrayez le ZIP</li>
+                        <li>Copiez le dossier dans votre repository <code>bernardhoyez.github.io/PWA/kmz-photos/</code></li>
+                        <li>Commitez et pushez vers GitHub</li>
+                        <li>Accédez à vos photos via : <code>https://bernardhoyez.github.io/PWA/kmz-photos/[nom-du-dossier]/</code></li>
+                    </ol>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>💡 Les images sont automatiquement redimensionnées à 1920px max pour optimiser l'espace GitHub</p>
+            <p>🗺️ Le KML généré pointe vers vos photos GitHub - Uploadez d'abord les photos, puis utilisez le KML</p>
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</body>
+</html>
