@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KMZ Convertisseur</title>
+    <link rel="manifest" href="/PWA/kmzconvertisseur/manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="apple-touch-icon" href="/PWA/kmzconvertisseur/icon192.png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 16px; }
+        h1 { text-align: center; }
+        .thumbnail { width: 120px; height: 120px; object-fit: cover; border-radius: 6px; margin: 8px 0; }
+        .waypoint { border: 1px solid #ddd; padding: 12px; margin: 12px 0; border-radius: 8px; background: #f9f9f9; }
+        label { display: block; margin: 8px 0 4px; font-weight: bold; }
+        input[type="text"] { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { padding: 12px 24px; font-size: 1.1em; margin: 16px 0; }
+        #loading { display: none; text-align: center; font-style: italic; color: #666; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+    <h1>KMZ Convertisseur<br><small>Optimisation traces + photos (OruxMaps)</small></h1>
+
+    <input type="file" id="kmzInput" accept=".kmz">
+    <button onclick="processKMZ()">Charger et traiter le KMZ</button>
+
+    <div id="loading">Traitement en cours… (peut prendre quelques secondes)</div>
+
+    <div id="communeDiv" style="display:none; margin: 20px 0;">
+        <label>Commune principale :
+            <input id="commune" type="text" style="width: 240px;">
+        </label>
+    </div>
+
+    <div id="waypoints"></div>
+
+    <button onclick="generateNewKMZ()" style="display:none;" id="generateBtn">Générer le KMZ modifié</button>
+
+    <script>
+        let originalZip;
+        let kmlDoc;
+        let waypoints = [];
+        let images = {};
+        let communeInput = document.getElementById('commune');
+
+        async function processKMZ() {
+            const file = document.getElementById('kmzInput').files[0];
+            if (!file) return alert('Veuillez sélectionner un fichier KMZ');
+
+            document.getElementById('loading').style.display = 'block';
+
+            try {
+                const zip = await JSZip.loadAsync(file);
+                originalZip = zip;
+
+                const kmlFile = zip.file('doc.kml');
+                if (!kmlFile) throw new Error('Fichier doc.kml non trouvé dans le KMZ');
+
+                const kmlText = await kmlFile.async('text');
+                kmlDoc = new DOMParser().parseFromString(kmlText, 'text/xml');
+
+                waypoints = [];
+                images = {};
+
+                const placemarks = kmlDoc.getElementsByTagName('Placemark');
+                for (let pm of placemarks) {
+                    const nameEl = pm.getElementsByTagName('name')[0];
+                    const descEl = pm.getElementsByTagName('description')[0];
+                    const coordEl = pm.getElementsByTagName('coordinates')[0];
+
+                    if (!coordEl) continue;
+
+                    const coords = coordEl.textContent.trim().split(',')[0].split(' ').map(Number);
+                    if (coords.length < 2) continue;
+
+                    const name = nameEl ? nameEl.textContent.trim() : '';
+                    let desc = descEl ? descEl.textContent || descEl.innerHTML : '';
+
+                    const imgMatch = desc.match(/<img[^>]+src=["']?([^"'\s>]+)["']?/i);
+                    const imgSrc = imgMatch ? imgMatch[1].trim() : null;
+
+                    if (imgSrc && zip.file(imgSrc)) {
+                        const imgBlob = await zip.file(imgSrc).async('blob');
+                        images[imgSrc] = imgBlob;
+
+                        waypoints.push({
+                            placemark: pm,
+                            originalName: name,
+                            name: name.slice(0, 20),
+                            comment: '',
+                            imgSrc,
+                            coords: { lon: coords[0], lat: coords[1] }
+                        });
+                    }
+                }
+
+                if (waypoints.length === 0) {
+                    throw new Error('Aucun waypoint avec photo n’a été détecté');
+                }
+
+                // Détection commune (premier waypoint)
+                const first = waypoints[0].coords;
+                try {
+                    const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${first.lat}&lon=${first.lon}&zoom=14&addressdetails=1`);
+                    const data = await resp.json();
+                    const addr = data.address || {};
+                    const detected = addr.village || addr.town || addr.city || addr.municipality || addr.hamlet || 'Non détectée';
+                    communeInput.value = detected;
+                } catch (e) {
+                    communeInput.value = 'Non détectée';
+                }
+
+                // Affichage des waypoints
+                const wpDiv = document.getElementById('waypoints');
+                wpDiv.innerHTML = `<h3>${waypoints.length} waypoint(s) avec photo trouvé(s)</h3>`;
+
+                waypoints.forEach((wp, i) => {
+                    const div = document.createElement('div');
+                    div.className = 'waypoint';
+                    div.innerHTML = `
+                        <img src="${URL.createObjectURL(images[wp.imgSrc])}" class="thumbnail" alt="photo">
+                        <label>Nom du waypoint (max 20) :
+                            <input type="text" value="${wp.name}" maxlength="20" data-index="${i}" class="wp-name">
+                        </label>
+                        <label>Commentaire (max 60) :
+                            <input type="text" value="${wp.comment}" maxlength="60" data-index="${i}" class="wp-comment">
+                        </label>
+                    `;
+                    wpDiv.appendChild(div);
+                });
+
+                // Écouteurs pour mise à jour live
+                document.querySelectorAll('.wp-name, .wp-comment').forEach(input => {
+                    input.addEventListener('input', e => {
+                        const idx = parseInt(e.target.dataset.index);
+                        const field = e.target.classList.contains('wp-name') ? 'name' : 'comment';
+                        waypoints[idx][field] = e.target.value;
+                    });
+                });
+
+                document.getElementById('communeDiv').style.display = 'block';
+                document.getElementById('generateBtn').style.display = 'inline-block';
+
+                // Optimisation images en arrière-plan
+                for (let wp of waypoints) {
+                    images[wp.imgSrc] = await optimizeImage(images[wp.imgSrc]);
+                }
+
+            } catch (err) {
+                alert('Erreur : ' + err.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        async function optimizeImage(originalBlob) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let w = img.width;
+                    let h = img.height;
+                    const max = 1920;
+
+                    if (w > max || h > max) {
+                        if (w > h) { h = Math.round(h * max / w); w = max; }
+                        else       { w = Math.round(w * max / h); h = max; }
+                    }
+
+                    canvas.width = w;
+                    canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+
+                    canvas.toBlob(blob => resolve(blob || originalBlob), 'image/jpeg', 0.82);
+                };
+                img.src = URL.createObjectURL(originalBlob);
+            });
+        }
+
+        async function generateNewKMZ() {
+            if (!originalZip || !kmlDoc) return alert('Aucun KMZ chargé');
+
+            const newZip = new JSZip();
+
+            // Mise à jour des noms et descriptions
+            waypoints.forEach(wp => {
+                const pm = wp.placemark;
+                if (pm.getElementsByTagName('name')[0]) {
+                    pm.getElementsByTagName('name')[0].textContent = wp.name;
+                }
+
+                let descEl = pm.getElementsByTagName('description')[0];
+                if (!descEl) {
+                    descEl = document.createElement('description');
+                    pm.appendChild(descEl);
+                }
+
+                let currentDesc = descEl.innerHTML || '';
+                if (wp.comment.trim()) {
+                    currentDesc += (currentDesc ? '<br>' : '') + wp.comment.trim();
+                }
+                descEl.innerHTML = currentDesc;
+            });
+
+            const newKml = new XMLSerializer().serializeToString(kmlDoc);
+            newZip.file('doc.kml', newKml);
+
+            // Images optimisées
+            for (const [path, blob] of Object.entries(images)) {
+                newZip.file(path, blob);
+            }
+
+            // Autres fichiers du KMZ original
+            for (const filename in originalZip.files) {
+                if (filename !== 'doc.kml' && !images[filename]) {
+                    newZip.file(filename, await originalZip.file(filename).async('blob'));
+                }
+            }
+
+            const blob = await newZip.generateAsync({type: 'blob'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'trace_modifiee.kmz';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/PWA/kmzconvertisseur/sw.js', { scope: '/PWA/kmzconvertisseur/' })
+                    .then(reg => console.log('Service Worker enregistré'))
+                    .catch(err => console.warn('Échec enregistrement SW', err));
+            });
+        }
+    </script>
+</body>
+</html>
+
+
+
