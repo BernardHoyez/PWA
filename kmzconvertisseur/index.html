@@ -9,14 +9,60 @@
     <link rel="apple-touch-icon" href="/PWA/kmzconvertisseur/icon192.png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 16px; }
-        h1 { text-align: center; }
-        .thumbnail { width: 120px; height: 120px; object-fit: cover; border-radius: 6px; margin: 8px 0; }
-        .waypoint { border: 1px solid #ddd; padding: 12px; margin: 12px 0; border-radius: 8px; background: #f9f9f9; }
-        label { display: block; margin: 8px 0 4px; font-weight: bold; }
-        input[type="text"] { width: 100%; padding: 8px; box-sizing: border-box; }
-        button { padding: 12px 24px; font-size: 1.1em; margin: 16px 0; }
-        #loading { display: none; text-align: center; font-style: italic; color: #666; margin: 20px 0; }
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 16px;
+            line-height: 1.5;
+        }
+        h1, h2, h3 { text-align: center; }
+        .thumbnail {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+        }
+        .waypoint {
+            border: 1px solid #ccc;
+            padding: 12px;
+            margin: 12px 0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        label {
+            display: block;
+            margin: 8px 0 4px;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #aaa;
+            border-radius: 4px;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 1.1em;
+            margin: 16px 0;
+            background: #4a7c59;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        button:hover { background: #3a6447; }
+        #loading {
+            display: none;
+            text-align: center;
+            font-style: italic;
+            color: #666;
+            margin: 20px 0;
+        }
+        small { color: #555; }
     </style>
 </head>
 <body>
@@ -26,7 +72,7 @@
     <input type="file" id="kmzInput" accept=".kmz">
     <button onclick="processKMZ()">Charger et traiter le KMZ</button>
 
-    <div id="loading">Traitement en cours… (peut prendre quelques secondes)</div>
+    <div id="loading">Traitement en cours… (peut prendre quelques secondes selon le nombre de photos)</div>
 
     <div id="communeDiv" style="display:none; margin: 20px 0;">
         <label>Commune principale :
@@ -61,43 +107,69 @@
                 const kmlText = await kmlFile.async('text');
                 kmlDoc = new DOMParser().parseFromString(kmlText, 'text/xml');
 
+                // ───────────────────────────────────────────────
+                // EXTRACTION CORRIGÉE pour OruxMaps (style #3 + table/img)
                 waypoints = [];
                 images = {};
 
                 const placemarks = kmlDoc.getElementsByTagName('Placemark');
+
                 for (let pm of placemarks) {
+                    const styleUrl = pm.getElementsByTagName('styleUrl')[0];
+                    if (!styleUrl || styleUrl.textContent.trim() !== '#3') continue;
+
                     const nameEl = pm.getElementsByTagName('name')[0];
                     const descEl = pm.getElementsByTagName('description')[0];
                     const coordEl = pm.getElementsByTagName('coordinates')[0];
 
-                    if (!coordEl) continue;
+                    if (!coordEl || !descEl) continue;
 
-                    const coords = coordEl.textContent.trim().split(',')[0].split(' ').map(Number);
-                    if (coords.length < 2) continue;
+                    const name = (nameEl ? nameEl.textContent.trim() : '').slice(0, 20);
 
-                    const name = nameEl ? nameEl.textContent.trim() : '';
-                    let desc = descEl ? descEl.textContent || descEl.innerHTML : '';
+                    const descHTML = (descEl.innerHTML || descEl.textContent || '').trim();
 
-                    const imgMatch = desc.match(/<img[^>]+src=["']?([^"'\s>]+)["']?/i);
-                    const imgSrc = imgMatch ? imgMatch[1].trim() : null;
+                    const imgMatch = descHTML.match(/<img[^>]*src\s*=\s*["']?([^"'\s>]+)["']?/i);
+                    if (!imgMatch) continue;
 
-                    if (imgSrc && zip.file(imgSrc)) {
-                        const imgBlob = await zip.file(imgSrc).async('blob');
-                        images[imgSrc] = imgBlob;
+                    let imgSrc = imgMatch[1].trim();
+                    imgSrc = imgSrc.replace(/^\.?\//, ''); // enlève ./ ou /
 
-                        waypoints.push({
-                            placemark: pm,
-                            originalName: name,
-                            name: name.slice(0, 20),
-                            comment: '',
-                            imgSrc,
-                            coords: { lon: coords[0], lat: coords[1] }
-                        });
+                    const imgFile = zip.file(imgSrc);
+                    if (!imgFile) {
+                        console.warn(`Image introuvable : ${imgSrc}`);
+                        continue;
                     }
+
+                    const imgBlob = await imgFile.async('blob');
+                    images[imgSrc] = imgBlob;
+
+                    const coordsText = coordEl.textContent.trim().split(/[\s,]+/).filter(Boolean);
+                    if (coordsText.length < 2) continue;
+
+                    const lon = parseFloat(coordsText[0]);
+                    const lat = parseFloat(coordsText[1]);
+
+                    if (isNaN(lon) || isNaN(lat)) continue;
+
+                    waypoints.push({
+                        placemark: pm,
+                        originalName: name,
+                        name: name,
+                        comment: '',
+                        imgSrc: imgSrc,
+                        coords: { lon, lat }
+                    });
                 }
 
                 if (waypoints.length === 0) {
-                    throw new Error('Aucun waypoint avec photo n’a été détecté');
+                    alert(
+                        "Aucun waypoint photo détecté.\n\n" +
+                        "Vérifications :\n" +
+                        "• Le KMZ contient-il le dossier 'files/' avec les OMIMG_*.jpg ?\n" +
+                        "• Les photos sont-elles associées à des waypoints avec l'icône appareil photo ?\n" +
+                        "Ouvre la console (F12) pour plus d'informations."
+                    );
+                    return;
                 }
 
                 // Détection commune (premier waypoint)
@@ -108,13 +180,13 @@
                     const addr = data.address || {};
                     const detected = addr.village || addr.town || addr.city || addr.municipality || addr.hamlet || 'Non détectée';
                     communeInput.value = detected;
-                } catch (e) {
+                } catch {
                     communeInput.value = 'Non détectée';
                 }
 
-                // Affichage des waypoints
+                // Affichage
                 const wpDiv = document.getElementById('waypoints');
-                wpDiv.innerHTML = `<h3>${waypoints.length} waypoint(s) avec photo trouvé(s)</h3>`;
+                wpDiv.innerHTML = `<h3>${waypoints.length} waypoint(s) photo trouvé(s)</h3>`;
 
                 waypoints.forEach((wp, i) => {
                     const div = document.createElement('div');
@@ -131,7 +203,6 @@
                     wpDiv.appendChild(div);
                 });
 
-                // Écouteurs pour mise à jour live
                 document.querySelectorAll('.wp-name, .wp-comment').forEach(input => {
                     input.addEventListener('input', e => {
                         const idx = parseInt(e.target.dataset.index);
@@ -143,25 +214,25 @@
                 document.getElementById('communeDiv').style.display = 'block';
                 document.getElementById('generateBtn').style.display = 'inline-block';
 
-                // Optimisation images en arrière-plan
+                // Optimisation des images en arrière-plan
                 for (let wp of waypoints) {
                     images[wp.imgSrc] = await optimizeImage(images[wp.imgSrc]);
                 }
 
             } catch (err) {
-                alert('Erreur : ' + err.message);
+                alert('Erreur lors du traitement : ' + err.message);
+                console.error(err);
             } finally {
                 document.getElementById('loading').style.display = 'none';
             }
         }
 
         async function optimizeImage(originalBlob) {
-            return new Promise((resolve) => {
+            return new Promise(resolve => {
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    let w = img.width;
-                    let h = img.height;
+                    let w = img.width, h = img.height;
                     const max = 1920;
 
                     if (w > max || h > max) {
@@ -184,24 +255,23 @@
 
             const newZip = new JSZip();
 
-            // Mise à jour des noms et descriptions
+            // Mise à jour noms + descriptions
             waypoints.forEach(wp => {
                 const pm = wp.placemark;
-                if (pm.getElementsByTagName('name')[0]) {
-                    pm.getElementsByTagName('name')[0].textContent = wp.name;
-                }
+                const nameEl = pm.getElementsByTagName('name')[0];
+                if (nameEl) nameEl.textContent = wp.name;
 
                 let descEl = pm.getElementsByTagName('description')[0];
                 if (!descEl) {
-                    descEl = document.createElement('description');
+                    descEl = kmlDoc.createElement('description');
                     pm.appendChild(descEl);
                 }
 
-                let currentDesc = descEl.innerHTML || '';
+                let current = descEl.innerHTML || '';
                 if (wp.comment.trim()) {
-                    currentDesc += (currentDesc ? '<br>' : '') + wp.comment.trim();
+                    current += (current ? '<br>' : '') + wp.comment.trim();
                 }
-                descEl.innerHTML = currentDesc;
+                descEl.innerHTML = current;
             });
 
             const newKml = new XMLSerializer().serializeToString(kmlDoc);
@@ -228,17 +298,14 @@
             URL.revokeObjectURL(url);
         }
 
-        // Service Worker
+        // Service Worker (scope adapté au sous-dossier GitHub Pages)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/PWA/kmzconvertisseur/sw.js', { scope: '/PWA/kmzconvertisseur/' })
-                    .then(reg => console.log('Service Worker enregistré'))
-                    .catch(err => console.warn('Échec enregistrement SW', err));
+                    .then(() => console.log('Service Worker enregistré'))
+                    .catch(err => console.warn('Échec SW', err));
             });
         }
     </script>
 </body>
 </html>
-
-
-
