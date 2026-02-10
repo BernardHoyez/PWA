@@ -191,7 +191,6 @@
                     wpDiv.appendChild(div);
                 });
 
-                // Event listeners
                 document.querySelectorAll('.wp-name, .wp-comment').forEach(input => {
                     input.addEventListener('input', e => {
                         const idx = parseInt(e.target.dataset.index);
@@ -204,7 +203,6 @@
                 document.getElementById('generateBtn').style.display = 'inline-block';
 
                 loading.textContent = 'Optimisation des photos...';
-                // Optimisation
                 for (let wp of waypoints) {
                     images[wp.imgSrc] = await optimizeImage(images[wp.imgSrc]);
                 }
@@ -248,15 +246,13 @@
 
             const newZip = new JSZip();
 
-            // CORRECTION : gestion CDATA pour XML
+            // Mise à jour noms + descriptions (avec CDATA)
             waypoints.forEach(wp => {
                 const pm = wp.placemark;
                 
-                // Nom
                 const nameEl = pm.getElementsByTagName('name')[0];
                 if (nameEl) nameEl.textContent = wp.name;
 
-                // Description avec CDATA
                 let descEl = pm.getElementsByTagName('description')[0];
                 if (!descEl) {
                     descEl = kmlDoc.createElement('description');
@@ -285,17 +281,30 @@
             newKmlText = newKmlText.replace(/>\s+</g, '><');
             newZip.file('doc.kml', newKmlText);
 
-            // Images + autres fichiers
+            // Images optimisées
             for (const [path, blob] of Object.entries(images)) {
                 newZip.file(path, blob);
             }
+
+            // Autres fichiers → CORRECTION : on saute les dossiers et les entrées invalides
             for (const filename in originalZip.files) {
-                if (filename !== 'doc.kml' && !images[filename]) {
-                    try {
-                        newZip.file(filename, await originalZip.file(filename).async('blob'));
-                    } catch (e) {
-                        console.warn('Skip', filename, e);
-                    }
+                const zipEntry = originalZip.files[filename];
+
+                if (
+                    filename === 'doc.kml' ||
+                    images[filename] ||
+                    zipEntry.dir === true ||
+                    !zipEntry.async
+                ) {
+                    continue;
+                }
+
+                try {
+                    const blob = await zipEntry.async('blob');
+                    newZip.file(filename, blob);
+                    // console.log(`Copié fichier additionnel : ${filename}`);
+                } catch (e) {
+                    console.warn(`Skip ${filename} : ${e.message}`);
                 }
             }
 
@@ -309,9 +318,11 @@
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                alert(`✅ KMZ généré !\n${waypoints.length} photos optimisées (1920px max, 82% JPEG)\nNoms et commentaires ajoutés`);
+
+                alert(`KMZ généré avec succès !\n${waypoints.length} photos optimisées`);
             } catch (err) {
-                alert('Erreur génération : ' + err.message);
+                console.error('Erreur finale génération ZIP :', err);
+                alert('Erreur lors de la génération finale : ' + err.message);
             } finally {
                 loading.style.display = 'none';
             }
