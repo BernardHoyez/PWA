@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KMZ Converter - Extracteur de photos de randonnée</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="description" content="Extraire et optimiser les photos de vos traces de randonnée KMZ">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏔️ KMZ Converter</h1>
+            <p class="subtitle">Optimisez vos traces de randonnée pour GitHub Pages</p>
+        </header>
+
+        <!-- ÉTAPE 1: Upload -->
+        <section id="upload-section" class="section">
+            <div class="upload-zone" id="upload-zone">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <h2>Glissez votre fichier KMZ ici</h2>
+                <p>ou</p>
+                <button class="btn btn-primary" id="select-btn">Parcourir les fichiers</button>
+                <input type="file" id="file-input" accept=".kmz" style="display: none;">
+            </div>
+        </section>
+
+        <!-- ÉTAPE 2: Processing -->
+        <section id="processing-section" class="section" style="display: none;">
+            <div class="card">
+                <h2>⚙️ Extraction en cours...</h2>
+                <p id="status-text">Lecture du fichier KMZ...</p>
+                <div class="progress-bar">
+                    <div class="progress" id="progress"></div>
+                </div>
+                <p id="progress-text">0%</p>
+            </div>
+        </section>
+
+        <!-- ÉTAPE 3: Édition des waypoints -->
+        <section id="edit-section" class="section" style="display: none;">
+            <div class="card">
+                <h2>✏️ Personnalisation des waypoints</h2>
+                <p class="help-text">Donnez un nom et un commentaire optionnel à chaque photo</p>
+                
+                <div class="stats">
+                    <span id="photos-count">0 photos</span> • 
+                    <span id="total-size">0 MB</span>
+                </div>
+
+                <div id="waypoints-list" class="waypoints-list"></div>
+
+                <div class="location-section">
+                    <h3>📍 Localisation</h3>
+                    <div class="input-group">
+                        <label for="commune-input">Commune détectée :</label>
+                        <input type="text" id="commune-input" placeholder="Détection en cours..." readonly>
+                        <button id="edit-commune-btn" class="btn btn-secondary btn-sm">✏️ Modifier</button>
+                    </div>
+                    <p class="help-text" id="detection-status">Détection automatique à partir du point de départ...</p>
+                </div>
+
+                <div class="github-section">
+                    <h3>🔗 Configuration GitHub</h3>
+                    <div class="input-group">
+                        <label for="github-base-input">URL de base GitHub :</label>
+                        <input 
+                            type="text" 
+                            id="github-base-input" 
+                            value="https://bernardhoyez.github.io/PWA/kmz-photos"
+                            placeholder="https://bernardhoyez.github.io/PWA/kmz-photos"
+                        >
+                    </div>
+                    <p class="help-text">
+                        Dossier final : <code id="final-folder-preview"></code>
+                    </p>
+                </div>
+
+                <div class="actions-section">
+                    <h3>💾 Téléchargements</h3>
+                    <p class="workflow-help">
+                        <strong>Étape 1 :</strong> Téléchargez le KMZ modifié<br>
+                        <strong>Étape 2 :</strong> Désarchivez-le et uploadez le dossier sur GitHub<br>
+                        <strong>Étape 3 :</strong> Téléchargez le KML final avec les liens GitHub
+                    </p>
+                    
+                    <div class="buttons-row">
+                        <button id="download-kmz-btn" class="btn btn-success">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            1. KMZ modifié (à uploader sur GitHub)
+                        </button>
+                        
+                        <button id="download-kml-btn" class="btn btn-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            2. KML final (avec liens GitHub)
+                        </button>
+                    </div>
+                </div>
+
+                <button id="reset-btn" class="btn btn-secondary btn-block">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Nouveau fichier
+                </button>
+                
+                <button id="debug-kml-btn" class="btn btn-secondary btn-block" style="margin-top:10px;background:#f59e0b;">
+                    🔍 DEBUG: Télécharger le KML modifié
+                </button>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>KMZ Converter v2.0 • <a href="https://github.com/bernardhoyez" target="_blank">Bernard Hoyez</a></p>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(registration => {
+                console.log('Service Worker enregistré');
+            }).catch(error => {
+                console.log('Erreur Service Worker:', error);
+            });
+        }
+    </script>
+</body>
+</html>
