@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KMZ to KML Converter</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4a7c59">
+    <link rel="apple-touch-icon" href="icon192.png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <h1>📍 KMZ to KML Converter</h1>
+        <p class="subtitle">Optimisation de traces OruxMaps avec photos géolocalisées</p>
+    </header>
+
+    <main>
+        <!-- Section 1: Upload -->
+        <section id="upload-section" class="section active">
+            <div class="card">
+                <h2>📤 1. Charger votre trace KMZ</h2>
+                <div class="upload-zone" id="upload-zone">
+                    <div class="upload-icon">📁</div>
+                    <p>Glissez-déposez votre fichier KMZ ici</p>
+                    <p class="upload-hint">ou cliquez pour sélectionner</p>
+                    <input type="file" id="file-input" accept=".kmz" hidden>
+                </div>
+                <button id="select-btn" class="btn btn-primary">Sélectionner un fichier</button>
+            </div>
+        </section>
+
+        <!-- Section 2: Processing -->
+        <section id="processing-section" class="section">
+            <div class="card">
+                <h2>⚙️ Traitement en cours...</h2>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div id="progress" class="progress-fill"></div>
+                    </div>
+                    <p id="status-text" class="status-text">Initialisation...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Edit -->
+        <section id="edit-section" class="section">
+            <div class="card">
+                <h2>✏️ 2. Personnalisation de la trace</h2>
+                
+                <!-- Commune detection -->
+                <div class="commune-section">
+                    <label for="commune-input">📍 Commune détectée :</label>
+                    <div class="input-with-button">
+                        <input type="text" id="commune-input" readonly>
+                        <button id="edit-commune-btn" class="btn btn-small">✏️ Modifier</button>
+                    </div>
+                    <p id="detection-status" class="status-small"></p>
+                </div>
+
+                <!-- Stats -->
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Photos détectées :</span>
+                        <span id="photos-count" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Taille totale :</span>
+                        <span id="total-size" class="stat-value">0 MB</span>
+                    </div>
+                </div>
+
+                <!-- Waypoints list -->
+                <h3>🏞️ Waypoints photo</h3>
+                <div id="waypoints-list" class="waypoints-list"></div>
+
+                <!-- GitHub configuration -->
+                <div class="github-section">
+                    <h3>🔗 Configuration GitHub Pages</h3>
+                    
+                    <div style="background: #fff3cd; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; border-left: 4px solid #f59e0b;">
+                        <strong>📋 Structure attendue sur GitHub :</strong>
+                        <pre style="margin: 0.5rem 0 0; font-size: 0.85rem; background: white; padding: 0.75rem; border-radius: 4px; overflow-x: auto;">votre-repo/
+└── kmz-photos/
+    └── Bras_2026-01-21/
+        ├── doc.kml
+        └── files/
+            ├── OMIMG_001.jpg
+            ├── OMIMG_002.jpg
+            └── ...</pre>
+                        <p style="margin: 0.5rem 0 0; font-size: 0.9rem;">
+                            ⚠️ <strong>Important :</strong> Décompressez le KMZ et uploadez le dossier complet (avec files/)
+                        </p>
+                    </div>
+                    
+                    <label for="github-base-input">URL de base GitHub Pages :</label>
+                    <input 
+                        type="text" 
+                        id="github-base-input" 
+                        value="https://bernardhoyez.github.io/PWA/kmz-photos"
+                        placeholder="https://votre-user.github.io/votre-repo/kmz-photos"
+                    >
+                    <p class="hint">📁 Dossier final : <code id="final-folder-preview"></code></p>
+                    <p class="hint">🌐 URL des images : <code>https://votre-site.github.io/.../[Dossier]/files/image.jpg</code></p>
+                </div>
+
+                <!-- Download buttons -->
+                <div class="download-section">
+                    <button id="download-kmz-btn" class="btn btn-success btn-large">
+                        📦 Télécharger KMZ modifié
+                        <small>Étape 1 : Pour upload sur GitHub</small>
+                    </button>
+                    
+                    <button id="download-kml-btn" class="btn btn-primary btn-large">
+                        📄 Télécharger KML final
+                        <small>Étape 2 : Avec liens GitHub</small>
+                    </button>
+                    
+                    <button id="reset-btn" class="btn btn-secondary">🔄 Nouveau fichier</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>KMZ to KML Converter v1.0 | Février 2026</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
