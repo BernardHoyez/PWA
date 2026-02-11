@@ -1,12 +1,13 @@
 {
-  "name": "KMZ Convertisseur – Optimisation randonnée",
-  "short_name": "KMZ Conv",
-  "description": "Optimise les KMZ OruxMaps : photos compressées, renommage waypoints, ajout commentaires",
+  "name": "KMZ Convertisseur → Web",
+  "short_name": "KMZ Web",
+  "description": "Optimisation de traces KMZ OruxMaps + préparation KML léger pour publication web",
   "start_url": "/PWA/kmzconvertisseur/",
   "scope": "/PWA/kmzconvertisseur/",
   "display": "standalone",
   "background_color": "#f8f9fa",
   "theme_color": "#4a7c59",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "/PWA/kmzconvertisseur/icon192.png",
