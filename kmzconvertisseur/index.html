@@ -26,7 +26,7 @@
 </head>
 <body>
 
-    <h1>KMZ Convertisseur → Web<br><small>Optimisation photos + KML léger pour GitHub Pages</small></h1>
+    <h1>KMZ Convertisseur → Web<br><small>Optimisation photos + KML léger pour GitHub</small></h1>
 
     <input type="file" id="kmzInput" accept=".kmz">
     <button onclick="processKMZ()">1. Charger et traiter le KMZ</button>
@@ -41,7 +41,7 @@
         <label><strong>Nom du dossier GitHub</strong> (ex: Bras2026-02-11) :<br>
             <input id="githubFolder" type="text" placeholder="BrasXXXXXX" style="width: 300px; font-weight:bold;">
         </label>
-        <p style="font-size:0.9em; color:#555;">Utilisé pour construire les liens directs vers les photos hébergées.</p>
+        <p style="font-size:0.9em; color:#555;">Sera utilisé pour les liens photos (raw.githubusercontent.com)</p>
     </div>
 
     <div id="waypoints"></div>
@@ -52,21 +52,19 @@
     </div>
 
     <div id="instructions">
-        <h3>Étapes suivantes après génération du KML :</h3>
+        <h3>Étapes après génération :</h3>
         <ol>
-            <li>Décompressez le <strong>KMZ modifié</strong> que vous avez téléchargé (si pas déjà fait)</li>
-            <li>Dans votre dépôt GitHub <strong>bernardhoyez/PWA</strong>, créez le dossier :<br><code>kmz-photos/<strong id="exampleFolder">BrasXXXXXX</strong></code></li>
-            <li>À l'intérieur, uploadez :
+            <li>Décompressez le KMZ modifié téléchargé</li>
+            <li>Dans le dépôt <strong>bernardhoyez/PWA</strong>, créez :<br><code>kmz-photos/<strong id="exampleFolder">BrasXXXXXX</strong></code></li>
+            <li>Upload dedans :
                 <ul>
-                    <li>le fichier <code>doc.kml</code> (ou renommez-le en <code>trace.kml</code>)</li>
-                    <li>le dossier <code>files/</code> entier (photos optimisées)</li>
+                    <li><code>doc.kml</code> (ou trace.kml)</li>
+                    <li>dossier <code>files/</code> complet</li>
                 </ul>
             </li>
-            <li>Utilisez le fichier <strong>KML</strong> généré pour Google Earth / My Maps</li>
+            <li>Utilisez le KML généré dans Google Earth / My Maps</li>
         </ol>
-        <p>Exemple d'URL photo une fois uploadé :<br>
-            <code>https://raw.githubusercontent.com/bernardhoyez/PWA/main/kmz-photos/BrasXXXXXX/files/OMIMG_20260211_XXXXXX.jpg</code>
-        </p>
+        <p>Exemple lien photo :<br><code>https://raw.githubusercontent.com/bernardhoyez/PWA/main/kmz-photos/BrasXXXXXX/files/OMIMG_....jpg</code></p>
     </div>
 
     <script>
@@ -148,7 +146,6 @@
                     document.getElementById('commune').value = 'Non détectée';
                 }
 
-                // Affichage
                 const wpDiv = document.getElementById('waypoints');
                 wpDiv.innerHTML = `<h3>${waypoints.length} waypoint(s) photo trouvé(s)</h3>`;
 
@@ -176,7 +173,6 @@
                 document.getElementById('btnKMZ').style.display = 'inline-block';
                 document.getElementById('btnWeb').style.display = 'inline-block';
 
-                // Optimisation
                 for (let wp of waypoints) {
                     images[wp.imgSrc] = await optimizeImage(images[wp.imgSrc]);
                 }
@@ -215,7 +211,6 @@
 
             const newZip = new JSZip();
 
-            // Mise à jour noms + descriptions (CDATA)
             waypoints.forEach(wp => {
                 const pm = wp.placemark;
                 const nameEl = pm.getElementsByTagName('name')[0];
@@ -249,20 +244,13 @@
             newKmlText = newKmlText.replace(/>\s+</g, '><');
             newZip.file('doc.kml', newKmlText);
 
-            // Images optimisées
             for (const [path, blob] of Object.entries(images)) {
                 newZip.file(path, blob);
             }
 
-            // Autres fichiers (sauf dossiers)
             for (const filename in originalZip.files) {
                 const entry = originalZip.files[filename];
-                if (
-                    filename === 'doc.kml' ||
-                    images[filename] ||
-                    entry.dir === true ||
-                    !entry.async
-                ) continue;
+                if (filename === 'doc.kml' || images[filename] || entry.dir === true || !entry.async) continue;
 
                 try {
                     const blob = await entry.async('blob');
@@ -278,12 +266,15 @@
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = 'trace_modifiee_' + new Date().toISOString().slice(0,10) + '.kmz';
+                document.body.appendChild(a);
                 a.click();
+                document.body.removeChild(a);
                 URL.revokeObjectURL(url);
             } catch (err) {
                 alert('Erreur génération KMZ : ' + err.message);
             } finally {
                 loading.style.display = 'none';
+                loading.textContent = 'Traitement en cours…';
             }
         }
 
@@ -297,12 +288,10 @@
 <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">
 <Document>
     <name>Trace ${folder}</name>
-    <description>Trace optimisée – photos hébergées sur GitHub</description>
+    <description>Trace optimisée – photos sur GitHub</description>
 
-    <!-- Trace originale (si présente) -->
     ${getOriginalTrackKML()}
 
-    <!-- Waypoints photos -->
     ${waypoints.map(wp => `
     <Placemark>
         <name>${wp.name || wp.originalName || 'Photo'}</name>
@@ -320,10 +309,7 @@
 
     <Style id="photoIcon">
         <IconStyle>
-            <Icon>
-                <href>https://www.oruxmaps.com/iconos/wpts_foto.png</href>
-            </Icon>
-            <scale>1.0</scale>
+            <Icon><href>https://www.oruxmaps.com/iconos/wpts_foto.png</href></Icon>
         </IconStyle>
     </Style>
 </Document>
@@ -334,7 +320,9 @@
             const a = document.createElement('a');
             a.href = url;
             a.download = `trace_${folder.replace(/[^a-zA-Z0-9-]/g, '_')}.kml`;
+            document.body.appendChild(a);
             a.click();
+            document.body.removeChild(a);
             URL.revokeObjectURL(url);
 
             document.getElementById('exampleFolder').textContent = folder;
@@ -342,18 +330,20 @@
         }
 
         function getOriginalTrackKML() {
-            const tracks = Array.from(kmlDoc.querySelectorAll('Placemark gx\\:Track, Placemark LineString'));
-            if (!tracks.length) return '<!-- Pas de trace vectorielle trouvée -->';
+            const trackElements = kmlDoc.querySelectorAll('Placemark gx\\:Track, Placemark LineString, Placemark LineString');
+            if (!trackElements.length) return '<!-- Pas de trace vectorielle trouvée -->';
 
-            return tracks.map(el => {
-                const pm = el.closest('Placemark');
-                return new XMLSerializer().serializeToString(pm);
-            }).join('\n    ');
+            return Array.from(trackElements)
+                .map(el => {
+                    const pm = el.closest('Placemark');
+                    return new XMLSerializer().serializeToString(pm);
+                })
+                .join('\n    ');
         }
 
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/PWA/kmzconvertisseur/sw.js', { scope: '/PWA/kmzconvertisseur/' })
-                .catch(err => console.warn('Service Worker non enregistré', err));
+                .catch(err => console.warn('SW error', err));
         }
     </script>
 </body>
