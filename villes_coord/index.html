@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>villes_coord</title>
+  <meta name="description" content="Géocodage de villes pour QGIS" />
+  <meta name="theme-color" content="#1a6fa8" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="villes_coord" />
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Source+Code+Pro:wght@400;600&family=Inter:wght@400;500;600&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f1923;
+      --bg2:       #162030;
+      --bg3:       #0d1a27;
+      --border:    #2a4060;
+      --accent:    #1a6fa8;
+      --accent2:   #0d4a73;
+      --text:      #d4e2f0;
+      --text-dim:  #7a9bb5;
+      --text-faint:#3a5570;
+      --green:     #2ecc71;
+      --red:       #e74c3c;
+      --orange:    #f0a500;
+      --lat-color: #7de8b0;
+      --lon-color: #7db8e8;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      padding: 1.5rem 1rem;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    .header { margin-bottom: 2rem; }
+    .header-row {
+      display: flex; align-items: center; gap: 0.9rem; margin-bottom: 0.4rem;
+    }
+    .logo {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: 2px solid #2a8fcc;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; flex-shrink: 0;
+    }
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.75rem; color: #e8f4ff; letter-spacing: 0.02em;
+    }
+    .subtitle { font-size: 0.85rem; color: var(--text-dim); }
+
+    /* ── Input bar ── */
+    .input-bar {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1rem 1.25rem;
+      display: flex; gap: 0.75rem; align-items: center;
+      margin-bottom: 1.25rem;
+    }
+    #cityInput {
+      flex: 1; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 7px; padding: 0.6rem 0.9rem;
+      color: #e8f4ff; font-size: 0.95rem; font-family: 'Inter', sans-serif;
+    }
+    #cityInput:focus { outline: none; border-color: var(--accent); }
+    #cityInput::placeholder { color: var(--text-faint); }
+
+    .btn {
+      border: none; border-radius: 7px; padding: 0.6rem 1.2rem;
+      font-family: 'Inter', sans-serif; font-weight: 600;
+      font-size: 0.9rem; cursor: pointer; white-space: nowrap;
+      transition: opacity 0.15s, transform 0.1s;
+      color: #fff;
+    }
+    .btn:hover:not(:disabled) { opacity: 0.85; transform: translateY(-1px); }
+    .btn:active:not(:disabled) { transform: translateY(0); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .btn-add      { background: linear-gradient(135deg, var(--accent), var(--accent2)); }
+    .btn-geocode  { background: linear-gradient(135deg, #1a8a5a, #0d5a3a); }
+    .btn-export   { background: linear-gradient(135deg, #a86a1a, #7a4a0a); }
+    .btn-clear    { background: #1a2d40; color: var(--text-dim); }
+
+    /* ── Table ── */
+    .table-wrap {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden; margin-bottom: 1.25rem;
+    }
+    .table-head {
+      display: grid;
+      grid-template-columns: 38px 1fr 110px 110px 1fr 100px 32px;
+      padding: 0.65rem 1rem;
+      background: var(--bg3); border-bottom: 1px solid var(--border);
+      font-family: 'Source Code Pro', monospace;
+      font-size: 0.7rem; color: var(--text-faint);
+      letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .table-body { max-height: 52vh; overflow-y: auto; }
+    .table-row {
+      display: grid;
+      grid-template-columns: 38px 1fr 110px 110px 1fr 100px 32px;
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid #1a2d40;
+      align-items: center;
+      transition: background 0.15s;
+    }
+    .table-row:nth-child(even) { background: #111c2a; }
+    .table-row:last-child { border-bottom: none; }
+
+    .initial-badge {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: 1.5px solid #2a6fa0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-size: 0.85rem; font-weight: 700; color: #e8f4ff;
+      flex-shrink: 0;
+    }
+    .city-name { font-size: 0.9rem; color: #cce0f5; padding-right: 0.5rem; }
+    .coord {
+      font-family: 'Source Code Pro', monospace;
+      font-size: 0.78rem;
+    }
+    .coord-lat { color: var(--lat-color); }
+    .coord-lon { color: var(--lon-color); }
+    .coord-empty { color: var(--text-faint); }
+    .nominatim-name {
+      font-size: 0.72rem; color: var(--text-dim);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      padding-right: 0.5rem;
+    }
+    .status { font-size: 0.72rem; white-space: nowrap; }
+    .st-idle    { color: var(--text-faint); }
+    .st-loading { color: var(--orange); animation: spin 0.8s linear infinite; display: inline-block; }
+    .st-found   { color: var(--green); }
+    .st-error   { color: var(--red); }
+    .btn-del {
+      background: none; border: none; color: var(--text-faint);
+      font-size: 1.1rem; cursor: pointer; line-height: 1;
+      padding: 0; transition: color 0.15s;
+    }
+    .btn-del:hover { color: var(--red); }
+
+    .empty-state {
+      padding: 3rem 1rem; text-align: center;
+      color: var(--text-faint); font-size: 0.9rem;
+    }
+
+    /* ── Actions bar ── */
+    .actions {
+      display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;
+      margin-bottom: 1.25rem;
+    }
+    .actions .spacer { margin-left: auto; }
+    .nominatim-credit { font-size: 0.75rem; color: var(--text-faint); }
+
+    /* ── QGIS instructions ── */
+    .qgis-box {
+      background: var(--bg3); border: 1px solid #1a4a6a;
+      border-radius: 10px; padding: 1.1rem 1.4rem;
+      font-size: 0.83rem; color: #7aa8c8; line-height: 1.75;
+    }
+    .qgis-box strong { color: #aaccee; }
+    .qgis-box h3 { color: #aaccee; font-size: 0.9rem; margin-bottom: 0.5rem; }
+    .qgis-box ol { padding-left: 1.2rem; }
+    code {
+      background: #1a2d40; padding: 1px 5px;
+      border-radius: 3px; font-family: 'Source Code Pro', monospace;
+      font-size: 0.85em;
+    }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+      background: #1a3a50; border: 1px solid var(--accent);
+      color: #cce0f5; padding: 0.6rem 1.2rem;
+      border-radius: 8px; font-size: 0.85rem;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s;
+      z-index: 999;
+    }
+    #toast.show { opacity: 1; }
+
+    /* ── Install banner ── */
+    #installBanner {
+      display: none;
+      background: linear-gradient(135deg, #0d3a5a, #162030);
+      border: 1px solid var(--accent); border-radius: 10px;
+      padding: 0.9rem 1.25rem; margin-bottom: 1.25rem;
+      align-items: center; gap: 1rem; flex-wrap: wrap;
+    }
+    #installBanner p { font-size: 0.85rem; color: var(--text-dim); flex: 1; }
+    #installBanner .btn { padding: 0.5rem 1rem; font-size: 0.85rem; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: #2a4060; border-radius: 3px; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .table-head, .table-row {
+        grid-template-columns: 32px 1fr 90px 90px 32px;
+      }
+      .col-nominatim, .col-status { display: none; }
+      h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Install banner -->
+<div id="installBanner">
+  <p>📲 Installer <strong>villes_coord</strong> comme application sur cet appareil ?</p>
+  <button class="btn btn-add" id="installBtn">Installer</button>
+  <button class="btn btn-clear" id="dismissBtn">Plus tard</button>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-row">
+    <div class="logo">🗺</div>
+    <h1>villes_coord</h1>
+  </div>
+  <p class="subtitle">Saisissez vos villes · coordonnées via OpenStreetMap/Nominatim · export CSV pour QGIS</p>
+</div>
+
+<!-- Input -->
+<div class="input-bar">
+  <input type="text" id="cityInput" placeholder="Nom de la ville (ex : Lyon, Rouen, Berlin…)" autocomplete="off" />
+  <button class="btn btn-add" id="addBtn">+ Ajouter</button>
+</div>
+
+<!-- Table -->
+<div class="table-wrap">
+  <div class="table-head">
+    <div>Init.</div>
+    <div>Ville</div>
+    <div>Latitude</div>
+    <div>Longitude</div>
+    <div class="col-nominatim">Résultat Nominatim</div>
+    <div class="col-status">Statut</div>
+    <div></div>
+  </div>
+  <div class="table-body" id="tableBody">
+    <div class="empty-state">Ajoutez des villes ci-dessus pour commencer</div>
+  </div>
+</div>
+
+<!-- Actions -->
+<div class="actions">
+  <button class="btn btn-geocode" id="geocodeAllBtn" disabled>⚡ Tout géocoder</button>
+  <button class="btn btn-export"  id="exportBtn"     disabled>⬇ Exporter CSV</button>
+  <button class="btn btn-clear"   id="clearBtn"      disabled>🗑 Effacer tout</button>
+  <div class="spacer"></div>
+  <span class="nominatim-credit">Source : OpenStreetMap / Nominatim</span>
+</div>
+
+<!-- QGIS instructions -->
+<div class="qgis-box" id="qgisBox" style="display:none">
+  <h3>📐 Importer dans QGIS</h3>
+  <ol>
+    <li>Couche → Ajouter une couche → <strong>Couche de texte délimité</strong></li>
+    <li>Sélectionner le fichier <code>villes_qgis.csv</code></li>
+    <li>Champ X : <code>longitude</code> · Champ Y : <code>latitude</code></li>
+    <li>SCR : <strong>EPSG:4326</strong> (WGS 84)</li>
+    <li>Marqueurs avec initiale : Étiquettes → champ <code>initiale</code></li>
+  </ol>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────────────────
+  let rows = JSON.parse(localStorage.getItem('villes_coord_rows') || '[]');
+  let deferredPrompt = null;
+
+  const NOMINATIM = 'https://nominatim.openstreetmap.org/search';
+
+  // ── DOM refs ───────────────────────────────────────────────────────────────
+  const cityInput     = document.getElementById('cityInput');
+  const addBtn        = document.getElementById('addBtn');
+  const geocodeAllBtn = document.getElementById('geocodeAllBtn');
+  const exportBtn     = document.getElementById('exportBtn');
+  const clearBtn      = document.getElementById('clearBtn');
+  const tableBody     = document.getElementById('tableBody');
+  const qgisBox       = document.getElementById('qgisBox');
+  const installBanner = document.getElementById('installBanner');
+  const installBtn    = document.getElementById('installBtn');
+  const dismissBtn    = document.getElementById('dismissBtn');
+  const toast         = document.getElementById('toast');
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function getInitial(name) { return name.trim().charAt(0).toUpperCase(); }
+
+  function save() { localStorage.setItem('villes_coord_rows', JSON.stringify(rows)); }
+
+  function showToast(msg, duration = 2500) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), duration);
+  }
+
+  async function geocodeCity(name) {
+    const params = new URLSearchParams({ q: name, format: 'json', limit: 1, addressdetails: 1 });
+    try {
+      const res = await fetch(`${NOMINATIM}?${params}`, {
+        headers: { 'Accept-Language': 'fr', 'User-Agent': 'villes_coord-PWA/1.0' }
+      });
+      const data = await res.json();
+      if (!data.length) return null;
+      return {
+        lat: parseFloat(data[0].lat).toFixed(6),
+        lon: parseFloat(data[0].lon).toFixed(6),
+        display: data[0].display_name
+      };
+    } catch { return null; }
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+  function render() {
+    const foundCount = rows.filter(r => r.status === 'found').length;
+    const pendingCount = rows.filter(r => r.name && r.status !== 'found').length;
+
+    geocodeAllBtn.disabled = pendingCount === 0;
+    exportBtn.disabled     = foundCount === 0;
+    clearBtn.disabled      = rows.length === 0;
+    exportBtn.textContent  = `⬇ Exporter CSV (${foundCount} ville${foundCount !== 1 ? 's' : ''})`;
+    qgisBox.style.display  = foundCount > 0 ? 'block' : 'none';
+
+    if (!rows.length) {
+      tableBody.innerHTML = '<div class="empty-state">Ajoutez des villes ci-dessus pour commencer</div>';
+      return;
+    }
+
+    tableBody.innerHTML = rows.map((r, i) => {
+      const statusHtml = {
+        idle:    '<span class="status st-idle">—</span>',
+        loading: '<span class="status st-loading">⟳</span>',
+        found:   '<span class="status st-found">✓ Trouvé</span>',
+        error:   '<span class="status st-error">✗ Introuvable</span>'
+      }[r.status] || '';
+
+      const latHtml = r.lat
+        ? `<span class="coord coord-lat">${r.lat}</span>`
+        : `<span class="coord coord-empty">—</span>`;
+      const lonHtml = r.lon
+        ? `<span class="coord coord-lon">${r.lon}</span>`
+        : `<span class="coord coord-empty">—</span>`;
+
+      return `
+        <div class="table-row" data-id="${r.id}">
+          <div><div class="initial-badge">${getInitial(r.name)}</div></div>
+          <div class="city-name">${escHtml(r.name)}</div>
+          <div>${latHtml}</div>
+          <div>${lonHtml}</div>
+          <div class="nominatim-name col-nominatim" title="${escHtml(r.display || '')}">${escHtml(r.display || '—')}</div>
+          <div class="col-status">${statusHtml}</div>
+          <div><button class="btn-del" data-id="${r.id}" title="Supprimer">×</button></div>
+        </div>`;
+    }).join('');
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Add city ───────────────────────────────────────────────────────────────
+  async function addCity(name) {
+    name = name.trim();
+    if (!name) return;
+    if (rows.find(r => r.name.toLowerCase() === name.toLowerCase())) {
+      showToast('Ville déjà dans la liste'); return;
+    }
+    const row = { id: Date.now(), name, lat: '', lon: '', display: '', status: 'loading' };
+    rows.push(row);
+    cityInput.value = '';
+    render();
+
+    const result = await geocodeCity(name);
+    const idx = rows.findIndex(r => r.id === row.id);
+    if (idx === -1) return;
+    if (result) {
+      rows[idx] = { ...rows[idx], ...result, status: 'found' };
+    } else {
+      rows[idx].status = 'error';
+    }
+    save(); render();
+  }
+
+  // ── Geocode all ────────────────────────────────────────────────────────────
+  async function geocodeAll() {
+    geocodeAllBtn.disabled = true;
+    const pending = rows.filter(r => r.name && r.status !== 'found');
+    for (const row of pending) {
+      const idx = rows.findIndex(r => r.id === row.id);
+      if (idx === -1) continue;
+      rows[idx].status = 'loading';
+      render();
+      const result = await geocodeCity(row.name);
+      const i2 = rows.findIndex(r => r.id === row.id);
+      if (i2 === -1) continue;
+      if (result) { rows[i2] = { ...rows[i2], ...result, status: 'found' }; }
+      else         { rows[i2].status = 'error'; }
+      render();
+      await new Promise(res => setTimeout(res, 350)); // respect Nominatim rate limit
+    }
+    save(); render();
+    showToast('Géocodage terminé');
+  }
+
+  // ── Export CSV ─────────────────────────────────────────────────────────────
+  function exportCSV() {
+    const found = rows.filter(r => r.status === 'found');
+    if (!found.length) return;
+    const header = 'nom,initiale,latitude,longitude,affichage_nominatim';
+    const lines = found.map(r =>
+      `"${r.name}","${getInitial(r.name)}",${r.lat},${r.lon},"${r.display.replace(/"/g,'""')}"`
+    );
+    const csv = '\uFEFF' + [header, ...lines].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'villes_qgis.csv'; a.click();
+    URL.revokeObjectURL(url);
+    showToast(`${found.length} ville${found.length > 1 ? 's' : ''} exportée${found.length > 1 ? 's' : ''}`);
+  }
+
+  // ── Events ─────────────────────────────────────────────────────────────────
+  addBtn.addEventListener('click', () => addCity(cityInput.value));
+  cityInput.addEventListener('keydown', e => { if (e.key === 'Enter') addCity(cityInput.value); });
+  geocodeAllBtn.addEventListener('click', geocodeAll);
+  exportBtn.addEventListener('click', exportCSV);
+  clearBtn.addEventListener('click', () => {
+    if (confirm('Effacer toutes les villes ?')) { rows = []; save(); render(); }
+  });
+
+  tableBody.addEventListener('click', e => {
+    const del = e.target.closest('.btn-del');
+    if (del) {
+      const id = parseInt(del.dataset.id);
+      rows = rows.filter(r => r.id !== id);
+      save(); render();
+    }
+  });
+
+  // ── PWA Install ────────────────────────────────────────────────────────────
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBanner.style.display = 'flex';
+  });
+
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    installBanner.style.display = 'none';
+    if (outcome === 'accepted') showToast('Application installée !');
+  });
+
+  dismissBtn.addEventListener('click', () => {
+    installBanner.style.display = 'none';
+  });
+
+  // ── Service Worker ─────────────────────────────────────────────────────────
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/PWA/villes_coord/sw.js')
+        .catch(err => console.warn('SW registration failed:', err));
+    });
+  }
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  render();
+</script>
+</body>
+</html>
