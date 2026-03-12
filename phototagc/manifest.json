@@ -1,0 +1,27 @@
+{
+  "name": "phototagc",
+  "short_name": "phototagc",
+  "description": "Taguez vos photos géoréférencées avec coordonnées GPS et date EXIF",
+  "start_url": "/PWA/phototagc/",
+  "scope": "/PWA/phototagc/",
+  "display": "standalone",
+  "background_color": "#080c18",
+  "theme_color": "#0a0e1a",
+  "orientation": "any",
+  "lang": "fr",
+  "categories": ["photo", "utilities"],
+  "icons": [
+    {
+      "src": "icon192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

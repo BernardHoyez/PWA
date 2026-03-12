@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0a0e1a" />
+  <meta name="description" content="Taguez vos photos géoréférencées avec coordonnées GPS et date" />
+  <title>phototagc</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon192.png" />
+  <link rel="apple-touch-icon" href="icon512.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="grain"></div>
+  <header>
+    <div class="logo">
+      <span class="logo-icon">⌖</span>
+      <span class="logo-text">phototagc</span>
+    </div>
+    <div class="status-bar">
+      <span id="pwa-status" class="badge">PWA</span>
+      <span id="file-count" class="badge hidden">0 photos</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Géotaguez<br /><em>vos photos</em></h1>
+      <p class="subtitle">Extrait les coordonnées GPS et la date depuis les métadonnées EXIF<br />et les inscrit directement sur vos photographies.</p>
+      <div class="tag-preview">
+        <span class="tag-example">48°51.30'N 002°21.05'E 2024/06/15</span>
+      </div>
+    </section>
+
+    <section class="workflow">
+      <!-- STEP 1 -->
+      <div class="step" id="step-input">
+        <div class="step-number">01</div>
+        <div class="step-content">
+          <h2>Choisir les photos</h2>
+          <p>Sélectionnez un dossier de photos géoréférencées (JPEG/JPG)</p>
+          <label class="drop-zone" id="drop-zone" for="folder-input">
+            <div class="drop-icon">📂</div>
+            <div class="drop-text">Glissez un dossier ici<br /><small>ou cliquez pour parcourir</small></div>
+            <input type="file" id="folder-input" accept="image/jpeg,image/jpg" multiple webkitdirectory />
+          </label>
+          <div id="file-list" class="file-list hidden"></div>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="step" id="step-options">
+        <div class="step-number">02</div>
+        <div class="step-content">
+          <h2>Options du tag</h2>
+          <div class="options-grid">
+            <div class="option-group">
+              <label>Taille de police</label>
+              <div class="range-wrapper">
+                <input type="range" id="font-size" min="12" max="72" value="28" step="2" />
+                <span id="font-size-val">28px</span>
+              </div>
+            </div>
+            <div class="option-group">
+              <label>Couleur du texte</label>
+              <div class="color-row">
+                <button class="color-btn active" data-color="white" style="background:#fff;border-color:#fff"></button>
+                <button class="color-btn" data-color="yellow" style="background:#ffe44d;border-color:#ffe44d"></button>
+                <button class="color-btn" data-color="black" style="background:#111;border-color:#555"></button>
+                <button class="color-btn" data-color="red" style="background:#ff4444;border-color:#ff4444"></button>
+              </div>
+            </div>
+            <div class="option-group">
+              <label>Fond du tag</label>
+              <div class="color-row">
+                <button class="bg-btn active" data-bg="semi" title="Semi-transparent noir">
+                  <span style="background:rgba(0,0,0,0.55);width:28px;height:28px;display:block;border-radius:4px;border:1px solid #444"></span>
+                </button>
+                <button class="bg-btn" data-bg="none" title="Sans fond">
+                  <span style="background:transparent;width:28px;height:28px;display:block;border-radius:4px;border:1px dashed #555"></span>
+                </button>
+                <button class="bg-btn" data-bg="black" title="Noir plein">
+                  <span style="background:#000;width:28px;height:28px;display:block;border-radius:4px;border:1px solid #444"></span>
+                </button>
+              </div>
+            </div>
+            <div class="option-group">
+              <label>Marge (px)</label>
+              <div class="range-wrapper">
+                <input type="range" id="margin" min="0" max="60" value="16" step="4" />
+                <span id="margin-val">16px</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="step" id="step-process">
+        <div class="step-number">03</div>
+        <div class="step-content">
+          <h2>Traiter &amp; Télécharger</h2>
+          <p>Les photos taguées seront téléchargées dans un fichier ZIP</p>
+          <button id="process-btn" class="btn-primary" disabled>
+            <span class="btn-icon">⚡</span>
+            <span class="btn-label">Lancer le traitement</span>
+          </button>
+          <div id="progress-wrap" class="progress-wrap hidden">
+            <div class="progress-bar">
+              <div id="progress-fill" class="progress-fill"></div>
+            </div>
+            <div id="progress-text" class="progress-text">Traitement en cours…</div>
+          </div>
+          <div id="result-area" class="result-area hidden">
+            <div class="result-icon">✓</div>
+            <div class="result-msg">Traitement terminé !</div>
+            <div id="result-stats" class="result-stats"></div>
+            <button id="download-btn" class="btn-secondary">
+              <span>⬇ Télécharger le ZIP</span>
+            </button>
+            <button id="reset-btn" class="btn-ghost">Nouvelle session</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Preview modal -->
+    <div id="preview-modal" class="modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-box">
+        <button class="modal-close" id="modal-close">✕</button>
+        <img id="preview-img" src="" alt="Aperçu" />
+        <div class="preview-info" id="preview-info"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <span>phototagc — traitement 100% local, aucune donnée envoyée</span>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="exif.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
