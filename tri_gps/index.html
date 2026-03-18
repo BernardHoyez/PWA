@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a1f2e" />
+  <meta name="description" content="Tri de photos géolocalisées par polygone cartographique" />
+  <title>tri_gps</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon192.png" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+  <style>
+    /* ─── RESET & TOKENS ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:       #1a1f2e;
+      --surface:  #242938;
+      --border:   #323a52;
+      --accent:   #3b82f6;
+      --accent2:  #10b981;
+      --warn:     #f59e0b;
+      --danger:   #ef4444;
+      --txt:      #e2e8f0;
+      --txt2:     #94a3b8;
+      --radius:   8px;
+      --header-h: 52px;
+      --panel-w:  320px;
+      --font:     'Courier New', monospace;
+    }
+    html, body { height: 100%; overflow: hidden; font-family: var(--font); background: var(--bg); color: var(--txt); }
+
+    /* ─── LAYOUT ─────────────────────────────────────────────── */
+    #app { display: flex; flex-direction: column; height: 100%; }
+
+    /* HEADER */
+    header {
+      height: var(--header-h);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px;
+      padding: 0 14px;
+      flex-shrink: 0;
+      z-index: 1000;
+    }
+    header h1 { font-size: 1.1rem; letter-spacing: 2px; color: var(--accent); font-weight: 700; flex-shrink: 0; }
+    header .sep { width: 1px; height: 24px; background: var(--border); }
+
+    /* basemap selector */
+    #basemap-sel {
+      background: var(--bg); border: 1px solid var(--border); color: var(--txt);
+      padding: 4px 8px; border-radius: var(--radius); font-family: var(--font);
+      font-size: .78rem; cursor: pointer;
+    }
+
+    /* load button */
+    .btn {
+      padding: 5px 12px; border-radius: var(--radius); font-family: var(--font);
+      font-size: .78rem; cursor: pointer; border: 1px solid;
+      display: flex; align-items: center; gap: 6px; white-space: nowrap;
+      transition: all .15s;
+    }
+    .btn-primary  { background: var(--accent);  border-color: var(--accent);  color: #fff; }
+    .btn-success  { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+    .btn-warn     { background: var(--warn);    border-color: var(--warn);    color: #1a1f2e; }
+    .btn-danger   { background: var(--danger);  border-color: var(--danger);  color: #fff; }
+    .btn-ghost    { background: transparent;    border-color: var(--border);  color: var(--txt); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .btn:not(:disabled):hover { filter: brightness(1.15); }
+
+    #load-btn { flex-shrink: 0; }
+    #file-input { display: none; }
+
+    .spacer { flex: 1; }
+
+    /* counters */
+    .counters { display: flex; gap: 10px; font-size: .72rem; }
+    .cnt { display: flex; align-items: center; gap: 4px; }
+    .cnt-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .cnt-dot.all   { background: var(--txt2); }
+    .cnt-dot.ok    { background: var(--accent2); }
+    .cnt-dot.nok   { background: var(--danger); }
+
+    /* BODY */
+    #body { display: flex; flex: 1; overflow: hidden; }
+
+    /* MAP */
+    #map { flex: 1; }
+
+    /* PANEL */
+    #panel {
+      width: var(--panel-w);
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    #panel-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .tab {
+      flex: 1; padding: 8px 4px; font-size: .72rem; text-align: center;
+      cursor: pointer; color: var(--txt2); border-bottom: 2px solid transparent;
+      transition: all .15s; letter-spacing: .5px;
+    }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    #panel-content { flex: 1; overflow-y: auto; padding: 10px; }
+    #panel-content::-webkit-scrollbar { width: 4px; }
+    #panel-content::-webkit-scrollbar-track { background: var(--bg); }
+    #panel-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* PHOTO LIST */
+    .photo-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 8px; border-radius: var(--radius);
+      border: 1px solid var(--border); margin-bottom: 6px;
+      cursor: pointer; transition: background .1s;
+      font-size: .72rem;
+    }
+    .photo-item:hover { background: #2e3447; }
+    .photo-item.selected { border-color: var(--accent); }
+    .photo-thumb {
+      width: 40px; height: 40px; object-fit: cover;
+      border-radius: 4px; flex-shrink: 0;
+    }
+    .photo-info { flex: 1; overflow: hidden; }
+    .photo-name { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--txt); }
+    .photo-coord { color: var(--txt2); margin-top: 2px; font-size: .65rem; }
+    .photo-status { flex-shrink: 0; font-size: .65rem; font-weight: 700; }
+    .photo-status.ok  { color: var(--accent2); }
+    .photo-status.nok { color: var(--danger); }
+    .photo-status.none { color: var(--txt2); }
+
+    /* ACTIONS TAB */
+    .section-title {
+      font-size: .68rem; letter-spacing: 1px; color: var(--txt2);
+      text-transform: uppercase; margin: 10px 0 6px; padding-bottom: 4px;
+      border-bottom: 1px solid var(--border);
+    }
+    .action-row { display: flex; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
+    .info-box {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 8px; font-size: .7rem;
+      color: var(--txt2); margin-bottom: 8px; line-height: 1.6;
+    }
+    .info-box strong { color: var(--txt); }
+
+    /* TAG PREVIEW */
+    .tag-preview {
+      font-size: .68rem; background: #000; color: #fff;
+      padding: 4px 8px; border-radius: 4px; font-family: var(--font);
+      margin-bottom: 8px; letter-spacing: .5px;
+    }
+
+    /* PROGRESS */
+    #progress-wrap { padding: 8px 10px; border-top: 1px solid var(--border); flex-shrink: 0; }
+    #progress-bar-outer {
+      height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden;
+    }
+    #progress-bar-inner {
+      height: 100%; background: var(--accent2); border-radius: 3px;
+      width: 0%; transition: width .2s;
+    }
+    #progress-label { font-size: .65rem; color: var(--txt2); margin-top: 4px; text-align: center; }
+
+    /* MODAL */
+    #modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.75);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999; display: none;
+    }
+    #modal-overlay.open { display: flex; }
+    #modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 20px; max-width: 90vw; width: 380px;
+    }
+    #modal h2 { font-size: .9rem; margin-bottom: 10px; color: var(--accent); }
+    #modal p  { font-size: .78rem; color: var(--txt2); margin-bottom: 16px; line-height: 1.6; }
+    #modal .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+
+    /* TOAST */
+    #toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--txt); padding: 8px 18px; border-radius: 20px;
+      font-size: .78rem; z-index: 9998; opacity: 0;
+      transition: opacity .3s; pointer-events: none; white-space: nowrap;
+    }
+    #toast.show { opacity: 1; }
+
+    /* MAP CUSTOM MARKERS */
+    .marker-circle {
+      border-radius: 50%;
+      border: 2px solid;
+      cursor: pointer;
+    }
+
+    /* leaflet draw overrides */
+    .leaflet-draw-toolbar a { background-color: var(--surface) !important; }
+
+    /* EMPTY STATE */
+    .empty-state {
+      text-align: center; padding: 30px 10px; color: var(--txt2);
+      font-size: .8rem; line-height: 2;
+    }
+    .empty-state .icon { font-size: 2rem; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <!-- HEADER -->
+  <header>
+    <h1>tri_gps</h1>
+    <div class="sep"></div>
+    <select id="basemap-sel">
+      <option value="ign-photo">IGN Photos aériennes</option>
+      <option value="ign-plan" selected>IGN Plan V2</option>
+      <option value="osm">OpenStreetMap</option>
+    </select>
+    <div class="sep"></div>
+    <button class="btn btn-primary" id="load-btn">📂 Charger photos</button>
+    <input type="file" id="file-input" multiple accept="image/jpeg,image/jpg,image/tiff" />
+    <div class="sep"></div>
+    <div class="counters">
+      <div class="cnt"><div class="cnt-dot all"></div><span id="cnt-all">0</span> total</div>
+      <div class="cnt"><div class="cnt-dot ok"></div><span id="cnt-ok">0</span> OK</div>
+      <div class="cnt"><div class="cnt-dot nok"></div><span id="cnt-nok">0</span> hors</div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn btn-ghost" id="draw-btn" disabled>✏️ Polygone</button>
+    <button class="btn btn-warn" id="clear-poly-btn" disabled>🗑️ Effacer polygone</button>
+  </header>
+
+  <!-- BODY -->
+  <div id="body">
+    <div id="map"></div>
+
+    <!-- SIDE PANEL -->
+    <div id="panel">
+      <div id="panel-tabs">
+        <div class="tab active" data-tab="photos">Photos</div>
+        <div class="tab" data-tab="actions">Actions</div>
+      </div>
+      <div id="panel-content">
+        <!-- Photos tab -->
+        <div id="tab-photos">
+          <div class="empty-state">
+            <div class="icon">🗺️</div>
+            Chargez un dossier de photos<br/>géolocalisées pour commencer.
+          </div>
+        </div>
+        <!-- Actions tab -->
+        <div id="tab-actions" style="display:none">
+          <div class="section-title">Polygone de sélection</div>
+          <div class="info-box">
+            Dessinez un polygone sur la carte pour isoler les photos correctement géolocalisées.
+            <br/><strong id="poly-status">Aucun polygone dessiné.</strong>
+          </div>
+
+          <div class="section-title">Format du tag</div>
+          <div class="tag-preview" id="tag-preview-example">
+            XX°XX.XXN YY°YY.YYE AAAA/MM/JJ
+          </div>
+          <div class="info-box">
+            Le tag est appliqué <strong>en bas à gauche</strong> de chaque photo sélectionnée.
+            Taille adaptée à la résolution de l'image.
+          </div>
+
+          <div class="section-title">Traitement</div>
+          <div class="action-row">
+            <button class="btn btn-success" id="tag-btn" disabled>🏷️ Taguer &amp; Sauvegarder</button>
+          </div>
+          <div class="info-box">
+            Deux dossiers seront générés :<br/>
+            <strong>dossier_tag_OK</strong> — photos taguées<br/>
+            <strong>dossier_NO_tag</strong> — photos non sélectionnées
+          </div>
+
+          <div class="section-title">Réinitialisation</div>
+          <div class="action-row">
+            <button class="btn btn-danger" id="reset-btn">↺ Tout réinitialiser</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROGRESS -->
+      <div id="progress-wrap" style="display:none">
+        <div id="progress-bar-outer">
+          <div id="progress-bar-inner"></div>
+        </div>
+        <div id="progress-label">Traitement en cours…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay">
+  <div id="modal">
+    <h2 id="modal-title">Confirmer</h2>
+    <p id="modal-msg"></p>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" id="modal-cancel">Annuler</button>
+      <button class="btn btn-success" id="modal-ok">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- LIBS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════
+//  tri_gps — application principale
+// ══════════════════════════════════════════════════════════════════════
+
+'use strict';
+
+// ── Service Worker ────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+// ── Tuiles cartographiques ────────────────────────────────────────────
+const LAYERS = {
+  'ign-photo': L.tileLayer(
+    'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0' +
+    '&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&STYLE=normal&FORMAT=image/jpeg' +
+    '&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}',
+    { attribution: '© IGN – Géoportail', maxZoom: 19 }
+  ),
+  'ign-plan': L.tileLayer(
+    'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0' +
+    '&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png' +
+    '&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}',
+    { attribution: '© IGN – Géoportail', maxZoom: 19 }
+  ),
+  'osm': L.tileLayer(
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    { attribution: '© OpenStreetMap contributors', maxZoom: 19 }
+  )
+};
+
+// ── Carte ─────────────────────────────────────────────────────────────
+const map = L.map('map', {
+  center: [46.5, 2.5],
+  zoom: 6,
+  layers: [LAYERS['ign-plan']]
+});
+
+let currentLayer = LAYERS['ign-plan'];
+
+document.getElementById('basemap-sel').addEventListener('change', e => {
+  map.removeLayer(currentLayer);
+  currentLayer = LAYERS[e.target.value];
+  map.addLayer(currentLayer);
+});
+
+// ── Draw ──────────────────────────────────────────────────────────────
+const drawnItems = new L.FeatureGroup().addTo(map);
+const drawControl = new L.Control.Draw({
+  draw: {
+    polygon: {
+      allowIntersection: false,
+      showArea: false,
+      shapeOptions: { color: '#3b82f6', weight: 2, fillOpacity: 0.1 }
+    },
+    polyline: false, circle: false, rectangle: false,
+    marker: false, circlemarker: false
+  },
+  edit: { featureGroup: drawnItems }
+});
+
+let polygon = null;
+
+map.on(L.Draw.Event.CREATED, e => {
+  drawnItems.clearLayers();
+  polygon = e.layer;
+  drawnItems.addLayer(polygon);
+  document.getElementById('clear-poly-btn').disabled = false;
+  document.getElementById('poly-status').textContent =
+    'Polygone actif (' + polygon.getLatLngs()[0].length + ' points).';
+  updateSelection();
+  updateTagBtn();
+});
+
+map.on(L.Draw.Event.EDITED, () => { updateSelection(); updateTagBtn(); });
+map.on(L.Draw.Event.DELETED, () => {
+  polygon = null;
+  document.getElementById('clear-poly-btn').disabled = true;
+  document.getElementById('poly-status').textContent = 'Aucun polygone dessiné.';
+  updateSelection();
+  updateTagBtn();
+});
+
+document.getElementById('draw-btn').addEventListener('click', () => {
+  new L.Draw.Polygon(map, drawControl.options.draw.polygon).enable();
+});
+
+document.getElementById('clear-poly-btn').addEventListener('click', () => {
+  drawnItems.clearLayers();
+  polygon = null;
+  document.getElementById('clear-poly-btn').disabled = true;
+  document.getElementById('poly-status').textContent = 'Aucun polygone dessiné.';
+  updateSelection();
+  updateTagBtn();
+});
+
+// ── État global ───────────────────────────────────────────────────────
+let photos = [];         // { file, name, lat, lng, date, marker, thumb, inPoly }
+let folderName = '';     // nom du dossier source (déduit du premier fichier)
+let markers = L.layerGroup().addTo(map);
+
+// ── Helpers ───────────────────────────────────────────────────────────
+function toast(msg, duration = 3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), duration);
+}
+
+function setProgress(pct, label) {
+  const wrap  = document.getElementById('progress-wrap');
+  const bar   = document.getElementById('progress-bar-inner');
+  const lbl   = document.getElementById('progress-label');
+  if (pct === null) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  bar.style.width = pct + '%';
+  lbl.textContent = label || '';
+}
+
+function modal(title, msg) {
+  return new Promise(resolve => {
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-msg').textContent   = msg;
+    document.getElementById('modal-overlay').classList.add('open');
+    const ok  = document.getElementById('modal-ok');
+    const no  = document.getElementById('modal-cancel');
+    function cleanup(val) {
+      document.getElementById('modal-overlay').classList.remove('open');
+      ok.removeEventListener('click', onOk);
+      no.removeEventListener('click', onNo);
+      resolve(val);
+    }
+    function onOk() { cleanup(true); }
+    function onNo() { cleanup(false); }
+    ok.addEventListener('click', onOk);
+    no.addEventListener('click', onNo);
+  });
+}
+
+// ── EXIF (lecture manuelle binaire) ──────────────────────────────────
+function readUint16(view, offset, le) { return view.getUint16(offset, le); }
+function readUint32(view, offset, le) { return view.getUint32(offset, le); }
+function readRational(view, offset, le) {
+  const num = view.getUint32(offset, le);
+  const den = view.getUint32(offset + 4, le);
+  return den === 0 ? 0 : num / den;
+}
+
+function parseExif(buffer) {
+  const view = new DataView(buffer);
+  // check JPEG SOI
+  if (view.getUint16(0) !== 0xFFD8) return null;
+
+  let offset = 2;
+  while (offset < view.byteLength - 2) {
+    const marker = view.getUint16(offset);
+    if (marker === 0xFFE1) {
+      // APP1 — EXIF
+      const segLen = view.getUint16(offset + 2);
+      const exifHeader = String.fromCharCode(
+        view.getUint8(offset + 4), view.getUint8(offset + 5),
+        view.getUint8(offset + 6), view.getUint8(offset + 7)
+      );
+      if (exifHeader !== 'Exif') { offset += 2 + segLen; continue; }
+      return parseIFD(view, offset + 10, segLen - 8);
+    }
+    if (marker === 0xFFDA) break; // SOS
+    const segLen = view.getUint16(offset + 2);
+    offset += 2 + segLen;
+  }
+  return null;
+}
+
+function parseIFD(view, tiffStart, maxLen) {
+  // byte order
+  const byteOrder = view.getUint16(tiffStart);
+  const le = (byteOrder === 0x4949); // II = little-endian
+
+  const firstIFDOffset = readUint32(view, tiffStart + 4, le);
+  const result = {};
+
+  function readIFD(ifdOffset) {
+    const abs = tiffStart + ifdOffset;
+    if (abs + 2 > tiffStart + maxLen) return;
+    const count = readUint16(view, abs, le);
+    for (let i = 0; i < count; i++) {
+      const e = abs + 2 + i * 12;
+      if (e + 12 > tiffStart + maxLen) break;
+      const tag  = readUint16(view, e,     le);
+      const type = readUint16(view, e + 2, le);
+      const num  = readUint32(view, e + 4, le);
+      let valOff = e + 8;
+      const byteSize = [0,1,1,2,4,8,0,1,0,4,8,4,8][type] || 1;
+      if (byteSize * num > 4) valOff = tiffStart + readUint32(view, e + 8, le);
+
+      if (tag === 0x8825) {
+        // GPS IFD
+        const gpsOffset = tiffStart + readUint32(view, e + 8, le);
+        const gpsCount  = readUint16(view, gpsOffset, le);
+        const gps = {};
+        for (let g = 0; g < gpsCount; g++) {
+          const ge   = gpsOffset + 2 + g * 12;
+          const gtag = readUint16(view, ge,     le);
+          const gtype= readUint16(view, ge + 2, le);
+          const gnum = readUint32(view, ge + 4, le);
+          let gOff   = ge + 8;
+          const gByteSize = [0,1,1,2,4,8,0,1,0,4,8,4,8][gtype] || 1;
+          if (gByteSize * gnum > 4) gOff = tiffStart + readUint32(view, ge + 8, le);
+
+          if (gtag === 1) gps.latRef = String.fromCharCode(view.getUint8(gOff));
+          if (gtag === 3) gps.lonRef = String.fromCharCode(view.getUint8(gOff));
+          if (gtag === 2 && gtype === 5) {
+            gps.lat = [
+              readRational(view, gOff,      le),
+              readRational(view, gOff + 8,  le),
+              readRational(view, gOff + 16, le)
+            ];
+          }
+          if (gtag === 4 && gtype === 5) {
+            gps.lon = [
+              readRational(view, gOff,      le),
+              readRational(view, gOff + 8,  le),
+              readRational(view, gOff + 16, le)
+            ];
+          }
+        }
+        result.gps = gps;
+      }
+
+      // DateTimeOriginal (0x9003) ou DateTime (0x0132)
+      if ((tag === 0x9003 || tag === 0x0132) && !result.dateStr) {
+        let s = '';
+        for (let c = 0; c < num && c < 20; c++) {
+          const ch = view.getUint8(valOff + c);
+          if (ch === 0) break;
+          s += String.fromCharCode(ch);
+        }
+        result.dateStr = s; // "YYYY:MM:DD HH:MM:SS"
+      }
+    }
+  }
+
+  readIFD(firstIFDOffset);
+  return result;
+}
+
+function dmsToDecimal(dms, ref) {
+  if (!dms || dms.length < 3) return null;
+  let dec = dms[0] + dms[1] / 60 + dms[2] / 3600;
+  if (ref === 'S' || ref === 'W') dec = -dec;
+  return dec;
+}
+
+function formatDMM(decDeg, isLat) {
+  const hem = isLat
+    ? (decDeg >= 0 ? 'N' : 'S')
+    : (decDeg >= 0 ? 'E' : 'W');
+  const abs = Math.abs(decDeg);
+  const deg = Math.floor(abs);
+  const min = (abs - deg) * 60;
+  return deg.toString().padStart(isLat ? 2 : 3, '0') + '°' +
+    min.toFixed(2).padStart(5, '0') + hem;
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return 'AAAA/MM/JJ';
+  const m = dateStr.match(/^(\d{4}):(\d{2}):(\d{2})/);
+  return m ? `${m[1]}/${m[2]}/${m[3]}` : 'AAAA/MM/JJ';
+}
+
+// ── Chargement des fichiers ───────────────────────────────────────────
+document.getElementById('load-btn').addEventListener('click', () => {
+  document.getElementById('file-input').click();
+});
+
+document.getElementById('file-input').addEventListener('change', async e => {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  e.target.value = '';
+
+  // Déduire le dossier (utilise webkitRelativePath si dispo)
+  if (files[0].webkitRelativePath) {
+    folderName = files[0].webkitRelativePath.split('/')[0];
+  } else {
+    folderName = 'photos';
+  }
+
+  // Réinitialiser
+  photos = [];
+  markers.clearLayers();
+
+  setProgress(0, 'Lecture des métadonnées EXIF…');
+
+  const bounds = [];
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    setProgress(Math.round((i / files.length) * 80), `EXIF : ${f.name}`);
+
+    let lat = null, lng = null, dateStr = null;
+    try {
+      const buf = await f.arrayBuffer();
+      const exif = parseExif(buf);
+      if (exif && exif.gps) {
+        lat = dmsToDecimal(exif.gps.lat, exif.gps.latRef);
+        lng = dmsToDecimal(exif.gps.lon, exif.gps.lonRef);
+      }
+      if (exif && exif.dateStr) dateStr = exif.dateStr;
+    } catch {}
+
+    // Miniature
+    const thumb = URL.createObjectURL(f);
+
+    const photo = { file: f, name: f.name, lat, lng, dateStr, thumb, inPoly: false, marker: null };
+    photos.push(photo);
+
+    if (lat !== null && lng !== null) {
+      bounds.push([lat, lng]);
+      // Créer marqueur
+      const icon = L.divIcon({
+        className: '',
+        html: `<div class="marker-circle" style="width:14px;height:14px;background:#64748b;border-color:#94a3b8"></div>`,
+        iconSize: [14, 14], iconAnchor: [7, 7]
+      });
+      const mk = L.marker([lat, lng], { icon })
+        .on('click', () => selectPhoto(photo));
+      markers.addLayer(mk);
+      photo.marker = mk;
+    }
+  }
+
+  if (bounds.length) map.fitBounds(bounds, { padding: [40, 40] });
+
+  setProgress(100, 'Chargement terminé.');
+  setTimeout(() => setProgress(null), 800);
+
+  // Activer les boutons
+  document.getElementById('draw-btn').disabled = false;
+  document.getElementById('reset-btn').disabled = false;
+
+  updateSelection();
+  renderPhotoList();
+  updateCounters();
+  toast(`${photos.length} photo(s) chargée(s) — ${photos.filter(p=>p.lat!==null).length} géolocalisée(s)`);
+});
+
+// ── Sélection par polygone ────────────────────────────────────────────
+function pointInPolygon(lat, lng, poly) {
+  if (!poly) return false;
+  const latlngs = poly.getLatLngs()[0];
+  // ray casting
+  let inside = false;
+  for (let i = 0, j = latlngs.length - 1; i < latlngs.length; j = i++) {
+    const xi = latlngs[i].lat, yi = latlngs[i].lng;
+    const xj = latlngs[j].lat, yj = latlngs[j].lng;
+    const intersect = ((yi > lng) !== (yj > lng)) &&
+      (lat < (xj - xi) * (lng - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+function updateSelection() {
+  let ok = 0, nok = 0;
+  photos.forEach(p => {
+    if (p.lat === null) { p.inPoly = false; return; }
+    p.inPoly = pointInPolygon(p.lat, p.lng, polygon);
+    if (p.inPoly) ok++; else nok++;
+
+    // mettre à jour la couleur du marqueur
+    if (p.marker) {
+      const color = polygon
+        ? (p.inPoly ? '#10b981' : '#ef4444')
+        : '#64748b';
+      const border = polygon
+        ? (p.inPoly ? '#6ee7b7' : '#fca5a5')
+        : '#94a3b8';
+      p.marker.setIcon(L.divIcon({
+        className: '',
+        html: `<div class="marker-circle" style="width:14px;height:14px;background:${color};border-color:${border}"></div>`,
+        iconSize: [14, 14], iconAnchor: [7, 7]
+      }));
+    }
+  });
+  document.getElementById('cnt-ok').textContent  = polygon ? ok  : '—';
+  document.getElementById('cnt-nok').textContent = polygon ? nok : '—';
+  renderPhotoList();
+}
+
+function updateCounters() {
+  document.getElementById('cnt-all').textContent = photos.length;
+  if (!polygon) {
+    document.getElementById('cnt-ok').textContent  = '—';
+    document.getElementById('cnt-nok').textContent = '—';
+  }
+}
+
+function updateTagBtn() {
+  document.getElementById('tag-btn').disabled = !(polygon && photos.some(p => p.inPoly));
+}
+
+// ── Liste des photos ──────────────────────────────────────────────────
+function renderPhotoList() {
+  const container = document.getElementById('tab-photos');
+  if (!photos.length) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">🗺️</div>Chargez un dossier de photos<br/>géolocalisées pour commencer.</div>`;
+    return;
+  }
+
+  container.innerHTML = photos.map((p, i) => {
+    let statusClass = 'none', statusTxt = '—';
+    if (p.lat !== null && polygon) {
+      if (p.inPoly)  { statusClass = 'ok';  statusTxt = '✓ OK'; }
+      else           { statusClass = 'nok'; statusTxt = '✗ Hors'; }
+    } else if (p.lat === null) {
+      statusClass = 'nok'; statusTxt = '⚠ Sans GPS';
+    }
+    const coord = p.lat !== null
+      ? `${formatDMM(p.lat, true)} ${formatDMM(p.lng, false)}`
+      : 'Pas de coordonnées GPS';
+    return `
+      <div class="photo-item" data-idx="${i}" onclick="selectPhoto(photos[${i}], true)">
+        <img class="photo-thumb" src="${p.thumb}" alt="${p.name}" loading="lazy"/>
+        <div class="photo-info">
+          <div class="photo-name">${p.name}</div>
+          <div class="photo-coord">${coord}</div>
+          <div class="photo-coord">${formatDate(p.dateStr)}</div>
+        </div>
+        <div class="photo-status ${statusClass}">${statusTxt}</div>
+      </div>`;
+  }).join('');
+}
+
+function selectPhoto(photo, panTo = true) {
+  if (!photo || photo.lat === null) return;
+  if (panTo) map.panTo([photo.lat, photo.lng]);
+  // mettre en évidence (flash)
+  if (photo.marker) {
+    photo.marker.openPopup && photo.marker.openPopup();
+  }
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const id = tab.dataset.tab;
+    document.getElementById('tab-photos').style.display = id === 'photos' ? '' : 'none';
+    document.getElementById('tab-actions').style.display = id === 'actions' ? '' : 'none';
+    if (id === 'actions') updateTagBtn();
+  });
+});
+
+// ── Taggage et sauvegarde ─────────────────────────────────────────────
+document.getElementById('tag-btn').addEventListener('click', async () => {
+  const okPhotos  = photos.filter(p => p.inPoly);
+  const nokPhotos = photos.filter(p => !p.inPoly);
+
+  const confirmed = await modal(
+    'Confirmer le traitement',
+    `${okPhotos.length} photo(s) seront taguées et sauvegardées dans "${folderName}_tag_OK".\n` +
+    `${nokPhotos.length} photo(s) seront copiées dans "${folderName}_NO_tag".\n\nContinuer ?`
+  );
+  if (!confirmed) return;
+
+  setProgress(0, 'Initialisation…');
+
+  // Utiliser JSZip via CDN (chargement dynamique)
+  if (typeof JSZip === 'undefined') {
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+  }
+
+  const zip = new JSZip();
+  const tagOkFolder  = zip.folder(`${folderName}_tag_OK`);
+  const noTagFolder  = zip.folder(`${folderName}_NO_tag`);
+
+  const total = photos.length;
+  let done = 0;
+
+  // Traiter photos OK — taguer
+  for (const p of okPhotos) {
+    setProgress(Math.round((done / total) * 90), `Taggage : ${p.name}`);
+    try {
+      const taggedBlob = await applyTag(p);
+      const arrBuf = await taggedBlob.arrayBuffer();
+      tagOkFolder.file(p.name, arrBuf);
+    } catch (err) {
+      console.error('Tag error:', p.name, err);
+      // En cas d'erreur, copier l'original
+      const arrBuf = await p.file.arrayBuffer();
+      tagOkFolder.file(p.name, arrBuf);
+    }
+    done++;
+  }
+
+  // Traiter photos NO_tag — copier telles quelles
+  for (const p of nokPhotos) {
+    setProgress(Math.round((done / total) * 90), `Copie : ${p.name}`);
+    const arrBuf = await p.file.arrayBuffer();
+    noTagFolder.file(p.name, arrBuf);
+    done++;
+  }
+
+  setProgress(95, 'Génération du ZIP…');
+  const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 3 } },
+    meta => setProgress(95 + Math.round(meta.percent * 0.05), `ZIP : ${Math.round(meta.percent)}%`)
+  );
+  setProgress(100, 'Téléchargement…');
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${folderName}_tri_gps.zip`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  setTimeout(() => setProgress(null), 1000);
+  toast(`✅ ${okPhotos.length} taguée(s), ${nokPhotos.length} copiée(s) — ZIP téléchargé.`, 5000);
+});
+
+// ── Appliquer le tag sur une photo (Canvas) ───────────────────────────
+function applyTag(photo) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width  = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+
+      // Préparer le texte
+      const latStr = formatDMM(photo.lat, true);
+      const lngStr = formatDMM(photo.lng, false);
+      const dateStr = formatDate(photo.dateStr);
+      const tagText = `${latStr} ${lngStr} ${dateStr}`;
+
+      // Taille de police proportionnelle à la résolution
+      const fontSize = Math.max(24, Math.round(img.naturalWidth * 0.02));
+      ctx.font = `bold ${fontSize}px 'Courier New', monospace`;
+
+      const metrics = ctx.measureText(tagText);
+      const textW = metrics.width;
+      const textH = fontSize * 1.4;
+
+      // Position : bas gauche, marge 1% de la largeur
+      const margin = Math.round(img.naturalWidth * 0.01);
+      const x = margin;
+      const y = img.naturalHeight - margin - textH * 0.2;
+
+      // Fond semi-transparent
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      const padX = fontSize * 0.4, padY = fontSize * 0.25;
+      ctx.fillRect(x - padX, y - textH - padY, textW + padX * 2, textH + padY * 2);
+
+      // Texte blanc
+      ctx.fillStyle = '#ffffff';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(tagText, x, y);
+
+      canvas.toBlob(blob => {
+        if (blob) resolve(blob);
+        else reject(new Error('canvas.toBlob failed'));
+      }, 'image/jpeg', 0.92);
+    };
+    img.onerror = reject;
+    img.src = photo.thumb;
+  });
+}
+
+// ── Réinitialisation ──────────────────────────────────────────────────
+document.getElementById('reset-btn').addEventListener('click', async () => {
+  const confirmed = await modal('Réinitialiser', 'Effacer toutes les photos et le polygone ?');
+  if (!confirmed) return;
+  photos.forEach(p => URL.revokeObjectURL(p.thumb));
+  photos = [];
+  folderName = '';
+  polygon = null;
+  drawnItems.clearLayers();
+  markers.clearLayers();
+  document.getElementById('draw-btn').disabled = true;
+  document.getElementById('clear-poly-btn').disabled = true;
+  document.getElementById('tag-btn').disabled = true;
+  document.getElementById('poly-status').textContent = 'Aucun polygone dessiné.';
+  renderPhotoList();
+  updateCounters();
+  toast('Application réinitialisée.');
+});
+
+// ── Chargement dynamique de script ───────────────────────────────────
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+
+// ── Draw toolbar visible ──────────────────────────────────────────────
+map.addControl(drawControl);
+
+// ── Init ──────────────────────────────────────────────────────────────
+renderPhotoList();
+</script>
+</body>
+</html>
