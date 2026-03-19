@@ -1,0 +1,38 @@
+{
+  "name": "psd2geo — Calibrage cartographique",
+  "short_name": "psd2geo",
+  "description": "Calibrez vos schémas PSD cartographiques et exportez-les en GeoPackage géoréférencé.",
+  "start_url": "/PWA/psd2geo/",
+  "scope": "/PWA/psd2geo/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0d1b2a",
+  "theme_color": "#0d1b2a",
+  "lang": "fr",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "icon192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Nouveau projet",
+      "short_name": "Nouveau",
+      "description": "Démarrer un nouveau calibrage",
+      "url": "/PWA/psd2geo/",
+      "icons": [{ "src": "icon192.png", "sizes": "192x192" }]
+    }
+  ]
+}
