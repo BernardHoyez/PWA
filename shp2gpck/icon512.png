@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#2d1f0e"/>
+  <!-- Topo grid -->
+  <g stroke="#5c3d1e" stroke-width="1.2" opacity="0.5">
+    <line x1="85"  y1="0"   x2="85"  y2="512"/>
+    <line x1="170" y1="0"   x2="170" y2="512"/>
+    <line x1="256" y1="0"   x2="256" y2="512"/>
+    <line x1="341" y1="0"   x2="341" y2="512"/>
+    <line x1="426" y1="0"   x2="426" y2="512"/>
+    <line x1="0"  y1="85"   x2="512" y2="85"/>
+    <line x1="0"  y1="170"  x2="512" y2="170"/>
+    <line x1="0"  y1="256"  x2="512" y2="256"/>
+    <line x1="0"  y1="341"  x2="512" y2="341"/>
+    <line x1="0"  y1="426"  x2="512" y2="426"/>
+  </g>
+  <!-- Geological polygon -->
+  <polygon points="100,380 155,200 265,155 400,235 415,375 295,415 185,408"
+           fill="#4a8a3a" fill-opacity="0.3" stroke="#6aaa5a" stroke-width="5"/>
+  <!-- Arrow -->
+  <path d="M256 175 L256 295 M224 265 L256 300 L288 265"
+        stroke="#c8832a" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- C2 badge -->
+  <rect x="200" y="315" width="112" height="52" rx="6" fill="#2d1f0e" stroke="#c8832a" stroke-width="2"/>
+  <text x="256" y="352" font-family="Georgia, serif" font-weight="700" font-size="34"
+        fill="#e8a040" text-anchor="middle">C2</text>
+  <!-- Title -->
+  <text x="256" y="470" font-family="'Courier New', monospace" font-size="28"
+        fill="#7a6040" text-anchor="middle" letter-spacing="3">shp2gpck</text>
+</svg>
