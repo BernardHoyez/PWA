@@ -1,0 +1,28 @@
+{
+  "name": "shp2gpck — SHP vers GeoPackage",
+  "short_name": "shp2gpck",
+  "description": "Convertit une archive ZIP BRGM (Shapefile) en GeoPackage filtré, 100 % côté client.",
+  "start_url": "/PWA/shp2gpck/",
+  "scope": "/PWA/shp2gpck/",
+  "display": "standalone",
+  "background_color": "#1a1208",
+  "theme_color": "#2d1f0e",
+  "lang": "fr",
+  "categories": ["utilities", "productivity"],
+  "icons": [
+    {
+      "src": "icon192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
+}
