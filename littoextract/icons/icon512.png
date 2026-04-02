@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#0a1628" rx="60"/>
-  <text x="256" y="280" text-anchor="middle" font-family="serif" font-size="72" fill="#8eb8cc">icon512</text>
-  <text x="256" y="340" text-anchor="middle" font-family="monospace" font-size="28" fill="#245080">À remplacer</text>
-  <path d="M60 360 C110 300, 160 400, 210 340 C260 280, 310 400, 360 340 C390 310, 420 360, 450 340"
-        stroke="#00e5ff" stroke-width="10" fill="none" stroke-linecap="round"/>
-</svg>
