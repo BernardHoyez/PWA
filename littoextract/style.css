@@ -1,0 +1,644 @@
+/* ============================================================
+   LittoExtract — Stylesheet
+   Palette marine : nuit côtière + accents cyan phosphorescent
+   Typographie : DM Serif Display + DM Mono
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap');
+
+:root {
+  --ocean-deep:    #050d1a;
+  --ocean-dark:    #0a1628;
+  --ocean-mid:     #0f2040;
+  --ocean-surface: #1a3558;
+  --ocean-light:   #245080;
+  --foam:          #e8f4f8;
+  --foam-dim:      #8eb8cc;
+  --cyan-bright:   #00e5ff;
+  --cyan-mid:      #00b4cc;
+  --cyan-dim:      #007a8a;
+  --amber:         #f5a623;
+  --danger:        #ff4f4f;
+  --success:       #2ecc71;
+
+  --border:        rgba(0, 229, 255, 0.18);
+  --border-hover:  rgba(0, 229, 255, 0.45);
+  --glass:         rgba(10, 22, 40, 0.85);
+  --glass-light:   rgba(26, 53, 88, 0.5);
+
+  --radius:   8px;
+  --radius-lg: 14px;
+  --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--ocean-deep);
+  color: var(--foam);
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow: hidden;
+}
+
+/* ── Grain texture overlay ──────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ── App Shell ──────────────────────────────────────────── */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 20px;
+  height: 52px;
+  background: var(--ocean-dark);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 100;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.logo-icon svg {
+  width: 100%; height: 100%;
+}
+
+.logo-text {
+  font-family: 'DM Serif Display', serif;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+  color: var(--foam);
+}
+
+.logo-text span {
+  color: var(--cyan-bright);
+}
+
+.header-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+/* ── Tab Navigation ─────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--ocean-mid);
+  border-radius: var(--radius);
+  padding: 3px;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 14px;
+  border: none;
+  background: transparent;
+  color: var(--foam-dim);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.tab-btn:hover {
+  color: var(--foam);
+  background: var(--glass-light);
+}
+
+.tab-btn.active {
+  background: var(--ocean-surface);
+  color: var(--cyan-bright);
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.tab-btn svg {
+  width: 14px; height: 14px;
+  flex-shrink: 0;
+}
+
+/* ── Status badge ───────────────────────────────────────── */
+.status-badge {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--foam-dim);
+  letter-spacing: 0.04em;
+}
+
+.status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--cyan-dim);
+  box-shadow: 0 0 6px var(--cyan-dim);
+  animation: pulse-dot 2.4s ease-in-out infinite;
+}
+
+.status-dot.ready { background: var(--success); box-shadow: 0 0 6px var(--success); }
+.status-dot.error { background: var(--danger); box-shadow: 0 0 6px var(--danger); animation: none; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* ── Main Content ───────────────────────────────────────── */
+main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.panel {
+  display: none;
+  width: 100%;
+  height: 100%;
+}
+
+.panel.active {
+  display: flex;
+}
+
+/* ── Extract Panel ──────────────────────────────────────── */
+#panel-extract {
+  flex-direction: row;
+}
+
+.sidebar {
+  width: 320px;
+  flex-shrink: 0;
+  background: var(--ocean-dark);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--ocean-light); border-radius: 2px; }
+
+.sidebar-section {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-section:last-child { border-bottom: none; }
+
+.section-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 13px;
+  color: var(--cyan-bright);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── Param rows ─────────────────────────────────────────── */
+.param-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  gap: 12px;
+}
+
+.param-row:last-child { margin-bottom: 0; }
+
+.param-label {
+  color: var(--foam-dim);
+  font-size: 11.5px;
+  flex-shrink: 0;
+}
+
+.param-value {
+  color: var(--foam);
+  font-weight: 500;
+  text-align: right;
+  font-size: 12px;
+}
+
+.param-value.highlight {
+  color: var(--cyan-bright);
+  font-weight: 500;
+}
+
+/* ── Tile stats ─────────────────────────────────────────── */
+.tile-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.stat-box {
+  background: var(--ocean-mid);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 8px;
+  text-align: center;
+}
+
+.stat-box .stat-num {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--cyan-bright);
+  display: block;
+  line-height: 1.2;
+}
+
+.stat-box .stat-lbl {
+  font-size: 10px;
+  color: var(--foam-dim);
+  margin-top: 2px;
+  display: block;
+}
+
+/* ── Progress ───────────────────────────────────────────── */
+.progress-wrap {
+  margin-top: 4px;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 11px;
+  color: var(--foam-dim);
+}
+
+.progress-bar-outer {
+  height: 6px;
+  background: var(--ocean-mid);
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.progress-bar-inner {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan-dim), var(--cyan-bright));
+  border-radius: 3px;
+  width: 0%;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 8px var(--cyan-mid);
+}
+
+.progress-detail {
+  font-size: 10.5px;
+  color: var(--foam-dim);
+  margin-top: 5px;
+  min-height: 16px;
+  font-style: italic;
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--ocean-mid);
+  color: var(--foam);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all var(--transition);
+  width: 100%;
+  margin-top: 8px;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--ocean-surface);
+  border-color: var(--border-hover);
+  color: var(--cyan-bright);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.12);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn.primary {
+  background: var(--cyan-dim);
+  border-color: var(--cyan-mid);
+  color: var(--ocean-deep);
+  font-weight: 500;
+}
+
+.btn.primary:hover:not(:disabled) {
+  background: var(--cyan-mid);
+  border-color: var(--cyan-bright);
+  color: var(--ocean-deep);
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.25);
+}
+
+.btn.danger {
+  border-color: rgba(255, 79, 79, 0.4);
+  color: var(--danger);
+}
+
+.btn.danger:hover:not(:disabled) {
+  background: rgba(255, 79, 79, 0.15);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+/* ── Map container ──────────────────────────────────────── */
+.map-area {
+  flex: 1;
+  position: relative;
+  background: var(--ocean-deep);
+}
+
+#preview-map, #viewer-map {
+  width: 100%;
+  height: 100%;
+}
+
+.map-overlay {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.map-info-pill {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 11px;
+  color: var(--foam-dim);
+  backdrop-filter: blur(8px);
+  pointer-events: all;
+  white-space: nowrap;
+}
+
+.map-info-pill span {
+  color: var(--cyan-bright);
+  font-weight: 500;
+}
+
+/* ── Viewer Panel ───────────────────────────────────────── */
+#panel-viewer {
+  flex-direction: column;
+  position: relative;
+}
+
+#viewer-map {
+  flex: 1;
+}
+
+.viewer-toolbar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 72px;
+  background: var(--glass);
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 16px;
+  z-index: 20;
+}
+
+.viewer-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-btn {
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--ocean-mid);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--foam-dim);
+  cursor: pointer;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+
+.nav-btn:hover {
+  border-color: var(--border-hover);
+  color: var(--cyan-bright);
+  background: var(--ocean-surface);
+}
+
+.nav-btn svg { width: 18px; height: 18px; }
+
+/* ── Coastline progress slider ──────────────────────────── */
+.coast-slider-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.coast-slider-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--foam-dim);
+}
+
+.coast-slider-label .pos-name {
+  color: var(--cyan-bright);
+  font-weight: 500;
+}
+
+input[type="range"].coast-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: var(--ocean-surface);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  border: 1px solid var(--border);
+}
+
+input[type="range"].coast-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--cyan-bright);
+  box-shadow: 0 0 8px var(--cyan-mid);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+input[type="range"].coast-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.viewer-load-area {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.viewer-load-area.hidden { display: none; }
+
+.viewer-load-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.3;
+}
+
+.viewer-load-text {
+  font-family: 'DM Serif Display', serif;
+  font-size: 16px;
+  color: var(--foam-dim);
+  margin-bottom: 6px;
+}
+
+.viewer-load-sub {
+  font-size: 11px;
+  color: var(--ocean-light);
+}
+
+/* ── Log console ─────────────────────────────────────────── */
+.log-console {
+  background: var(--ocean-deep);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  max-height: 120px;
+  overflow-y: auto;
+  font-size: 10.5px;
+  color: var(--foam-dim);
+  line-height: 1.8;
+}
+
+.log-console::-webkit-scrollbar { width: 3px; }
+.log-console::-webkit-scrollbar-thumb { background: var(--ocean-light); }
+
+.log-entry { display: flex; gap: 8px; }
+.log-entry .log-time { color: var(--ocean-light); flex-shrink: 0; }
+.log-entry.info .log-msg { color: var(--foam-dim); }
+.log-entry.success .log-msg { color: var(--success); }
+.log-entry.warn .log-msg { color: var(--amber); }
+.log-entry.error .log-msg { color: var(--danger); }
+
+/* ── Notice ──────────────────────────────────────────────── */
+.notice {
+  display: flex;
+  gap: 8px;
+  background: rgba(245, 166, 35, 0.08);
+  border: 1px solid rgba(245, 166, 35, 0.25);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 11px;
+  color: var(--amber);
+  line-height: 1.6;
+  margin-top: 4px;
+}
+
+.notice svg { flex-shrink: 0; margin-top: 1px; }
+
+/* ── MapLibre overrides ──────────────────────────────────── */
+.maplibregl-ctrl-bottom-left,
+.maplibregl-ctrl-bottom-right {
+  display: none;
+}
+
+.maplibregl-canvas { cursor: grab; }
+.maplibregl-canvas:active { cursor: grabbing; }
+
+/* ── Scrollbar global ────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--ocean-deep); }
+::-webkit-scrollbar-thumb { background: var(--ocean-surface); border-radius: 3px; }
+
+/* ── Animations ──────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.panel.active { animation: fadeIn 0.25s ease; }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.spinning { animation: spin 1.2s linear infinite; }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+  #panel-extract { flex-direction: column; }
+  .map-area { min-height: 300px; }
+  header { padding: 0 12px; gap: 8px; }
+  .logo-text { font-size: 15px; }
+}
