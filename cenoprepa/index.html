@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1a3a2a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="cenoprepa">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon192.png">
+  <title>cenoprepa — Éditeur cenoutil</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ══ TOAST ══ -->
+<div id="toast-container" class="toast-container"></div>
+
+<!-- ══ MODAL CONFIRMATION ══ -->
+<div id="modal-overlay" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-body"  id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="modal-cancel">Annuler</button>
+      <button class="btn btn-danger"    id="modal-ok">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ APPLICATION ══ -->
+<div id="app">
+
+  <!-- ════════════════════════════
+       SIDEBAR
+       ════════════════════════════ -->
+  <aside class="sidebar">
+
+    <div class="sidebar-logo">
+      <!-- Logo ammonite petite version -->
+      <svg width="30" height="30" viewBox="0 0 60 60">
+        <circle cx="30" cy="30" r="29" fill="#2d7a4f"/>
+        <g transform="translate(30,30)" fill="none" stroke="white" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4,0 C5,-1 7,-3 9,-4 C12,-5.5 14,-4 15,-1 C16,2 15.5,6 14,9 C12,13 9,16 6,17.5 C3,19 0,18.5 -2,17 C-5,15 -7,11 -7.5,7 C-8,3 -7,-1 -5,-4.5 C-3,-8 0,-11 4,-13 C8,-15 12,-15.5 16,-14 C20,-12.5 23,-9 25,-5 C27,-1 27,4 26,9" stroke-width="2"/>
+          <line x1="17" y1="0" x2="28" y2="0" stroke-width="1.3"/>
+          <line x1="23" y1="0" x2="29" y2="-5" stroke-width=".9"/>
+          <line x1="23" y1="0" x2="29" y2="5" stroke-width=".9"/>
+          <circle cx="0" cy="0" r="3.5" fill="white" opacity=".9"/>
+          <circle cx="0" cy="0" r="1.8" fill="#2d7a4f"/>
+        </g>
+      </svg>
+      <div>
+        <div class="sidebar-app-name">cenoprepa</div>
+        <div class="sidebar-app-sub">Éditeur cenoutil</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+
+      <div class="sidebar-section-label">Vue générale</div>
+      <button class="nav-btn active" data-panel="dashboard">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/>
+          <rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/>
+        </svg>
+        Tableau de bord
+      </button>
+
+      <div class="sidebar-section-label">Carte</div>
+      <button class="nav-btn" data-panel="observations">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="8" cy="6" r="3"/><path d="M8 9v5"/><circle cx="8" cy="6" r="1" fill="currentColor"/>
+        </svg>
+        Observations
+        <span class="nav-badge" id="nav-badge-obs">—</span>
+      </button>
+      <button class="nav-btn" data-panel="descentes">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <path d="M2 4 C2 4 6 2 8 5 C10 8 14 6 14 6"/><path d="M8 5 L8 14"/>
+          <circle cx="8" cy="5" r="1.5" fill="currentColor"/>
+        </svg>
+        Accès falaise
+        <span class="nav-badge" id="nav-badge-desc">—</span>
+      </button>
+
+      <div class="sidebar-section-label">Contenu</div>
+      <button class="nav-btn" data-panel="fossiles">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <ellipse cx="8" cy="10" rx="5" ry="3.5"/>
+          <path d="M5 10 C5 7.5 6.2 5.5 8 5.5 C9.8 5.5 11 7.5 11 10"/>
+          <circle cx="8" cy="10" r="1.2" fill="currentColor"/>
+        </svg>
+        Fossiles
+        <span class="nav-badge" id="nav-badge-fos">—</span>
+      </button>
+      <button class="nav-btn" data-panel="pages">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <rect x="2" y="1" width="12" height="14" rx="1.5"/>
+          <line x1="5" y1="5" x2="11" y2="5"/><line x1="5" y1="8" x2="11" y2="8"/>
+          <line x1="5" y1="11" x2="8" y2="11"/>
+        </svg>
+        Pages info
+        <span class="nav-badge" id="nav-badge-pages">—</span>
+      </button>
+
+      <div class="sidebar-section-label">Export</div>
+      <button class="nav-btn" data-panel="export">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <path d="M8 2v8M5 7l3 3 3-3"/><path d="M3 12h10"/>
+        </svg>
+        Exporter
+      </button>
+
+    </nav>
+
+    <div class="sidebar-footer">
+      <div id="dirty-indicator" style="color:rgba(255,255,255,0.4);margin-bottom:4px;">✓ À jour</div>
+      <div id="sidebar-status">Chargement…</div>
+    </div>
+  </aside>
+
+  <!-- ════════════════════════════
+       ZONE PRINCIPALE
+       ════════════════════════════ -->
+  <div class="main">
+
+    <!-- ══ DASHBOARD ══ -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="topbar">
+        <div class="topbar-title">Tableau de bord</div>
+        <span class="topbar-sub">cenoutil — Cénomanien normand</span>
+        <div class="topbar-actions">
+          <button class="btn btn-export" onclick="Export.exportAll()">
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="14" height="14">
+              <path d="M7 1v8M4 6l3 3 3-3"/><path d="M2 11h10"/>
+            </svg>
+            Tout exporter (ZIP)
+          </button>
+        </div>
+      </div>
+      <div class="content">
+
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-label">Observations</div>
+            <div class="stat-value" id="stat-obs">—</div>
+            <div class="stat-sub">marqueurs ocre sur la carte</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Accès falaise</div>
+            <div class="stat-value" id="stat-desc">—</div>
+            <div class="stat-sub">marqueurs verts fixes</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Espèces fossiles</div>
+            <div class="stat-value" id="stat-fossiles">—</div>
+            <div class="stat-sub">dans <span id="stat-groupes">—</span> groupes</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Pages info</div>
+            <div class="stat-value" id="stat-pages">—</div>
+            <div class="stat-sub">chapitres introductifs</div>
+          </div>
+        </div>
+
+        <!-- Import rapide -->
+        <div class="export-section">
+          <div class="export-title">Import des données existantes</div>
+          <div class="export-desc">
+            Pour modifier les données de cenoutil, importez les fichiers JSON correspondants depuis le dossier <code>cenoutil/data/</code>.
+            Les modifications se font ensuite dans les onglets dédiés, puis exportez le bundle final.
+          </div>
+          <div class="export-actions">
+            <label class="btn btn-secondary">
+              📥 observations.json
+              <input type="file" id="import-obs" accept=".json" style="display:none">
+            </label>
+            <label class="btn btn-secondary">
+              📥 markers.json
+              <input type="file" id="import-desc" accept=".json" style="display:none">
+            </label>
+            <label class="btn btn-secondary">
+              📥 fossiles.json
+              <input type="file" id="import-fos" accept=".json" style="display:none">
+            </label>
+            <label class="btn btn-secondary">
+              📥 pages.json
+              <input type="file" id="import-pages" accept=".json" style="display:none">
+            </label>
+          </div>
+        </div>
+
+        <!-- Workflow -->
+        <div class="export-section">
+          <div class="export-title">Workflow de mise à jour</div>
+          <div class="export-desc">
+            <strong>1.</strong> Importez les JSON actuels de cenoutil (ci-dessus) ou laissez cenoprepa les charger automatiquement si les deux PWA sont dans le même dossier PWA/.<br>
+            <strong>2.</strong> Modifiez les données dans les onglets Observations, Accès falaise, Fossiles, Pages info.<br>
+            <strong>3.</strong> Exportez le bundle ZIP → décompressez dans <code>cenoutil/</code> sur GitHub.<br>
+            <strong>4.</strong> Les photos doivent être placées manuellement dans <code>cenoutil/photos/</code>.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ OBSERVATIONS ══ -->
+    <div class="panel" id="panel-observations">
+      <div class="topbar">
+        <div class="topbar-title">Marqueurs d'observation</div>
+        <span class="topbar-sub">cercles ocre sur la carte</span>
+        <div class="topbar-actions">
+          <button class="btn btn-ocre" id="btn-obs-new">+ Nouvelle observation</button>
+          <button class="btn btn-export" onclick="Export.exportObservations()">↓ Exporter JSON</button>
+        </div>
+      </div>
+      <div class="split-view">
+
+        <!-- Liste -->
+        <div class="split-list">
+          <div class="split-list-header">
+            <input type="search" id="obs-search" placeholder="Rechercher…">
+            <span id="obs-count" style="font-size:11px;color:var(--text-ter);white-space:nowrap;"></span>
+          </div>
+          <div class="split-list-items" id="obs-list-items"></div>
+        </div>
+
+        <!-- Formulaire -->
+        <div class="split-form">
+
+          <!-- État vide -->
+          <div class="form-empty-state" id="obs-empty-state">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="24" cy="20" r="10"/><path d="M24 30v12"/>
+              <circle cx="24" cy="20" r="4" fill="currentColor" opacity=".3"/>
+            </svg>
+            <p>Sélectionnez une observation dans la liste<br>ou créez-en une nouvelle</p>
+          </div>
+
+          <!-- Formulaire observation -->
+          <div id="obs-form-wrap" class="hidden">
+            <input type="hidden" id="obs-form-id">
+
+            <div class="form-section">
+              <div class="form-section-title">Identification</div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Nom / titre <span class="required">*</span></label>
+                  <input type="text" id="obs-form-nom" placeholder="Ex : Panneau sud — plage de Saint-Jouin">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Coordonnées GPS <span class="required">*</span></label>
+                  <div class="gps-input-wrap">
+                    <input type="text" id="obs-form-gps"
+                      placeholder="49°38.86N 0°09.26E  ou  49.6477°N 0.1543°E">
+                    <span id="obs-gps-status" class="gps-status empty"></span>
+                  </div>
+                  <div class="form-hint">Formats acceptés : DM (49°38.86N 0°09.26E) ou DD (49.6477°N 0.1543°E)</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-section-title">Données géologiques</div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Niveau stratigraphique</label>
+                  <select id="obs-form-strat"></select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Fossiles observés</label>
+                  <div class="chips-input-wrap" id="obs-chips-wrap">
+                    <input id="obs-chips-input" class="chips-input"
+                      placeholder="Ajouter une espèce…" autocomplete="off">
+                  </div>
+                  <div class="form-hint">Tapez un nom d'espèce et appuyez sur Entrée ou virgule pour ajouter</div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Commentaire</label>
+                  <textarea id="obs-form-comment" rows="4"
+                    placeholder="Description de la coupe, niveaux visibles, intérêt particulier…"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-section-title">Photo de terrain</div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="photo-upload">
+                    <input type="file" id="obs-form-photo" accept="image/*">
+                    <div class="photo-upload-label">
+                      <strong>Choisir une photo</strong> ou glisser-déposer<br>
+                      <span style="font-size:11px;color:var(--text-ter);">JPEG recommandé · max ~500 Ko</span>
+                    </div>
+                    <img id="obs-form-preview" class="photo-preview" alt="Aperçu">
+                  </label>
+                  <div class="form-hint mt-8">
+                    Chemin : <code id="obs-form-photo-path" style="font-size:11px;">Aucune photo</code>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-section-title">Métadonnées</div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Date d'observation</label>
+                  <input type="date" id="obs-form-date">
+                </div>
+                <div class="form-group">
+                  <label>Observateurs</label>
+                  <input type="text" id="obs-form-obs" placeholder="B. Hoyez, J. Girard…">
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:10px;margin-top:4px;padding-bottom:20px;">
+              <button class="btn btn-primary" id="btn-obs-save">✓ Sauvegarder</button>
+              <button class="btn btn-danger btn-sm" id="btn-obs-delete">Supprimer</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ACCÈS FALAISE ══ -->
+    <div class="panel" id="panel-descentes">
+      <div class="topbar">
+        <div class="topbar-title">Accès falaise</div>
+        <span class="topbar-sub">13 points d'accès — marqueurs verts</span>
+        <div class="topbar-actions">
+          <button class="btn btn-export" onclick="Export.exportDescentes()">↓ Exporter JSON</button>
+        </div>
+      </div>
+      <div class="split-view">
+        <div class="split-list">
+          <div class="split-list-header">
+            <input type="search" id="desc-search" placeholder="Rechercher…">
+            <span id="desc-count" style="font-size:11px;color:var(--text-ter);"></span>
+          </div>
+          <div class="split-list-items" id="desc-list-items"></div>
+        </div>
+        <div class="split-form">
+          <div class="form-empty-state" id="desc-empty-state">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M8 18 C8 8 24 2 24 2 C24 2 40 8 40 18 C40 30 24 44 24 44 C24 44 8 30 8 18Z"/>
+              <circle cx="24" cy="18" r="5"/>
+            </svg>
+            <p>Sélectionnez un point d'accès pour le modifier</p>
+          </div>
+          <div id="desc-form-wrap" class="hidden">
+            <input type="hidden" id="desc-form-id">
+            <div class="form-section">
+              <div class="form-section-title">Identification</div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Nom <span class="required">*</span></label>
+                  <input type="text" id="desc-form-nom">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Coordonnées GPS</label>
+                  <div class="gps-input-wrap">
+                    <input type="text" id="desc-form-gps" placeholder="49°38.86N 0°09.26E">
+                    <span id="desc-gps-status" class="gps-status empty"></span>
+                  </div>
+                </div>
+                <div class="form-group w-auto" style="min-width:140px;">
+                  <label>État du sentier</label>
+                  <select id="desc-form-etat"></select>
+                </div>
+              </div>
+            </div>
+            <div class="form-section">
+              <div class="form-section-title">Description</div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Informations d'accès</label>
+                  <textarea id="desc-form-acces" rows="3" placeholder="Adresse, parking, durée de marche…"></textarea>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Description géologique</label>
+                  <textarea id="desc-form-desc" rows="4" placeholder="Coupes visibles, intérêt du site…"></textarea>
+                </div>
+              </div>
+            </div>
+            <div class="form-section">
+              <div class="form-section-title">Photo du site</div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="photo-upload">
+                    <input type="file" id="desc-form-photo" accept="image/*">
+                    <div class="photo-upload-label"><strong>Choisir une photo</strong></div>
+                    <img id="desc-form-preview" class="photo-preview" alt="Aperçu">
+                  </label>
+                  <div class="form-hint mt-8">Chemin : <code id="desc-form-photo-path" style="font-size:11px;">Aucune photo</code></div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;padding-bottom:20px;">
+              <button class="btn btn-primary" id="btn-desc-save">✓ Sauvegarder</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ FOSSILES ══ -->
+    <div class="panel" id="panel-fossiles">
+      <div class="topbar">
+        <div class="topbar-title">Catalogue fossiles</div>
+        <span class="topbar-sub">espèces du Cénomanien normand</span>
+        <div class="topbar-actions">
+          <button class="btn btn-primary" id="btn-fos-new">+ Nouvelle espèce</button>
+          <button class="btn btn-export" onclick="Export.exportFossiles()">↓ Exporter JSON</button>
+        </div>
+      </div>
+      <div class="split-view">
+        <div class="split-list">
+          <div class="split-list-header">
+            <input type="search" id="fos-search" placeholder="Rechercher…">
+            <span id="fos-count" style="font-size:11px;color:var(--text-ter);white-space:nowrap;"></span>
+          </div>
+          <div class="split-list-items" id="fos-list-items"></div>
+        </div>
+        <div class="split-form">
+          <div class="form-empty-state" id="fos-empty-state">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+              <ellipse cx="24" cy="30" rx="16" ry="11"/>
+              <path d="M13 30 C13 22 17.5 16 24 16 C30.5 16 35 22 35 30"/>
+              <circle cx="24" cy="30" r="4" fill="currentColor" opacity=".3"/>
+            </svg>
+            <p>Sélectionnez une espèce ou créez-en une nouvelle</p>
+          </div>
+          <div id="fos-form-wrap" class="hidden">
+            <input type="hidden" id="fos-form-id">
+            <div class="form-section">
+              <div class="form-section-title">Taxonomie</div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Nom d'espèce <span class="required">*</span></label>
+                  <input type="text" id="fos-form-nom" placeholder="Mantelliceras saxbii" style="font-style:italic;">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Famille</label>
+                  <input type="text" id="fos-form-famille" placeholder="Acanthoceratidae">
+                </div>
+                <div class="form-group">
+                  <label>Groupe</label>
+                  <select id="fos-form-groupe"></select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Étage / niveau</label>
+                  <input type="text" id="fos-form-etage" placeholder="Cénomanien moyen">
+                </div>
+                <div class="form-group w-auto" style="min-width:90px;">
+                  <label>N° planche</label>
+                  <input type="number" id="fos-form-planche" min="1" max="50" placeholder="—">
+                </div>
+              </div>
+            </div>
+            <div class="form-section">
+              <div class="form-section-title">Description</div>
+              <div class="form-row">
+                <div class="form-group">
+                  <textarea id="fos-form-desc" rows="5"
+                    placeholder="Morphologie, caractères diagnostiques, intérêt stratigraphique…"></textarea>
+                </div>
+              </div>
+            </div>
+            <div class="form-section">
+              <div class="form-section-title">Photo</div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="photo-upload">
+                    <input type="file" id="fos-form-photo" accept="image/*">
+                    <div class="photo-upload-label"><strong>Choisir une photo</strong></div>
+                    <img id="fos-form-preview" class="photo-preview" alt="Aperçu">
+                  </label>
+                  <div class="form-hint mt-8">Chemin : <code id="fos-form-photo-path" style="font-size:11px;">Aucune photo</code></div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;padding-bottom:20px;">
+              <button class="btn btn-primary" id="btn-fos-save">✓ Sauvegarder</button>
+              <button class="btn btn-danger btn-sm" id="btn-fos-delete">Supprimer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PAGES INFO ══ -->
+    <div class="panel" id="panel-pages">
+      <div class="topbar">
+        <div class="topbar-title">Pages d'information</div>
+        <span class="topbar-sub">chapitres introductifs de l'ouvrage</span>
+        <div class="topbar-actions">
+          <button class="btn btn-primary" id="btn-pages-new">+ Nouvelle page</button>
+          <button class="btn btn-export" onclick="Export.exportPages()">↓ Exporter JSON</button>
+        </div>
+      </div>
+      <div class="split-view">
+        <div class="split-list">
+          <div class="split-list-header">
+            <span id="pages-count" style="font-size:11px;color:var(--text-ter);"></span>
+          </div>
+          <div class="split-list-items" id="pages-list-items"></div>
+        </div>
+        <div class="split-form">
+          <div class="form-empty-state" id="pages-empty-state">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="6" y="4" width="36" height="40" rx="3"/>
+              <line x1="14" y1="14" x2="34" y2="14"/><line x1="14" y1="21" x2="34" y2="21"/>
+              <line x1="14" y1="28" x2="24" y2="28"/>
+            </svg>
+            <p>Sélectionnez une page pour la modifier</p>
+          </div>
+          <div id="pages-form-wrap" class="hidden">
+            <input type="hidden" id="pages-form-id">
+            <div class="form-section">
+              <div class="form-section-title">En-tête</div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Titre <span class="required">*</span></label>
+                  <input type="text" id="pages-form-titre" placeholder="Introduction">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Résumé (affiché dans la liste)</label>
+                  <input type="text" id="pages-form-resume" placeholder="Géographie, falaises…">
+                </div>
+              </div>
+            </div>
+            <div class="form-section">
+              <div class="form-section-title">Contenu</div>
+              <div class="form-hint" style="margin-bottom:8px;">
+                Séparez les paragraphes par une ligne vide.<br>
+                Insérez une figure avec : <code>[FIGURE: chemin/image.jpg | Légende]</code>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <textarea id="pages-form-contenu" rows="14"
+                    placeholder="Texte du premier paragraphe…&#10;&#10;Texte du deuxième paragraphe…&#10;&#10;[FIGURE: photos/pages/carte.jpg | Fig. 1 — Carte des affleurements]"></textarea>
+                </div>
+              </div>
+            </div>
+            <div class="form-section">
+              <div class="form-section-title">Image bannière (optionnelle)</div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="photo-upload">
+                    <input type="file" id="pages-form-photo" accept="image/*">
+                    <div class="photo-upload-label"><strong>Choisir une image</strong></div>
+                    <img id="pages-form-preview" class="photo-preview" alt="Aperçu">
+                  </label>
+                  <div class="form-hint mt-8">Chemin : <code id="pages-form-photo-path" style="font-size:11px;">Aucune image</code></div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;padding-bottom:20px;">
+              <button class="btn btn-primary" id="btn-pages-save">✓ Sauvegarder</button>
+              <button class="btn btn-danger btn-sm" id="btn-pages-delete">Supprimer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ EXPORT ══ -->
+    <div class="panel" id="panel-export">
+      <div class="topbar">
+        <div class="topbar-title">Export du bundle cenoutil</div>
+      </div>
+      <div class="content">
+
+        <div class="export-section">
+          <div class="export-title">Export complet — bundle ZIP</div>
+          <div class="export-desc">
+            Génère une archive ZIP contenant tous les fichiers JSON mis à jour
+            (<code>markers.json</code>, <code>observations.json</code>, <code>fossiles.json</code>, <code>pages.json</code>).
+            Décompressez l'archive et copiez le dossier <code>data/</code> dans <code>cenoutil/</code> sur GitHub Pages.
+          </div>
+          <div class="export-actions">
+            <button class="btn btn-export" id="btn-export-all" style="font-size:14px;padding:10px 20px;">
+              ↓ Exporter tout (ZIP)
+            </button>
+          </div>
+        </div>
+
+        <div class="export-section">
+          <div class="export-title">Exports individuels</div>
+          <div class="export-desc">Télécharger un seul fichier JSON pour une mise à jour partielle.</div>
+          <div class="export-actions">
+            <button class="btn btn-secondary" id="btn-export-obs">↓ observations.json</button>
+            <button class="btn btn-secondary" id="btn-export-desc">↓ markers.json</button>
+            <button class="btn btn-secondary" id="btn-export-fos">↓ fossiles.json</button>
+            <button class="btn btn-secondary" id="btn-export-pages">↓ pages.json</button>
+          </div>
+        </div>
+
+        <div class="export-section">
+          <div class="export-title">Note sur les photos</div>
+          <div class="export-desc">
+            Les photos de terrain ne sont pas incluses dans le bundle JSON. Elles doivent être
+            copiées manuellement dans le dossier <code>cenoutil/photos/</code> du dépôt GitHub,
+            dans les sous-dossiers correspondants :<br><br>
+            <code>photos/observations/</code> — photos des marqueurs d'observation<br>
+            <code>photos/fossiles/</code> — photos des espèces du catalogue<br>
+            <code>photos/pages/</code> — images des pages d'information<br>
+            <code>photos/</code> — photos des 13 accès falaise
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- .main -->
+</div><!-- #app -->
+
+<!-- JSZip pour l'export ZIP -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<!-- Modules cenoprepa -->
+<script src="js/gps.js"></script>
+<script src="js/editeur-descentes.js"></script>
+<script src="js/editeur-observations.js"></script>
+<script src="js/editeur-fossiles.js"></script>
+<script src="js/editeur-pages.js"></script>
+<script src="js/export.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
