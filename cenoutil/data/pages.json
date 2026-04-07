@@ -1,0 +1,213 @@
+[
+  {
+    "id": "introduction",
+    "titre": "Introduction",
+    "resume": "Géographie, falaises entre la Valleuse d'Antifer et le Cap de La Hève · 24 km de coupes",
+    "image_banniere": "photos/pages/falaise_panorama.jpg",
+    "contenu": [
+      {
+        "type": "paragraphe",
+        "texte": "Entre les fleuves Seine et Somme, le littoral de la Manche est bordé de hautes falaises principalement formées de craie. Les arches d'Étretat en sont la figure la plus emblématique. Le pendage des couches de craie est très faible ou imperceptible, mais des inflexions tectoniques sont mises en évidence à l'échelle régionale."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "Cartographiquement, la région est traversée de grandes failles : Faille de Bray-Vittel, Faille de la Seine et Faille de Fécamp-Lillebonne (N150°) décalées par la Faille de Pavilly (N70°)."
+      },
+      {
+        "type": "figure",
+        "src": "photos/pages/carte_affleurements.jpg",
+        "legende": "Fig. 2 — Carte des affleurements cénomaniens de la Haute Normandie."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "L'étage Cénomanien, le plus ancien de la craie, affleure de deux manières : à l'intérieur des terres, localement à la faveur d'accidents tectoniques (Rouen, Pavilly, Fécamp) ; et sur le littoral, de manière continue dans les falaises entre la Valleuse d'Antifer et le Cap de La Hève, sur une longueur développée de 24 kilomètres."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "Deux profils de falaises différents apparaissent de part et d'autre du Port d'Antifer. Au Nord, sur 5 km, une falaise vive avec au pied quelques blocs éboulés, accessible par les 3 valleuses d'Antifer, du Fourquet et de Bruneval. Au Sud du port pétrolier, sur 19 km, une falaise vive taillée dans le Cénomanien, précédée vers la mer d'une préfalaise constituée par des terrains du Jurassique et du Crétacé inférieur."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "L'essentiel des observations est cantonné aux blocs éboulés au niveau du cordon de galets. L'absence de couverture de téléphonie mobile sur une grande partie du secteur appelle à la prudence et à éviter les sorties solitaires."
+      }
+    ]
+  },
+  {
+    "id": "acces",
+    "titre": "Accès aux 13 sites",
+    "resume": "Coordonnées GPS · État des sentiers · Contraintes de marées",
+    "image_banniere": "photos/pages/sentier_acces.jpg",
+    "contenu": [
+      {
+        "type": "paragraphe",
+        "texte": "Les accès au secteur sont situés aux deux extrémités — St-Jouin-Plage au Nord et La Hève (Le Bout du Monde) au Sud — et depuis le plateau, par l'ancien escalier de l'OTAN (site Aquacaux, commune d'Octeville). Des sentiers de pêcheurs existent mais ils sont souvent difficiles, plus ou moins bien entretenus."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "Des éboulements ou des glissements peuvent rendre les sentiers temporairement impraticables. Il faut toujours prévoir une reconnaissance par le haut avant d'emprunter les chemins d'accès. Il faut également composer avec les marées, certains éboulements restant infranchissables à l'étale de haute mer."
+      },
+      {
+        "type": "tableau_acces",
+        "sites": [
+          {
+            "num": 1,
+            "nom": "Valleuse d'Antifer",
+            "lat": "49°41'11\"N",
+            "lng": "0°11'45\"E",
+            "acces": "Parking obligatoire puis route à pied sur 1,6 km",
+            "etat": "Entretenu"
+          },
+          {
+            "num": 2,
+            "nom": "Valleuse du Fourquet",
+            "lat": "49°41'15\"N",
+            "lng": "0°10'07\"E",
+            "acces": "Chemin peu carrossable puis escalier béton",
+            "etat": "Délicat"
+          },
+          {
+            "num": 3,
+            "nom": "Valleuse de Bruneval",
+            "lat": "49°40'00\"N",
+            "lng": "0°09'36\"E",
+            "acces": "Route entretenue, petit parking",
+            "etat": "Bon"
+          },
+          {
+            "num": 4,
+            "nom": "Saint-Jouin Plage — Terminal Pétrolier",
+            "lat": "49°38'58\"N",
+            "lng": "0°09'14\"E",
+            "acces": "Belle route, vaste parking",
+            "etat": "Très bon"
+          },
+          {
+            "num": 5,
+            "nom": "Saint-Jouin Belvédère",
+            "lat": "49°38'58\"N",
+            "lng": "0°09'28\"E",
+            "acces": "Sentier entretenu depuis belvédère",
+            "etat": "Bon"
+          },
+          {
+            "num": 6,
+            "nom": "Grand Hameau",
+            "lat": "49°37'45\"N",
+            "lng": "0°09'23\"E",
+            "acces": "Sentier peu entretenu, ravine",
+            "etat": "Difficile"
+          },
+          {
+            "num": 7,
+            "nom": "Heuqueville — Guildins",
+            "lat": "49°37'13\"N",
+            "lng": "0°08'39\"E",
+            "acces": "Sentier raide, peu entretenu",
+            "etat": "Difficile"
+          },
+          {
+            "num": 8,
+            "nom": "Cauville — Tronquay",
+            "lat": "49°35'24\"N",
+            "lng": "0°06'52\"E",
+            "acces": "Sentier entretenu",
+            "etat": "Bon"
+          },
+          {
+            "num": 9,
+            "nom": "Ecqueville",
+            "lat": "49°34'42\"N",
+            "lng": "0°06'48\"E",
+            "acces": "Sentier raide, peu entretenu",
+            "etat": "Difficile"
+          },
+          {
+            "num": 10,
+            "nom": "Octeville — Fond du Val",
+            "lat": "49°34'12\"N",
+            "lng": "0°06'06\"E",
+            "acces": "Sentier en désuétude",
+            "etat": "Très difficile"
+          },
+          {
+            "num": 11,
+            "nom": "Octeville — Croquet (Tarzan)",
+            "lat": "49°33'26\"N",
+            "lng": "0°05'32\"E",
+            "acces": "Bon sentier, départ 100m avant parking",
+            "etat": "Bon"
+          },
+          {
+            "num": 12,
+            "nom": "Octeville — Aquacaux (OTAN)",
+            "lat": "49°32'47\"N",
+            "lng": "0°05'11\"E",
+            "acces": "Escalier 500 marches ou chemin latéral",
+            "etat": "Moyen"
+          },
+          {
+            "num": 13,
+            "nom": "La Hève — Bout du Monde",
+            "lat": "49°30'31\"N",
+            "lng": "0°04'07\"E",
+            "acces": "Chemin près du parking",
+            "etat": "Bon"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "stratigraphie",
+    "titre": "Stratigraphie",
+    "resume": "Biostratigraphie · Hardgrounds · Séquences Ce1–Ce3",
+    "image_banniere": "photos/pages/coupe_synthetique.jpg",
+    "contenu": [
+      {
+        "type": "paragraphe",
+        "texte": "Différentes approches stratigraphiques peuvent s'appliquer : biostratigraphie, stratigraphie événementielle, stratigraphie séquentielle, cyclostratigraphie, géochimie isotopique. À partir d'une trame séquentielle, des ensembles lithologiques et des niveaux-repères ont été distingués sur le terrain, nommés pour les identifier et suivre leurs variations latérales."
+      },
+      {
+        "type": "figure",
+        "src": "photos/pages/log_ce1_ce2_ce3.jpg",
+        "legende": "Log stratigraphique des formations cénomaniennes — Ce1 (Craie glauconieuse), Ce2 (Craie de Rouen), Ce3 (Craie d'Antifer)."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "La biostratigraphie se fonde essentiellement sur les Céphalopodes (ammonites), les Inocérames et les Foraminifères. La faune d'ammonites n'est pas abondante dans le Pays de Caux mais elle s'appuie sur la référence internationale."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "Trois formations sont distinguées : (1) la Craie glauconieuse (Ce1), limitée à sa base par la Surface de ravinement Octeville et à son sommet par le HG Rouen 1 ; (2) la Craie de Rouen (Ce2), allant du sommet du HG Rouen 1 au HG Antifer 1 ; (3) la Craie d'Antifer (Ce3), allant du sommet du HG Antifer 1 au sommet du HG Antifer 3."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "Le Cénomanien inférieur enregistre les plus fortes variations latérales. La Zone à Mantelliceras dixoni s'avère la plus condensée au Nord (Bruneval), particulièrement entre les hardgrounds Bruneval 1 et 2. La Zone à Cunningtoniceras inerme, supposée lacunaire jusqu'alors, a été identifiée par la récolte de Cunningtoniceras par les auteurs."
+      }
+    ]
+  },
+  {
+    "id": "paleontologie",
+    "titre": "Paléontologie",
+    "resume": "Groupes fossiles · Rôle dans le découpage stratigraphique",
+    "image_banniere": "photos/pages/coupe_biostrati.jpg",
+    "contenu": [
+      {
+        "type": "paragraphe",
+        "texte": "La partie paléontologique présente les groupes fossiles les plus caractéristiques utilisés pour le découpage stratigraphique du Cénomanien normand. Des planches photographiques rassemblent des spécimens récoltés pour l'essentiel par les auteurs sur les sites décrits."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "Les Ammonites constituent le groupe-guide principal de la biostratigraphie. Leur zonation est calée sur la référence internationale du NW européen. Bien que peu abondantes dans le Pays de Caux, leur présence permet des corrélations précises entre les différents secteurs étudiés."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "Les Inocérames (Bivalves) et les Foraminifères complètent l'armature biostratigraphique. Les Brachiopodes, plus utilisés en Angleterre et en Allemagne, sont ici un complément précieux. Les Échinides, abondants, permettent également des corrélations locales."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "Les Spongiaires, bien que non étudiés en détail dans l'ouvrage, sont très fréquents sous forme de sections tubulaires dans les silex de la formation Bruneval. L'ensemble présente des analogies avec les Sponge Beds du NW européen."
+      }
+    ]
+  }
+]
