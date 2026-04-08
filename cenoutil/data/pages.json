@@ -1,0 +1,413 @@
+[
+  {
+    "id": "introduction",
+    "titre": "Introduction",
+    "resume": "Géographie, falaises entre la Valleuse d'Antifer et le Cap de La Hève · 24 km de coupes",
+    "image_banniere": "photos/pages/falaise_panorama.jpg",
+    "contenu": [
+      {
+        "type": "paragraphe",
+        "texte": "Entre les fleuves Seine et Somme, le littoral de la Manche est bordé de hautes falaises principalement formées de craie. Les arches d'Étretat en sont la figure la plus emblématique. Le pendage des couches de craie est très faible ou imperceptible, mais des inflexions tectoniques sont mises en évidence à l'échelle régionale."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "Cartographiquement, la région est traversée de grandes failles : Faille de Bray-Vittel, Faille de la Seine et Faille de Fécamp-Lillebonne (N150°) décalées par la Faille de Pavilly (N70°)."
+      },
+      {
+        "type": "figure",
+        "src": "photos/pages/carte_affleurements.jpg",
+        "legende": "Fig. 2 — Carte des affleurements cénomaniens de la Haute Normandie."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "L'étage Cénomanien, le plus ancien de la craie, affleure de deux manières : à l'intérieur des terres, localement à la faveur d'accidents tectoniques (Rouen, Pavilly, Fécamp) ; et sur le littoral, de manière continue dans les falaises entre la Valleuse d'Antifer et le Cap de La Hève, sur une longueur développée de 24 kilomètres."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "Deux profils de falaises différents apparaissent de part et d'autre du Port d'Antifer. Au Nord, sur 5 km, une falaise vive avec au pied quelques blocs éboulés, accessible par les 3 valleuses d'Antifer, du Fourquet et de Bruneval. Au Sud du port pétrolier, sur 19 km, une falaise vive taillée dans le Cénomanien, précédée vers la mer d'une préfalaise constituée par des terrains du Jurassique et du Crétacé inférieur."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "L'essentiel des observations est cantonné aux blocs éboulés au niveau du cordon de galets. L'absence de couverture de téléphonie mobile sur une grande partie du secteur appelle à la prudence et à éviter les sorties solitaires."
+      }
+    ]
+  },
+  {
+    "id": "acces",
+    "titre": "Accès aux 13 sites",
+    "resume": "Coordonnées GPS · État des sentiers · Contraintes de marées",
+    "image_banniere": "photos/pages/sentier_acces.jpg",
+    "contenu": [
+      {
+        "type": "paragraphe",
+        "texte": "Les accès au secteur sont situés aux deux extrémités — St-Jouin-Plage au Nord et La Hève (Le Bout du Monde) au Sud — et depuis le plateau, par l'ancien escalier de l'OTAN (site Aquacaux, commune d'Octeville). Des sentiers de pêcheurs existent mais ils sont souvent difficiles, plus ou moins bien entretenus."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "Des éboulements ou des glissements peuvent rendre les sentiers temporairement impraticables. Il faut toujours prévoir une reconnaissance par le haut avant d'emprunter les chemins d'accès. Il faut également composer avec les marées, certains éboulements restant infranchissables à l'étale de haute mer."
+      },
+      {
+        "type": "tableau_acces",
+        "sites": [
+          {
+            "num": 1,
+            "nom": "Valleuse d'Antifer",
+            "lat": "49°41'11\"N",
+            "lng": "0°11'45\"E",
+            "acces": "Parking obligatoire puis route à pied sur 1,6 km",
+            "etat": "Entretenu"
+          },
+          {
+            "num": 2,
+            "nom": "Valleuse du Fourquet",
+            "lat": "49°41'15\"N",
+            "lng": "0°10'07\"E",
+            "acces": "Chemin peu carrossable puis escalier béton",
+            "etat": "Délicat"
+          },
+          {
+            "num": 3,
+            "nom": "Valleuse de Bruneval",
+            "lat": "49°40'00\"N",
+            "lng": "0°09'36\"E",
+            "acces": "Route entretenue, petit parking",
+            "etat": "Bon"
+          },
+          {
+            "num": 4,
+            "nom": "Saint-Jouin Plage — Terminal Pétrolier",
+            "lat": "49°38'58\"N",
+            "lng": "0°09'14\"E",
+            "acces": "Belle route, vaste parking",
+            "etat": "Très bon"
+          },
+          {
+            "num": 5,
+            "nom": "Saint-Jouin Belvédère",
+            "lat": "49°38'58\"N",
+            "lng": "0°09'28\"E",
+            "acces": "Sentier entretenu depuis belvédère",
+            "etat": "Bon"
+          },
+          {
+            "num": 6,
+            "nom": "Grand Hameau",
+            "lat": "49°37'45\"N",
+            "lng": "0°09'23\"E",
+            "acces": "Sentier peu entretenu, ravine",
+            "etat": "Difficile"
+          },
+          {
+            "num": 7,
+            "nom": "Heuqueville — Guildins",
+            "lat": "49°37'13\"N",
+            "lng": "0°08'39\"E",
+            "acces": "Sentier raide, peu entretenu",
+            "etat": "Difficile"
+          },
+          {
+            "num": 8,
+            "nom": "Cauville — Tronquay",
+            "lat": "49°35'24\"N",
+            "lng": "0°06'52\"E",
+            "acces": "Sentier entretenu",
+            "etat": "Bon"
+          },
+          {
+            "num": 9,
+            "nom": "Ecqueville",
+            "lat": "49°34'42\"N",
+            "lng": "0°06'48\"E",
+            "acces": "Sentier raide, peu entretenu",
+            "etat": "Difficile"
+          },
+          {
+            "num": 10,
+            "nom": "Octeville — Fond du Val",
+            "lat": "49°34'12\"N",
+            "lng": "0°06'06\"E",
+            "acces": "Sentier en désuétude",
+            "etat": "Très difficile"
+          },
+          {
+            "num": 11,
+            "nom": "Octeville — Croquet (Tarzan)",
+            "lat": "49°33'26\"N",
+            "lng": "0°05'32\"E",
+            "acces": "Bon sentier, départ 100m avant parking",
+            "etat": "Bon"
+          },
+          {
+            "num": 12,
+            "nom": "Octeville — Aquacaux (OTAN)",
+            "lat": "49°32'47\"N",
+            "lng": "0°05'11\"E",
+            "acces": "Escalier 500 marches ou chemin latéral",
+            "etat": "Moyen"
+          },
+          {
+            "num": 13,
+            "nom": "La Hève — Bout du Monde",
+            "lat": "49°30'31\"N",
+            "lng": "0°04'07\"E",
+            "acces": "Chemin près du parking",
+            "etat": "Bon"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "stratigraphie",
+    "titre": "Stratigraphie",
+    "resume": "Biostratigraphie · Hardgrounds · Séquences Ce1–Ce3",
+    "image_banniere": "photos/pages/coupe_synthetique.jpg",
+    "contenu": [
+      {
+        "type": "paragraphe",
+        "texte": "Différentes approches stratigraphiques peuvent s'appliquer : biostratigraphie, stratigraphie événementielle, stratigraphie séquentielle, cyclostratigraphie, géochimie isotopique. À partir d'une trame séquentielle, des ensembles lithologiques et des niveaux-repères ont été distingués sur le terrain, nommés pour les identifier et suivre leurs variations latérales."
+      },
+      {
+        "type": "figure",
+        "src": "photos/pages/log_ce1_ce2_ce3.jpg",
+        "legende": "Log stratigraphique des formations cénomaniennes — Ce1 (Craie glauconieuse), Ce2 (Craie de Rouen), Ce3 (Craie d'Antifer)."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "La biostratigraphie se fonde essentiellement sur les Céphalopodes (ammonites), les Inocérames et les Foraminifères. La faune d'ammonites n'est pas abondante dans le Pays de Caux mais elle s'appuie sur la référence internationale."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "Trois formations sont distinguées : (1) la Craie glauconieuse (Ce1), limitée à sa base par la Surface de ravinement Octeville et à son sommet par le HG Rouen 1 ; (2) la Craie de Rouen (Ce2), allant du sommet du HG Rouen 1 au HG Antifer 1 ; (3) la Craie d'Antifer (Ce3), allant du sommet du HG Antifer 1 au sommet du HG Antifer 3."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "Le Cénomanien inférieur enregistre les plus fortes variations latérales. La Zone à Mantelliceras dixoni s'avère la plus condensée au Nord (Bruneval), particulièrement entre les hardgrounds Bruneval 1 et 2. La Zone à Cunningtoniceras inerme, supposée lacunaire jusqu'alors, a été identifiée par la récolte de Cunningtoniceras par les auteurs."
+      }
+    ]
+  },
+  {
+    "id": "paleontologie",
+    "titre": "Paléontologie",
+    "resume": "Groupes fossiles · Rôle dans le découpage stratigraphique",
+    "image_banniere": "photos/pages/coupe_biostrati.jpg",
+    "contenu": [
+      {
+        "type": "paragraphe",
+        "texte": "La partie paléontologique présente les groupes fossiles les plus caractéristiques utilisés pour le découpage stratigraphique du Cénomanien normand. Des planches photographiques rassemblent des spécimens récoltés pour l'essentiel par les auteurs sur les sites décrits."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "Les Ammonites constituent le groupe-guide principal de la biostratigraphie. Leur zonation est calée sur la référence internationale du NW européen. Bien que peu abondantes dans le Pays de Caux, leur présence permet des corrélations précises entre les différents secteurs étudiés."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "Les Inocérames (Bivalves) et les Foraminifères complètent l'armature biostratigraphique. Les Brachiopodes, plus utilisés en Angleterre et en Allemagne, sont ici un complément précieux. Les Échinides, abondants, permettent également des corrélations locales."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "Les Spongiaires, bien que non étudiés en détail dans l'ouvrage, sont très fréquents sous forme de sections tubulaires dans les silex de la formation Bruneval. L'ensemble présente des analogies avec les Sponge Beds du NW européen."
+      }
+    ]
+  },
+  {
+    "id": "page_08881",
+    "titre": "Séquence Ce 1",
+    "resume": "",
+    "image_banniere": "photos/pages/log_sequence_ce1.jpg",
+    "contenu": [
+      {
+        "type": "paragraphe",
+        "texte": "La coupe de référence se situe à une trentaine de mètres au S des cabines de\nSaint-Jouin-plage. Elle se répartit en 2 panneaux séparés vraisemblablement par une faille\ncar les niveaux stratigraphiques homologues sont décalés de plus de 3 mètres. Le panneau\nsud permet d’observer la base du Cénomanien et le panneau nord montre à son sommet les\nHGs Bruneval 1 et 2. Les couches inférieures à ces derniers hardgrounds sont difficilement\naccessibles et, pour pouvoir les toucher, il est préférable de choisir la coupe entre la Valleuse\nde Bruneval et le Grouin, à 1,8 km plus au Nord.\nSeule la partie basse de la coupe, s’étendant de la surface de ravinement Octeville au\nhardground Bléville 1, soit une épaisseur de 3,6 m, représente la séquence Ce1 ou\nSous-Zone à Neostlingoceras carcitanense. Elle se décompose en plusieurs parties.\n● Le tourtia, c’est-à-dire une glauconitite conglomératique à nodules centimétriques\nverdis phosphatés, à fossiles phosphatés et bois minéralisés. Ce terme de tourtia est\nrepris conventionnellement du langage des mineurs du Nord de la France. La surface\nde ravinement du tourtia, nette et ondulée, désignée comme la « surface de\nravinement Octeville » par JUIGNET (équivalente à la Surface d'Érosion\nSub-carcitanense de WRIGHT et al., 2017). Elle recoupe à Saint-Jouin une marne gris\nclair à faciès gaize (Gaize supérieure de JUIGNET). Plus au Sud, elle peut recouvrir\ndes bancs cherteux (Gaize inférieure) ou des marnes noires à faciès Gault. Des\nterriers (diamètre centimétrique) peuvent pénétrer sur plusieurs décimètres les\ncouches sous-jacentes dont les plus récentes ont fourni Stoliczkaia dispar, de la\ndernière biozone d’ammonites de l’Albien.\nLe faciès conglomératique s’étend sur une quarantaine de centimètres d’épaisseur\nen moyenne, mais il peut dépasser le mètre. Les galets verdis sont anguleux, de\ndimension généralement inférieure à 5 cm, disséminés, avec un granoclassement\nnormal. En certains endroits (Fond du Val, par exemple), les éléments, remaniés des\ncherts albiens, arrondis et recouverts d’une patine phosphatée, peuvent atteindre 50\ncm (jeu tectonique du seuil d’Octeville). Exceptionnellement, des galets de quartzite\nsimilaires à ceux du Poudingue ferrugineux albien sont récoltés.\nLocalement, au-dessus du conglomérat de base, se superpose un horizon à graviers\nphosphatés bruns.\nCette formation est très fossilifère :\n❏ Brachiopodes : Cyclothyris difformis, C. scaldisensis, Kingena arenosa,\nDilophosina paraplicata, Prælongithyris fecampi, Dereta pectita, Terebratulina\nprotostriatula,\n❏ Échinides : “Cidaris” strombecki, Goniophorus lunulatus, Holaster nodulosus,\nPliotoxaster deloriollii, Pseudholaster bicarinatus, P. latissimus, P.\nsuborbicularis, Catopygus columbarius, Salenia petalifera, Hyposalenia\nclathrata, Hirudocidaris vesiculosa, Tetragramma variolare, Polydiadema\nbonei, Discoides subuculus,\n❏ Bivalves : Rastellum carinatum, Neithea quinquecostata, Spondylus striatus,\nMerklinia aspera\nUne glauconitite inférieure à Spongiaires et Bivalves. L’épaisseur de ce niveau est\nplutôt faible à Saint-Jouin. Elle atteint environ 6 m localement à Heuqueville.\n● Une glauconitite médiane à cimentation siliceuse en boules de trente à soixante\ncentimètres. Ce niveau résistant à l’érosion forme un relief dans la falaise.\nDes accumulations de Spongiaires peuvent parfois se développer dans ces niveaux\nde glauconitite, formant un véritable biostrome. De nombreuses espèces y sont\nreconnues (Exanthesis ou Plocosyphia meandrina, Elasmostoma babstimalis,\nGuettardia stellata à 4 ou à 6 ailerons, Corynella socialis, Hallirhoa costata,\nCephalites sp. , Porosphæra patelliformis). Les Spongiaires sont souvent associés\naux Annélides (Cycloserpula plexus). Cette craie grise très glauconieuse comporte\nquelques ammonites, en particulier l’ammonite de zone Mantelliceras mantelli.\n● Les « silex Grand Hameau », une suite de 3 à 7 cycles élémentaires à silex noirs\nbien formés (épaisseur globale : jusqu’à 1,5 m). Ces silex ne sont bien identifiés\nqu’entre Bruneval et Le Grand Hameau. Ailleurs, il n’en reste que des reliques.\n● Une glauconitite supérieure riche en débris d’inocérames (I. crippsi).\nCe niveau représente l’ « Inoceramus crippsi Event » de la Zone à M. mantelli\nmoyenne (AMÉDRO et al., 2012) et le niveau 2 de LENNIER.\nLes Brachiopodes sont abondants. L’emblématique Terebrirostra lyra est présente\ndans ce niveau accompagnée de Cyclothyris difformis. L’ammonite Sharpeiceras\nlaticlavium a été récoltée au sommet de cette glauconitite (S. schlueteri n’a pas été\nrencontrée).\n● Le hardground Bléville 1 (alias HG Saint-Jouin), gris clair à perforations plus\nfoncées, silicifié. Ce hardground est considéré comme la limite de la séquence 1 (SB\nCe1). Il correspond au niveau M3 de GALE (1989) et probablement à l’excursion\npositive du δ13C dite LCE III (Lower Cenomanian Event III) de JARVIS et al. (2006)"
+      }
+    ]
+  },
+  {
+    "id": "page_12307",
+    "titre": "Sous-séquence Ce2a",
+    "resume": "",
+    "image_banniere": "photos/pages/log_sous_sequence_Ce2a.jpg",
+    "contenu": [
+      {
+        "type": "paragraphe",
+        "texte": "La sous-séquence Ce2a comporte :"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "● la marne Épaville 1 : une marne crayeuse bioclastique sombre passant à une craie\nbioclastique à altération superficielle ocre. Les nodules de pyrite limonitisés y sont\nfréquents. Dans cette marne, au contact du HG Bléville 1, on trouve Mantelliceras\nmantelli, M. picteti, Schloenbachia varians et Mantelliceras cantianum déjà signalée\npar JUIGNET (1974). Les fossiles y sont de bonne qualité ;"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "● un banc calcarénitique et ferrugineux, prenant une patine d’altération ocre,\ncaractéristique sur les blocs éboulés exposés à la mer ;"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "● la marne Épaville 2 : une couche de marne noire (0,1 m), fine et assez bien\nmarquée. Elle contient quelques nodules limonitiques et de rares Mariella sp. ;"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "● les silex Briquemare : 2 niveaux principaux de craie fortement silicifiée, parfois\nintercalés de passées marneuses. La silicification donne des cherts difformes à\nnoyau gris, de plus en plus foncés vers le haut, parfois de véritables silex noirs. Les\nSpongiaires sont très fréquents sous forme de sections tubulaires (Laocoetis fittoni\n?). Vus en plan, ces Spongiaires forment des patch-reefs d’environ 1 m² englobés\ndans des marnes claires ;"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "● la (ou les) marne(s) Épaville supérieure(s) formant une encoche d’érosion bien\nmarquée. Ces marnes sont sableuses, gris foncé, avec une lamination souvent\nondulée ;"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "● le banc à Eponges Brière, de teinte claire, irrégulier et discontinu, à sections de\nSpongiaires tubulaires. Les silex Briquemare et Brière offrent une analogie avec le\n“Sponge Beds/Mariella Event” du Cénomanien allemand (WILMSEN, 2012). Ces deux\nniveaux sont désignés ici “Spongiaires inférieurs” (par rapport aux silex Heuqueville\nsuivants) ;"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "● la couche claire : une craie marneuse homogène, assez fine, sans silex, formant\nune bande claire par rapport à l’encaissant ;"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "● les silex Heuqueville : jusqu’à 11 couplets élémentaires avec des silex noirs ou gris\nà cortex clair très mince et des craies marneuses gris moyen. On y rencontre les\n25Le Cénomanien du littoral normand\néchinides Epiaster crassissimus, E. distinctus et Holaster nodulosus. Ils se\nsubdivisent en 3 membres :\n○ les silex Heuqueville inférieurs, constitués de 2 parties séparées par un\nintervalle comportant 3 niveaux marneux (ici désignées marnes Tanville a, b\net c) :\n- partie inférieure formée de 2 ou 3 bancs noirs épais,\n- partie supérieure faite de petits silex gris discontinus.\n○ les silex Heuqueville supérieurs, armés de 6 bancs épais de silex noir, aux\ncontours irréguliers. Le banc inférieur est dédoublé ;"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "● La surface d’érosion Poterie se manifeste par une surface durcie décolorée ou\nencroûtée (firmground Poterie). On la touche en place sur le platier de la Valleuse\nde Bruneval. Plus au Sud, jusqu’à la descente d’Heuqueville, elle est accessible dans\nde nombreux panneaux éboulés"
+      }
+    ]
+  },
+  {
+    "id": "page_03267",
+    "titre": "Sous-séquence Ce2b",
+    "resume": "",
+    "image_banniere": "photos/pages/log_sous_sequence_Ce2b.jpg",
+    "contenu": [
+      {
+        "type": "paragraphe",
+        "texte": "Elle comporte :"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "- la marne Poterie 1 ;\n- les silex Poterie, subdivisés généralement par une marne plus discrète, la marne\nPoterie 2 ;\n- la marne Bruneval 1, une craie marneuse claire ;\n- les silex Bruneval formés de trois membres, inférieur, médian et supérieur ;\n- le hardground Bruneval 1 quand celui-ci est présent. Du Nord vers le Sud, ce\nhardground évolue. D’une puissance de plus d’un mètre au N, il devient imperceptible\nau S. Cette évolution correspond à une durée de formation variable selon l’endroit.\nLorsqu’il est impossible de reconnaître ce hardground, la fixation de la limite\nsupérieure de la sous-séquence devient problématique. Nous verrons sur quels\narguments apporter une réponse.\nDes variations latérales conséquentes s’observent dans cette sous-séquence. Elles\ntraduisent des profondeurs du fond variables. Pour les analyser, les observations\nsont subdivisées en 3 secteurs, du Nord au Sud :\n- le secteur de Saint-Jouin, entre la Valleuse de Bruneval et la descente du Grand\nHameau ;\n- le secteur du Tronquay, entre le Grand Hameau et la descente d’Ecqueville ;\n- le secteur d’Ignauval, entre la descente d’Ecqueville et le Cap de la Hève"
+      }
+    ]
+  },
+  {
+    "id": "page_32337",
+    "titre": "Sous-séquence Ce3a",
+    "resume": "",
+    "image_banniere": "",
+    "contenu": [
+      {
+        "type": "paragraphe",
+        "texte": "Elle s’étend du début du HG Bruneval 1 au sommet du HG Bruneval 2b. Ces deux\nhardgrounds sont liés à une activité érosive variable, en intensité et en position. Les\nvariations latérales de la sous-séquence Ce3a sont importantes.\nDeux faits liés peuvent être constatés :\n1) vers le Nord, les hardgrounds Bruneval 1 et 2 sont très bien marqués dans le paysage. En\nse déplaçant vers le Sud, ils deviennent moins nets. C’est particulièrement le cas pour le HG\nBruneval 1 qui perd son individualité au Nord d’Octeville ;\n2) vers le Nord, une plus forte et longue activité des deux hardgrounds conduit à une\ncondensation de la sous-séquence. Ainsi, à Bruneval, les hardgrounds Bruneval 1 et 2 sont\ndirectement superposés."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "1. SECTEUR DE SAINT-JOUIN-BRUNEVAL\nLa coupe de Saint-Jouin-Bruneval est d’un accès très facile. Nombre d’auteurs (hors\nJUIGNET) l’ont donc considérée comme représentative du Cénomanien du Pays de Caux. En\ncet endroit, les deux hardgrounds Bruneval 1 et Bruneval 2 sont superposés et ont été\ngénéralement globalisés en un ensemble unique HGs Bruneval 1&2. En fait, un déplacement\nvers le Sud montre que l’intervalle temporel qui les sépare est plus important.\nEntre le Nord de la Valleuse de Bruneval et la descente au terminal pétrolier, la\nsous-séquence Ce3a peut être touchée directement en coupe dans la falaise vive. Elle ne\nmesure que 1,3 m. La moitié supérieure constitue le HG Bruneval 2. La moitié inférieure est\nune craie marneuse recouvrant le HG Bruneval1. Dans cette marne sont dispersées des\nreliques de silex. Dans ce secteur, le HG Bruneval 2 est unique (non-subdivisé) et il est coiffé\nd’un enduit limonitique caractéristique.\nAu Sud de la plage de Saint-Jouin, les observations se font essentiellement sur les\npanneaux éboulés. La falaise vive, épisodiquement visible, permet une vérification à\ndistance.\nLe HG Bruneval 1 est faiblement fossilifère, avec de rares ammonites à la patine verte\ncaractéristique dont Schloenbachia varians, Acompsoceras renevieri, Mantelliceras saxbii,\nM. picteti et M. dixoni.\nLe hardground est recouvert par un double (parfois triple) niveau de craie marneuse claire,\nriche en débris fossiles : Discoides subuculus, Holaster nodulosus, Catopygus columbarius,\nEpiaster crassissimus, Entolium orbiculare, Pycnodonte vesicularis. Les Inoceramus\nvirgatus prévalent au sommet de cette marne supra-Bruneval 1."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "2. SECTEUR ENTRE SAINT-JOUIN ET CAUVILLE\nLes 2 hardgrounds Bruneval 1 et 2 étant bien repérés, on peut suivre leur évolution en\nprogressant du Nord au Sud.\nÀ l’extrémité S de la plage de Saint-Jouin, un niveau de silex s’intercale entre le HG\n55Le Cénomanien du littoral normand\nBruneval 1 et le HG Bruneval 2. Puis, en progressant vers le Sud, d’autres silex s’ajoutent.\nAu S de la Valleuse de Cauville, on compte jusqu’à 11 niveaux de silex, dont 8 bien\ndifférenciés. Cette série de silex est désignée ici “silex Cauville” et elle correspond à la\nmajeure partie de la sous-séquence Ce3a. L’équivalence est probable avec “The Bank of\nlimestones”, une série de gros bancs calcaires qui apparaît au Southerham Grey Pit dans le\nSussex ou à la baie de Compton dans l’île de Wight (MORTIMORE et al., 2001). Dans la\nnumérotation des couplets de GALE (1995), le rapprochement se fait avec l’intervalle B12 à\nB22. Dans le Boulonnais, la correspondance peut également se faire avec les bancs à\nvirgatus du repère R5 (AMÉDRO & ROBASZYNSKI, 2001). En Allemagne, WILMSEN (2008)\nconsidère que ces couches se sont déposées pendant un événement de MFS, le\n“Schloenbachia / I. virgatus Event”.\nUne subdivision parmi les silex Cauville peut se faire d’après leur teinte. Ainsi, localement\nau Tronquay, on distingue :\n○ les Silex Cauville inférieurs noirs (sCi1 à sCi3),\n○ les Silex Cauville médians gris (sCm1 à sCm3),\n○ les Silex Cauville supérieurs noirs (sCs1 à sCs5).\nLes silex Cauville inférieurs sont fréquemment mal conservés et ont une forme irrégulière.\nLa particularité du silex sCi1 est d’avoir une structure spongiforme.\nTrois des silex Cauville supérieurs sont particulièrement épais (sCs1 à sCs3). Ils forment un\ntriplet caractéristique dans la falaise vive.\nLe silex sCs1 se distingue des silex sCs2 et sCs3 par sa structure :\n- sCs1 est tabulaire. Il montre un cortex épais et plat (particulièrement le cortex inférieur).\nUn joint net se place à une dizaine de centimètres au-dessous ;\n- sCs2 et sCs3 ont une forme irrégulière (Thalassinoides).\nLa faune est peu abondante (Holaster nodulosus, grandes ammonites Parapuzosia ).\nAu Sud de la descente du Tronquay, les silex Cauville restent visibles épisodiquement en\nfalaise ou sous forme de panneaux de petite dimension.\nÀ partir d’Heuqueville, et jusqu’à la Hève, le HG Bruneval 2 se dédouble. Un silex s’intercale\nentre les deux parties. Lorsqu’il est utile de les distinguer (voir ci-après), nous les désignons\nHG Bruneval 2a et HG Bruneval 2b."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "3. SECTEUR ENTRE LA DESCENTE DE L’OTAN ET LA HÈVE\n● Les silex Cauville\nIls sont bien représentés en falaise et dans quelques panneaux décamétriques.\nDe même qu’à Cauville, une succession en 3 parties s’observe : les Silex Cauville inférieurs,\nnoirs ou spongiformes, les silex Cauville médians, gris, les Silex Cauville supérieurs, noirs.\n❖ Les silex Cauville inférieurs sont compris entre les joints 4 et 5 (notés silex n° 7 et\nsilex n° 8).\nLe silex n° 7 peu épais, constitué d’une double plaque grise.\nLe silex n° 8 est le plus remarquable : par sa forte épaisseur (de l’ordre de 40 cm),\npar sa forme irrégulière très découpée et par sa texture spongiforme. De loin, les\ncoeurs noirs et les cortex clairs arrangés de manière chaotique lui donnent un aspect\nponctué. Des paramoudras traversent fréquemment ce silex. Sa position\n56Le Cénomanien du littoral normand\nstratigraphique en fait un équivalent probable du couplet B11 ou repère M5 de GALE\n(1995), encore désigné « The Rib » en Angleterre.\nEntre les silex Cauville inférieurs et médians se place une couche de marne grise\népaisse et régulière formant une encoche remarquable (joint 5).\n❖ Les silex Cauville médians sont constitués de 3 bancs de teinte grise uniforme. Le\nbanc inférieur est particulièrement épais, ce qui permet de le reconnaître aisément.\n❖ Les silex Cauville supérieurs sont réduits à environ 3 bancs. Ils semblent avoir été\npartiellement “digérés” par le HG Bruneval 2 à leur partie supérieure.\nNotons deux particularités, propres aux silex Cauville de ce secteur, qui peuvent aider à\nleur reconnaissance sur le terrain :\n❖ la première particularité est relative aux joints de stratification : certains joints\nmarneux nets servent de plans de décollement privilégiés pour les blocs éboulés. Le\nmorcellement des panneaux effondrés conduit à des blocs de différents intervalles\nstratigraphiques, limités par ces joints. Sur les figures, nous avons numéroté les joints\nprincipaux, par exemple :\n- joint 1, à la base du banc de silex Saint-Andrieux,\n- joint 7, entre les silex Cauville médians et supérieurs.\n❖ la seconde particularité est un faciès ichnologique apparaissant dans les silex\nCauville supérieurs, entre Le Tronquay et La Hève. Les interbancs crayeux entre les\nsilex sont affectés par une lamination ondulée et discontinue que l’altération et le\nlavage par le mer mettent en relief. Nous avons utilisé le terme imagé de “couche à\nfrisure” pour décrire ce faciès. La vue du plan de stratification atteste qu’il s’agit de\nréseaux de terriers horizontaux, aplatis, superposés et plus ou moins silicifiés. De\ntelles couches à frisure sont présentes dans les silex Cauville supérieurs (appelées\nici frisures inférieures, cfi1 et cfi2) mais également au-dessus du HG Bruneval 2\n(frisures supérieures, cfs1 et cfs2). Ce faciès est proche des “laminated structures” du\nJUKES-BROWNE Bed 7 (voir ci-après).\n● Le HG Bruneval 2\nCe hardground est un des plus caractéristiques. On peut le toucher en place de chaque\ncôté de la Valleuse de Bruneval, ainsi que sous le Grouin et dans la descente au terminal\npétrolier. Mais plus souvent, il se rencontre sous forme de blocs éboulés, entre les caps\nd’Antifer et de La Hève. Il est généralement assez épais, de l’ordre du mètre, mais il peut\natteindre jusqu’à 1,5 m. Il présente souvent une surface supérieure ferrugineuse continue, ce\nqui permet de le distinguer du HG Bruneval 1 qui peut néanmoins présenter ce type d’enduit,\nmais de manière discontinue. Le HG Bruneval 1 est également plus glauconieux que le HG\nBruneval 2 (un moyen mnémotechnique de s’en souvenir : 1 verre “vert” 2 rouge).\nLorsque son épaisseur est forte (à partir d’Heuqueville vers le Sud), un niveau marneux\nvient clairement scinder le HG Bruneval 2 en deux parties, d’où la distinction d’un HG\nBruneval 2a et d’un HG Bruneval 2b. Cette marne peut servir de joint de décollement dans\nles blocs éboulés et elle offre alors à la vue de belles surfaces à ammonites (surtout\nAcompsoceras). L’existence de 2 hardgrounds superposés avait été constatée par JUIGNET\n(1974), mais il avait interprété le hardground inférieur comme le HG Bruneval 1 (avec pour\ncorollaire la nécessité de créer un HG Heuqueville surnuméraire).\nAu Sud de Cauville, un silex intercalaire vient même s’ajouter entre le HG Bruneval 2a et\n57Le Cénomanien du littoral normand\nle HG Bruneval 2b. Il s’agit bien de deux épisodes séparés dans le temps.\nLe HG Bruneval 2 renferme :\n- des Céphalopodes : Neohibolites ultimus, Schloenbachia varians, Mantelliceras\ndixoni avec souvent le centre phosphaté de couleur orange, grandes Acompsoceras\nrenevieri très souvent mal conservées ;\n- des Échinides : Discoides subuculus, Holaster nodulosus, Epiaster crassissimus,\nCatopygus columbarius, Hemiaster bufo, Pseudholaster sequanicus, Tetragramma variolare,\nPolydiadema bonei, Tiaromma michelini, Salenia petalifera, Hirudocidaris vesiculosa.\nCrassiholaster bischoffi, n’est rencontré que dans ce niveau ;\n- des Bivalves : Merklinia aspera, Neitheia quinquecostata.\nEn Allemagne, les imprégnations ferrugineuses sont communes au sommet de la Zone à\nmantelli (LEHMANN et al., 1995).\nLe HG Bruneval 2 est considéré ici comme équivalent :\n● du « Double Limestone » ou couplet B23-B24 ou repère M6 dans le Sussex\n(GALE, 1995),\n● des “dixoni limestones” de WRIGHT et al. (2017),\n● du “bipartite limestone” de la carrière d’Hoppenstedt en Allemagne (WILMSEN,\n2007b),\n● du repère R6 (2 bancs crayeux décimétriques à Éponges) dans le Boulonnais\n(AMÉDRO & ROBASZYNSKi, 2001),\n● des couches 508-516 de la coupe de Blieux dans le SE de la France\n(REBOULET et al., 2012"
+      }
+    ]
+  },
+  {
+    "id": "page_27370",
+    "titre": "Sous-séquence Ce3b",
+    "resume": "",
+    "image_banniere": "photos/pages/log_sous_sequence_Ce3b.jpg",
+    "contenu": [
+      {
+        "type": "paragraphe",
+        "texte": "Sous-séquence (?) Ce3b (Zone à Mantelliceras dixoni"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "seule à la base de la Zone à\nCunningtoniceras inerme)\nElle occupe l’intervalle entre le sommet du HG Bruneval 2 et le sommet du HG Bruneval 3.\nDe Bruneval à Saint-Jouin, on peut la toucher en place, mais elle y est légèrement\ncondensée (un peu plus de 3,5 m). À Heuqueville, les gros panneaux éboulés offrent de\nbonnes coupes mieux développées (4,45 m). 11 couplets craie/silex peuvent être\ndifférenciés."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "1 - DE BRUNEVAL À CAUVILLE"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "Au-dessus de la surface ferrugineuse du HG Bruneval 2, on trouve :"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "● un joint marneux avec graviers remaniés phosphatés fossilifère ayant fourni une\nfaune de céphalopodes très diverse :\n- Ammonites : Schloenbachia varians, Hyphoplites avec parfois les reflets irisés de la\nnacre dont Hyphoplites falcatus, H. curvatus curvatus, H. curvatus aurausioniensis,\nForbesiceras obtectum, Acompsoceras renevieri, Mantelliceras mantelli et M. dixoni ;\n- Turrilites : Mesoturrilites aumalensis, M. boerssumensis, Hypoturrilites gravesianus,\nH. tuberculatus et Turrilites scheuchzerianus ;\n- Bélemnites : Neohibolites ultimus."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "● 3 couplets craie marneuse/ silex (épaisseur totale 45 cm). Les silex sont de petite\ntaille et dispersés, de telle sorte que l’ensemble apparaît essentiellement crayeux ;"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "● un niveau marneux, à Pectens et Pleurotomaires, désigné ici “marne Cayenne” ou\n“joint Cayenne” car il sert généralement de niveau de décollement dans les blocs\néboulés ;"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "● un niveau de silex épais (40 cm), avec une forme extrêmement découpée, désigné ici\n“silex Cayenne”. Il semble résulter de l’amalgamation de plusieurs niveaux de silex.\nLa cassure présente un patchwork blanc et noir ;"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "● 3 couplets craie/silex ;"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "● une amorce de hardground (ou firmground), désigné FG Guildins ;"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "● une première passée marneuse ou marne Guildins inférieure ;"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "● un silex noir semi-tabulaire, le silex Guildins ;"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "● une seconde passée marneuse, la marne Guildins supérieure ;"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "● 2 couplets craie/silex bien marqués ;"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "● craie marneuse sombre à débris de pectinidés (20 cm) ;"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "● le HG Bruneval 3.\nLe HG Bruneval 3 a des caractéristiques assez constantes :\n● une épaisseur d’environ 40 cm ;\n● une dureté et une cristallinité fortes (aspect de sucre cristallisé) ;\n● une coloration assez claire ;\n● la présence à sa base d’une craie marneuse à rares silex (environ 20 cm) à\nNeithea (marne infra-Bruneval 3) ;\n● La présence à son sommet d’une craie également pauvre en silex. Ces petits\nsilex isolés sont d’un type tubulaire caractéristique.\n67Le Cénomanien du littoral normand\nCes propriétés font que ce hardground se détache souvent en relief dans la falaise.\nUn gros panneau éboulé en 49°37.34N 0°08.29E (au N de la descente d’Heuqueville)\npermet d’échantillonner une coupe allant du HG Bruneval 1 au HG Rouen 1.\nChronologiquement, c’est en cet endroit, au niveau du sommet du HG Bruneval 3, sous le\npremier silex sus-jacent, que 2 spécimens de Cunningtoniceras ont été repérés initialement\npar l’un d’entre nous.\nDepuis lors, d’autres Cunningtoniceras ont été récoltés. Ils sont communs dans le HG\nBruneval 3, mais ils sont présents dès la marne Guildins inférieure. Ce fossile de zone\nn’avait pas encore été signalé, laissant sous-entendre jusqu’à présent une lacune sédimentaire. Les premières Acanthoceras A. gr. rhotomagense apparaissent dans le HG\nBruneval 3, ainsi qu’une Forbesiceras.\nCette découverte replace le début du Cénomanien moyen au HG Bruneval 3 au moins et,\nplus vraisemblablement, au sommet du FG Guildins.\nSur le littoral, les Cunningtoniceras n’ont pas été récoltés dans le HG Rouen 1, à la\ndifférence des coupes de Pavilly et de Rouen.\nD’autres faunes sont récoltées dans le HG Bruneval 3 :\n● des dents indéterminées ;\n● des Crustacés : Ils sont présents sous forme de moules internes, la carapace étant\nréduite à un enduit farineux. Parmi eux Diaulax oweni, Plagiophtalmus oviformis et\nNecrocarcinus labeschii ;\n● des Échinides : La faune est dominée par les échinides réguliers. Citons\nTetragramma variolare, Allomma desori, Salenia petalifera, Hyposalenia clathrata,\nGlyptocyphus difficilis, Hirudocidaris vesiculosa, Tylocidaris velifera, Cottaldia\nbenettiae, Echinocyphus rotatus. Les irréguliers sont représentés par Discoides\nsubuculus et Rostrogalerus rostratus abondants. Plus rarement on rencontre\nPseudholaster sequanicus, Conulus castanea et Holaster aff trecensis ;\n● des Crinoïdes : Glenotremites rotundus, ?Isocrinus sp. .\nLe HG Bruneval 3 est difficilement corrélable avec d’autres régions (même dans les coupes\nde Rouen).\nIl pourrait s’agir du “Strong limestone” du couplet B39 à Southerham (GALE, 1995),\négalement reconnu à Wunstorf (WILMSEN, 2007b) mais plus vraisemblablement du couplet\nB33 à Southerham, mais sans Cunningtoniceras reconnu (PAUL et al., 1994). Le sommet du\nbanc calcaire B33 marque la limite entre les séquences Ce III et Ce IV (niveau d’érosion) en\nAllemagne septentrionale (WILMSEN et al., 2007).\nDans le Boulonnais, le banc crayeux inférieur du repère R11 (AMÉDRO et ROBASZYNSKI,\n2001) pourrait être équivalent du HG Bruneval 3.\n68Le Cénomanien du littoral normand\nRemarques :\n1. il est à noter notre absence de récolte du brachiopode Orbirhynchia mantelliana dont\nl’occurrence constitue un triple bio-événement reconnu. Le premier niveau attendu\n(R7 du Boulonnais, AMÉDRO & ROBASZYNSKI, 2001) aurait dû se placer entre le HG\nBruneval 2 et la marne Cayenne (les deux autres se situant de part et d’autre du HG\nRouen 1) ;\n2. le joint (marne) Cayenne semble occuper la même position stratigraphique que la\nmarne M II en Allemagne (WILMSEN, 2007b) ou que le repère R8 du Boulonnais\n(AMÉDRO & ROBASZYNSKI, 2001) ;\n3. le silex Cayenne fournit Turrilites scheuchzerianus, ainsi que que de grandes\nammonites (Parapuzosia). D’autres T. scheuchzerianus sont présents entre le HG\nGuildins et le silex Guildins. Cet intervalle pourrait être équivalent à l’événement\néponyme (scheuchzerianus event) de la Zone à Dixoni décrit en Allemagne\n(WILMSEN, 2007b) ;\n4. très hypothétiquement, la marne Guildins inférieure pourrait être comparée à la\nmarne M1b (Meyer Bed) en Allemagne ;\n5. la marne infra-Bruneval 3 présente des analogies avec le repère 10 du Cénomanien\ndu Cap Blanc-Nez (AMÉDRO & ROBASZYNSKI, 2001). Ce R10 est une marne sombre à\nperforations directement recouverte par le banc inférieur du repère R11 ;\n6. les silex tubulaires superposés au HG Bruneval 3, mais existant en moindre\nabondance au-dessous, résulteraient de l’épigénie de terriers de type Chondrites\nsignalés (mais non silicifiés) dans ces niveaux, en Angleterre et dans le Boulonnais."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "2 - AU SUD D’OCTEVILLE"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "1. La marne à galets phosphatés à fossiles irisés, au-dessus du HG Bruneval 2 est très\nbien développée (alors que l’imprégnation ferrugineuse est moindre). Elle constitue\nun joint de décollement (joint 8) pour de nombreux blocs éboulés, fournissant de\nnombreuses ammonites.\n2. L’intervalle entre la marne à galets phosphatés et la marne Cayenne (joint 9)\ns’épaissit (1,2 m). Ce découpage fournit des blocs assez reconnaissables. D’autre\npart, l’intervalle s’enrichit en silex : un silex “flammé” (silex à la forme très découpée\nparticulière) basal et 2 silex tabulaires. Entre les silex se développe des “couches à\nfrisure supérieures” ; la plus basse de celles-ci est ferrugineuse, de même type que\ncelle apparaissant dans les silex Cauville supérieurs.\n3. Le silex Cayenne, toujours très découpé, présente ici un aspect maculé, blanc et noir."
+      }
+    ]
+  },
+  {
+    "id": "page_34953",
+    "titre": "Sous-séquence Ce4a",
+    "resume": "",
+    "image_banniere": "photos/pages/log_sous_sequence_Ce4a.jpg",
+    "contenu": [
+      {
+        "type": "paragraphe",
+        "texte": "Sous-séquence Ce4a (Zone à Cunningtoniceras inerme p. p. )."
+      },
+      {
+        "type": "paragraphe",
+        "texte": "Elle correspond à\nl’intervalle entre le HG Bruneval 3 et le HG Rouen 1 (entre 3 et 4 m d’épaisseur).\nLa partie inférieure comporte environ 11 couplets craie/silex :\n● les deux premiers (s1 et s2) comportent des petits silex isolés ayant la forme de\ntubulures hérissées de petites cornes. En section, ils apparaissent comme une\ncouronne noire avec une partie centrale blanche. Le “squelette” initial autour duquel\npeuvent s’être développés ces silex pourrait être celui de terriers de type Chondrites\n(ramifié) ou Planolites. Cet ichnofaciès pourrait être mis en correspondance avec\ncelui connu dans le Boulonnais ou en Allemagne (GALE, 1995) ;\n● des 4 silex suivants (s3, s3’, s4, s4’) seuls les silex s3 et s4 forment 2 bancs épais ;\n● un niveau marneux d’une dizaine de cm d’épaisseur (précédé d’une surface durcie),\nformant une encoche molle dans la falaise : la marne Sainte-Marie 1 (MSM1) ;\n● deux silex (s5 et s5’). Le silex s5 est épais et peut-être composite ;\n● un joint marneux, peu épais, mais net, servant souvent de surface de rupture de\nblocs, la marne Sainte-Marie 2 (MSM2). Nombreux Entolium ;\n● les trois derniers silex sont très peu épais, discontinus et en partie « digérés » par le\nhardground sus-jacent.\nVus de loin en falaise, les silex 3, 4 et 5 forment un triplet de silex noirs caractéristique\n(autant que le triplet des silex Cauville supérieurs). Sur les coupes, il est désigné “triplet\nSureau”.\nL’horizon des marnes Sainte-Marie peut être rapproché hypothétiquement :\n● d’une bentonite du Western Interior (U.S.A.), datée de 95.78±0.61 Ma (GALE et al.,\n2012) ;\n● de la couche à A. arlesiensis ou couplet B41 de GALE. Les marnes Sainte-Marie\ncontiennent de nombreux bivalves (Entolium en particulier), mais nous n’avons\njamais récolté ce bivalve marqueur (qui existe au musée de Rouen) ;\n● de la toute première excursion positive du 𝛅13C du Mid Cenomanian Event (MCE1a).\nL’intervalle contient Chenendopora fungiformis, spongiaire en forme de calice et de grandes\nammonites Parapuzosia (Austinoceras) austeni.\nLe HG Rouen 1 épais (80 cm), forme la partie supérieure. Il est profondément traversé par\ndes terriers de gros diamètre dans lesquels s’insinue le sédiment de l’Horizon de Rouen\nsupérieur. Le HG Rouen 1 équivaut au Tenuis Limestone en Angleterre méridionale ou au\nniveau B42 de GALE ou au Totternhoe Stone/Grey Bed du Bedfordshire ou encore au HG\nThéligny du stratotype du Mans. La faune est la suivante :"
+      },
+      {
+        "type": "paragraphe",
+        "texte": "● Brachiopodes : Grasirhynchia grasiana, Cyclothyris formosa, Capillithyris disparilis,\nKingena arenosa ;\n● Bivalves : Neithea quinquecostata, N. aequicostata, Rastellum diluvianum ;\n● Échinides réguliers : Stereocidaris dissimilis, Hirudocidaris vesiculosa, Tylocidaris\nvelifera, Hyposalenia clathrata, Allomma desori, Tiaromma michelini, Polydiadema\nbonei, Glyphocyphus radiatus, Cottaldia benettiae, Salenia petalifera, Tetragramma\nvariolare, Glyptocyphus difficilis ;\n● Échinides irréguliers : Camerogalerus cylindricus, Discoides subuculus, Catopygus\ncolombarius, Hemiaster bufo, Conulus castaneus. Il contient également les premiers\nCrassiholaster subglobosus et les derniers Epiaster crassissimus et Pseudholaster\nsequanicus"
+      }
+    ]
+  }
+]
