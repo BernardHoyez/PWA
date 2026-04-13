@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta name="theme-color" content="#07111f"/>
+  <meta name="description" content="Extraction de tuiles orthophoto le long d'un tronçon littoral quelconque"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-title" content="litto2mbtiles"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="icon" type="image/png" href="icons/icon192.png"/>
+  <link rel="apple-touch-icon" href="icons/icon192.png"/>
+  <title>litto2mbtiles</title>
+
+  <link href="https://unpkg.com/maplibre-gl@4.1.3/dist/maplibre-gl.css" rel="stylesheet"/>
+  <script src="https://unpkg.com/maplibre-gl@4.1.3/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Header ── -->
+  <header>
+    <div class="logo">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+        <path d="M2 17c3-3 5 3 8 0s5-3 8 0 5 3 5 0" stroke="#00c8b4" stroke-width="2" stroke-linecap="round"/>
+        <path d="M2 21c3-3 5 3 8 0s5-3 8 0 5 3 5 0" stroke="#008a7c" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="7"  cy="9" r="2" stroke="#f0a500" stroke-width="1.5"/>
+        <circle cx="19" cy="9" r="2" stroke="#f0a500" stroke-width="1.5"/>
+        <path d="M9 9h8" stroke="#f0a500" stroke-width="1" stroke-dasharray="2 2"/>
+      </svg>
+      <span class="logo-text">litto<em>2mbtiles</em></span>
+    </div>
+
+    <div class="hdiv"></div>
+
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="extract">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1v9M5 7l3 3 3-3M2 13h12" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg>
+        Extraire
+      </button>
+      <button class="tab-btn" data-tab="viewer">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.4" fill="none"/><circle cx="8" cy="8" r="2" fill="currentColor"/></svg>
+        Visualiser
+      </button>
+    </nav>
+
+    <div class="status-badge">
+      <div class="sdot" id="sdot"></div>
+      <span id="stxt">Prêt</span>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ═══ PANEL EXTRACT ═══ -->
+    <section id="panel-extract" class="panel active">
+      <aside class="sidebar">
+
+        <!-- Extrémités -->
+        <div class="sblock">
+          <div class="stitle">Extrémités du tronçon</div>
+
+          <!-- Mode de saisie -->
+          <div class="mode-toggle">
+            <button class="mode-btn active" data-mode="name">Par nom</button>
+            <button class="mode-btn" data-mode="coords">Par coordonnées</button>
+          </div>
+
+          <!-- Saisie par nom -->
+          <div id="input-name">
+            <div class="input-group">
+              <label class="input-label">Point de départ</label>
+              <div class="input-row">
+                <input class="ipt" id="name-start" type="text" placeholder="ex: Le Havre" autocomplete="off"/>
+                <button class="btn-resolve" id="resolve-start">→</button>
+              </div>
+              <div class="coord-display" id="coord-start">—</div>
+            </div>
+            <div class="input-group">
+              <label class="input-label">Point d'arrivée</label>
+              <div class="input-row">
+                <input class="ipt" id="name-end" type="text" placeholder="ex: Étretat" autocomplete="off"/>
+                <button class="btn-resolve" id="resolve-end">→</button>
+              </div>
+              <div class="coord-display" id="coord-end">—</div>
+            </div>
+          </div>
+
+          <!-- Saisie par coordonnées -->
+          <div id="input-coords" style="display:none">
+            <div class="input-group">
+              <label class="input-label">Départ — Longitude, Latitude (DD)</label>
+              <div class="input-row">
+                <input class="ipt" id="coord-lng-start" type="number" step="0.0001" placeholder="0.0712"/>
+                <input class="ipt" id="coord-lat-start" type="number" step="0.0001" placeholder="49.5147"/>
+              </div>
+            </div>
+            <div class="input-group">
+              <label class="input-label">Arrivée — Longitude, Latitude (DD)</label>
+              <div class="input-row">
+                <input class="ipt" id="coord-lng-end" type="number" step="0.0001" placeholder="0.1985"/>
+                <input class="ipt" id="coord-lat-end" type="number" step="0.0001" placeholder="49.7067"/>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn primary" id="btn-fetch-coast" disabled>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 2C4.7 2 2 5 2 8s2.7 6 6 6 6-3 6-6-2.7-6-6-6"/><path d="M8 5v3l2 2"/></svg>
+            Charger le trait de côte (OSM)
+          </button>
+        </div>
+
+        <!-- Paramètres -->
+        <div class="sblock">
+          <div class="stitle">Paramètres</div>
+
+          <div class="param-row">
+            <span class="param-label">Source ortho</span>
+            <div class="src-row" style="margin:0;flex:0 0 auto">
+              <button class="src-btn active" data-src="ign">IGN</button>
+              <button class="src-btn" data-src="osm">OSM</button>
+            </div>
+          </div>
+
+          <div class="param-row">
+            <span class="param-label">Buffer latéral</span>
+            <select class="ipt" id="param-buffer" style="flex:0 0 120px">
+              <option value="0.1">100 m</option>
+              <option value="0.2" selected>200 m</option>
+              <option value="0.5">500 m</option>
+              <option value="custom">Personnalisé</option>
+            </select>
+          </div>
+          <div class="input-group" id="buffer-custom-row" style="display:none">
+            <label class="input-label">Buffer personnalisé (mètres)</label>
+            <input class="ipt" id="buffer-custom-val" type="number" min="50" max="2000" value="200"/>
+          </div>
+
+          <div class="param-row">
+            <span class="param-label">Zoom minimum</span>
+            <select class="ipt" id="param-zmin" style="flex:0 0 80px">
+              <option value="13">13</option><option value="14">14</option>
+              <option value="15" selected>15</option><option value="16">16</option>
+            </select>
+          </div>
+          <div class="param-row">
+            <span class="param-label">Zoom maximum</span>
+            <select class="ipt" id="param-zmax" style="flex:0 0 80px">
+              <option value="15">15</option><option value="16">16</option>
+              <option value="17" selected>17</option><option value="18">18</option>
+              <option value="19">19</option>
+            </select>
+          </div>
+
+          <button class="btn" id="btn-compute" disabled>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M8 5v6"/></svg>
+            Calculer les tuiles
+          </button>
+        </div>
+
+        <!-- Stats -->
+        <div class="sblock">
+          <div class="stitle">Tuiles calculées</div>
+          <div class="tile-stats">
+            <div class="stat-box"><span class="stat-num" id="stat-z1">—</span><span class="stat-lbl" id="lbl-z1">Z—</span></div>
+            <div class="stat-box"><span class="stat-num" id="stat-z2">—</span><span class="stat-lbl" id="lbl-z2">Z—</span></div>
+            <div class="stat-box"><span class="stat-num" id="stat-z3">—</span><span class="stat-lbl" id="lbl-z3">Z—</span></div>
+          </div>
+          <div class="tile-stats">
+            <div class="stat-box"><span class="stat-num" id="stat-total">—</span><span class="stat-lbl">Total</span></div>
+            <div class="stat-box"><span class="stat-num" id="stat-size">—</span><span class="stat-lbl">Taille est.</span></div>
+            <div class="stat-box"><span class="stat-num" id="stat-len">—</span><span class="stat-lbl">Longueur</span></div>
+          </div>
+        </div>
+
+        <!-- Téléchargement -->
+        <div class="sblock">
+          <div class="stitle">Téléchargement</div>
+          <div class="prog-header">
+            <span id="prog-done">0 / 0</span><span id="prog-pct">0%</span>
+          </div>
+          <div class="prog-outer"><div class="prog-inner" id="prog-bar"></div></div>
+          <div class="prog-detail" id="prog-detail">En attente…</div>
+
+          <button class="btn primary" id="btn-download" disabled>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 2v8M5 7l3 3 3-3M2 13h12"/></svg>
+            Télécharger les tuiles
+          </button>
+          <button class="btn danger" id="btn-abort" disabled>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+            Interrompre
+          </button>
+          <button class="btn" id="btn-export" disabled>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 3h10v10H3V3zm3 3v4m2-4v4"/></svg>
+            Exporter en MBTiles
+          </button>
+          <button class="btn" id="btn-open-viewer" style="margin-top:4px">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.3" fill="none"/><circle cx="8" cy="8" r="2" fill="currentColor"/></svg>
+            Ouvrir dans le visualiseur
+          </button>
+
+          <div class="notice" style="margin-top:8px">
+            <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor" style="flex-shrink:0;margin-top:1px"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 3a1 1 0 0 1 1 1v3a1 1 0 1 1-2 0V5a1 1 0 0 1 1-1zm0 7a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>
+            BD ORTHO IGN — usage libre via Géoplateforme. OSM — licence ODbL.
+          </div>
+        </div>
+
+        <!-- Log -->
+        <div class="sblock">
+          <div class="stitle">Journal</div>
+          <div class="log" id="log"></div>
+        </div>
+
+      </aside>
+
+      <div class="map-area">
+        <div id="preview-map"></div>
+        <div class="map-pills">
+          <div class="pill">Trait de côte <span style="color:var(--amber)">—</span> orange</div>
+          <div class="pill">Buffer ±200m <span>—</span> teal</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ PANEL VIEWER ═══ -->
+    <section id="panel-viewer" class="panel">
+      <div id="viewer-map"></div>
+      <div class="vph" id="vph">
+        <div class="vph-icon">🗺</div>
+        <div class="vph-text">Aucune tuile chargée</div>
+        <div class="vph-sub">Téléchargez les tuiles puis cliquez<br>« Ouvrir dans le visualiseur »</div>
+      </div>
+      <div class="vbar">
+        <div style="display:flex;gap:6px">
+          <button class="navbtn" id="nav-start" title="Début">
+            <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4v10M14 4 8 9l6 5"/></svg>
+          </button>
+          <button class="navbtn" id="nav-prev">
+            <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M11 4 5 9l6 5"/></svg>
+          </button>
+          <button class="navbtn" id="nav-next">
+            <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 4l6 5-6 5"/></svg>
+          </button>
+          <button class="navbtn" id="nav-end" title="Fin">
+            <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 4v10M4 4l6 5-6 5"/></svg>
+          </button>
+        </div>
+        <div class="coast-wrap">
+          <div class="coast-labels">
+            <span id="lbl-start">Départ</span>
+            <span class="pos" id="wp-name">—</span>
+            <span id="lbl-end">Arrivée</span>
+          </div>
+          <input type="range" class="cslider" id="cslider" min="0" max="30" value="0"/>
+          <div style="font-size:10px;color:var(--text-faint);text-align:center" id="wp-km"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
