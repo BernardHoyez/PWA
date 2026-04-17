@@ -5,7 +5,6 @@
   "start_url": "/PWA/cenoutil/",
   "scope": "/PWA/cenoutil/",
   "display": "standalone",
-  "display": "fullscreen",
   "orientation": "portrait",
   "background_color": "#2d7a4f",
   "theme_color": "#2d7a4f",
