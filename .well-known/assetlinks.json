@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.bernardhoyez.cenoutil",
+        "sha256_cert_fingerprints": ["F4:3D:86:7A:78:9A:15:A0:02:90:4D:DD:0B:7E:6E:7C:9C:73:F8:A3:B7:E3:F8:16:E2:BD:3C:B4:EC:87:33:BD"]
+      }
+    }]
