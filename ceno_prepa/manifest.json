@@ -1,0 +1,26 @@
+{
+  "name": "cenoprepa — Éditeur cenoutil",
+  "short_name": "cenoprepa",
+  "description": "Outil expert de gestion et mise à jour de cenoutil — Cénomanien normand",
+  "start_url": "/PWA/ceno_prepa/",
+  "scope": "/PWA/ceno_prepa/",
+  "display": "standalone",
+  "orientation": "landscape-primary",
+  "background_color": "#1a3a2a",
+  "theme_color": "#1a3a2a",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "icons/icon192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
