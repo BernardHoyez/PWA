@@ -1,0 +1,47 @@
+[
+  {
+    "id": "obs001",
+    "type": "observation",
+    "nom": "Panneau sud — plage de Saint-Jouin",
+    "lat": 49.6477,
+    "lng": 0.1543,
+    "coords_originales": "49°38.86N 0°09.26E",
+    "stratigraphie": "Cénomanien inférieur — Ce1 / Ce2a",
+    "fossiles": "Mantelliceras mantelli, Inoceramus crippsi, Discoides subuculus",
+    "commentaire": "Panneau faillé derrière les cabines de bain. Coupe montrant la succession complète du Cénomanien inférieur : gaize albienne à la base, tourtia, HG Bléville 1, silex Briquemare, silex Brière, silex Heuqueville, marne Poterie 1 et silex Poterie. Très aisément accessible. Référence stratigraphique locale.",
+    "date": "2020-10-01",
+    "observateurs": "B. Hoyez, J. Girard, N. Cottard",
+    "photo": "photos/observations/obs001_panneau_sud_saintjouin.jpg",
+    "audio": "audio/observations/obs001.mp3"
+  },
+  {
+    "id": "obs290900",
+    "type": "observation",
+    "nom": "Panorama général vu de la digue",
+    "lat": 49.6499,
+    "lng": 0.1513,
+    "coords_originales": "49.6499°N 0.1513°E",
+    "stratigraphie": "—",
+    "fossiles": "",
+    "commentaire": "L'ensemble du circuit avec les principaux arrêts",
+    "date": "2026-04-18",
+    "observateurs": "",
+    "photo": "photos/observations/Arrêt 1 - Panorama.jpg",
+    "audio": "audio/observations/Arrêt 1_Panorama general.mp3"
+  },
+  {
+    "id": "obs990969",
+    "type": "observation",
+    "nom": "Arrêt 2 - Panneau Sud",
+    "lat": 49.6477,
+    "lng": 0.1543,
+    "coords_originales": "49°38.86N 0°09.26E",
+    "stratigraphie": "Cénomanien inférieur — Ce1",
+    "fossiles": "Mantelliceras mantelli, Exanthesis meandrina",
+    "commentaire": "",
+    "date": "2026-04-19",
+    "observateurs": "",
+    "photo": "photos/observations/obs001_panneau_sud_saintjouin.jpg",
+    "audio": "audio/observations/Arret2.mp3"
+  }
+]
