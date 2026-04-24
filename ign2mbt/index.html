@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IGN2MBT – Générateur MBTiles IGN</title>
+  <meta name="description" content="Générez des fichiers .mbtiles depuis la géoplateforme IGN par sélection rectangulaire sur carte." />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1a2a1a" />
+  <link rel="apple-touch-icon" href="icon192.png" />
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <!-- sql.js (SQLite en WASM) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.min.js"></script>
+
+  <style>
+    /* ── Palette ──────────────────────────────────────────────── */
+    :root {
+      --bg:        #0f1a10;
+      --panel:     #162018;
+      --border:    #2e4a2e;
+      --accent:    #4caf50;
+      --accent2:   #81c784;
+      --warn:      #ff7043;
+      --text:      #d4e8d4;
+      --muted:     #7a9e7a;
+      --font-mono: 'Courier New', monospace;
+      --font-ui:   'Trebuchet MS', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-ui);
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    /* ── Header ───────────────────────────────────────────────── */
+    header {
+      background: var(--panel);
+      border-bottom: 2px solid var(--accent);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      z-index: 1000;
+    }
+    header h1 {
+      font-size: 1.2rem;
+      letter-spacing: .12em;
+      color: var(--accent);
+      text-transform: uppercase;
+      font-family: var(--font-mono);
+    }
+    header .subtitle {
+      font-size: .72rem;
+      color: var(--muted);
+      letter-spacing: .06em;
+    }
+
+    /* ── Layout ───────────────────────────────────────────────── */
+    .workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ──────────────────────────────────────────────── */
+    #sidebar {
+      width: 300px;
+      min-width: 260px;
+      background: var(--panel);
+      border-right: 2px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .section {
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-title {
+      font-size: .65rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+      font-family: var(--font-mono);
+    }
+
+    label {
+      display: block;
+      font-size: .78rem;
+      color: var(--muted);
+      margin-bottom: 3px;
+      margin-top: 8px;
+    }
+    input[type="text"], input[type="number"], select {
+      width: 100%;
+      background: #0a120a;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 8px;
+      font-size: .82rem;
+      font-family: var(--font-mono);
+      border-radius: 3px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input:focus, select:focus { border-color: var(--accent); }
+
+    .range-row {
+      display: flex;
+      gap: 8px;
+    }
+    .range-row > div { flex: 1; }
+
+    /* ── Bbox display ─────────────────────────────────────────── */
+    #bbox-display {
+      background: #0a120a;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 8px;
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    #bbox-display.active { color: var(--accent2); border-color: var(--accent); }
+
+    /* ── Tile count info ──────────────────────────────────────── */
+    #tile-info {
+      font-size: .75rem;
+      font-family: var(--font-mono);
+      color: var(--muted);
+      padding: 6px 0 0;
+      min-height: 1.4em;
+    }
+    #tile-info.warn { color: var(--warn); }
+    #tile-info.ok   { color: var(--accent2); }
+
+    /* ── Buttons ──────────────────────────────────────────────── */
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 9px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: .82rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      transition: all .18s;
+      margin-top: 8px;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #0a120a;
+      font-weight: bold;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--accent2); }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ── Progress ─────────────────────────────────────────────── */
+    #progress-section { display: none; }
+    #progress-section.active { display: block; }
+
+    #prog-bar-outer {
+      background: #0a120a;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      height: 14px;
+      overflow: hidden;
+      margin: 6px 0;
+    }
+    #prog-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      width: 0%;
+      transition: width .3s;
+    }
+    #prog-text {
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      color: var(--muted);
+    }
+    #log-area {
+      background: #0a120a;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      height: 110px;
+      overflow-y: auto;
+      padding: 6px 8px;
+      font-family: var(--font-mono);
+      font-size: .68rem;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    #log-area .log-ok   { color: var(--accent2); }
+    #log-area .log-err  { color: var(--warn); }
+    #log-area .log-info { color: var(--muted); }
+
+    /* ── Map ──────────────────────────────────────────────────── */
+    #map {
+      flex: 1;
+      position: relative;
+      cursor: crosshair;
+    }
+
+    /* ── Draw overlay instruction ─────────────────────────────── */
+    #draw-hint {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15,26,16,.85);
+      border: 1px solid var(--accent);
+      color: var(--accent2);
+      padding: 6px 16px;
+      font-size: .78rem;
+      font-family: var(--font-mono);
+      border-radius: 20px;
+      pointer-events: none;
+      z-index: 900;
+      backdrop-filter: blur(4px);
+      white-space: nowrap;
+    }
+
+    /* ── Bouton mode sélection (mobile) ───────────────────────── */
+    #btn-select-mode {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      background: var(--panel);
+      border: 2px solid var(--border);
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: .75rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: none;          /* masqué sur desktop */
+      align-items: center;
+      gap: 6px;
+      transition: all .2s;
+      box-shadow: 0 2px 8px rgba(0,0,0,.5);
+      -webkit-tap-highlight-color: transparent;
+    }
+    #btn-select-mode.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0a120a;
+      font-weight: bold;
+    }
+    /* Afficher uniquement sur écran tactile / mobile */
+    @media (hover: none) and (pointer: coarse) {
+      #btn-select-mode { display: flex; }
+    }
+
+    /* Overlay transparent capturant le touch quand mode sélection actif */
+    #touch-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 800;
+      display: none;
+      touch-action: none;
+      cursor: crosshair;
+    }
+    #touch-overlay.active { display: block; }
+
+    /* ── Status badge ─────────────────────────────────────────── */
+    #status-badge {
+      display: inline-block;
+      background: var(--warn);
+      color: #fff;
+      font-size: .6rem;
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-family: var(--font-mono);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-left: auto;
+    }
+    #status-badge.ready { background: var(--accent); color: #0a120a; }
+
+    /* ── Mobile layout ────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .workspace { flex-direction: column; }
+      #sidebar {
+        width: 100%;
+        min-width: unset;
+        max-height: 55dvh;
+        border-right: none;
+        border-bottom: 2px solid var(--border);
+      }
+      #map { min-height: 45dvh; }
+    }
+
+    /* ── Scrollbar ────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>IGN2MBT</h1>
+    <div class="subtitle">Géoplateforme IGN → fichier .mbtiles</div>
+  </div>
+  <span id="status-badge">Aucune sélection</span>
+</header>
+
+<div class="workspace">
+  <!-- ── Sidebar ───────────────────────────────────────────── -->
+  <aside id="sidebar">
+
+    <!-- Clé API -->
+    <div class="section">
+      <div class="section-title">🔑 Clé API IGN</div>
+      <label>Clé (ex: ign_scan_ws)</label>
+      <input type="text" id="api-key" placeholder="votre_clé_ign" value="" spellcheck="false" />
+      <label>User-Agent</label>
+      <input type="text" id="user-agent" value="Mozilla/5.0 Gecko/20100101 Firefox/49.0" />
+    </div>
+
+    <!-- Paramètres WMTS -->
+    <div class="section">
+      <div class="section-title">🗺️ Couche WMTS</div>
+      <label>Layer</label>
+      <select id="layer">
+        <option value="GEOGRAPHICALGRIDSYSTEMS.MAPS">GEOGRAPHICALGRIDSYSTEMS.MAPS (Scan)</option>
+        <option value="GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2">PLANIGNV2</option>
+        <option value="GEOGRAPHICALGRIDSYSTEMS.MAPS.SCAN25TOUR">SCAN25TOUR</option>
+        <option value="ORTHOIMAGERY.ORTHOPHOTOS">Orthophotos</option>
+      </select>
+      <label>Format</label>
+      <select id="format">
+        <option value="image/jpeg">image/jpeg</option>
+        <option value="image/png">image/png</option>
+      </select>
+    </div>
+
+    <!-- Niveaux de zoom -->
+    <div class="section">
+      <div class="section-title">🔍 Niveaux de zoom</div>
+      <div class="range-row">
+        <div>
+          <label>Min</label>
+          <input type="number" id="zoom-min" value="12" min="0" max="18" />
+        </div>
+        <div>
+          <label>Max</label>
+          <input type="number" id="zoom-max" value="16" min="0" max="18" />
+        </div>
+      </div>
+      <div id="tile-info">–</div>
+    </div>
+
+    <!-- Sélection -->
+    <div class="section">
+      <div class="section-title">📐 Zone sélectionnée</div>
+      <div id="bbox-display">Dessinez un rectangle sur la carte →</div>
+      <button class="btn btn-secondary" id="btn-clear">✕ Effacer la sélection</button>
+    </div>
+
+    <!-- Nom de sortie -->
+    <div class="section">
+      <div class="section-title">💾 Fichier de sortie</div>
+      <label>Nom du fichier .mbtiles</label>
+      <input type="text" id="output-name" value="carte_ign" placeholder="carte_ign" />
+    </div>
+
+    <!-- Actions -->
+    <div class="section">
+      <div class="section-title">⚡ Actions</div>
+      <button class="btn btn-primary" id="btn-generate" disabled>Générer .mbtiles</button>
+      <button class="btn btn-secondary" id="btn-stop" disabled>⏹ Arrêter</button>
+    </div>
+
+    <!-- Progression -->
+    <div class="section" id="progress-section">
+      <div class="section-title">📊 Progression</div>
+      <div id="prog-bar-outer"><div id="prog-bar"></div></div>
+      <div id="prog-text">–</div>
+      <div id="log-area"></div>
+    </div>
+
+  </aside>
+
+  <!-- ── Map ──────────────────────────────────────────────── -->
+  <div id="map">
+    <div id="draw-hint">🖱 Cliquer–glisser pour sélectionner une zone</div>
+    <!-- Bouton mode sélection tactile (visible uniquement sur mobile) -->
+    <button id="btn-select-mode" title="Activer le mode sélection tactile">
+      <span id="select-mode-icon">✏️</span>
+      <span id="select-mode-label">Sélectionner</span>
+    </button>
+    <!-- Overlay transparent interceptant les touches en mode sélection -->
+    <div id="touch-overlay"></div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   IGN2MBT – logique principale
+   ══════════════════════════════════════════════════════════════ */
+
+// ── Carte Leaflet ──────────────────────────────────────────────
+const map = L.map('map', { zoomControl: true }).setView([46.5, 2.5], 6);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '© OpenStreetMap contributors'
+}).addTo(map);
+
+// ── État ───────────────────────────────────────────────────────
+let bbox = null;        // { west, south, east, north }
+let abortFlag = false;
+
+// ── Sélection rectangulaire ────────────────────────────────────
+let drawing = false, startLatLng = null, drawRect = null;
+let selectModeActive = false;   // mode sélection tactile
+
+const touchOverlay = document.getElementById('touch-overlay');
+const btnSelectMode = document.getElementById('btn-select-mode');
+const selectModeLabel = document.getElementById('select-mode-label');
+const drawHint = document.getElementById('draw-hint');
+
+// ── Helpers ────────────────────────────────────────────────────
+function containerPointToLatLng(clientX, clientY) {
+  const rect = document.getElementById('map').getBoundingClientRect();
+  return map.containerPointToLatLng(
+    L.point(clientX - rect.left, clientY - rect.top)
+  );
+}
+
+function startDraw(latlng) {
+  drawing = true;
+  startLatLng = latlng;
+  if (drawRect) { map.removeLayer(drawRect); drawRect = null; }
+}
+
+function moveDraw(latlng) {
+  if (!drawing || !startLatLng) return;
+  const b = L.latLngBounds(startLatLng, latlng);
+  if (!drawRect) {
+    drawRect = L.rectangle(b, {
+      color: '#4caf50', weight: 2, fill: true,
+      fillColor: '#4caf50', fillOpacity: .18, interactive: false
+    }).addTo(map);
+  } else {
+    drawRect.setBounds(b);
+  }
+}
+
+function endDraw(latlng) {
+  if (!drawing) return;
+  drawing = false;
+  if (!startLatLng || !latlng) return;
+  const b = L.latLngBounds(startLatLng, latlng);
+  const sw = b.getSouthWest(), ne = b.getNorthEast();
+  if (Math.abs(sw.lat - ne.lat) < 0.0001 && Math.abs(sw.lng - ne.lng) < 0.0001) return; // trop petit
+  setBbox(b);
+  startLatLng = null;
+}
+
+// ── Souris (desktop) ──────────────────────────────────────────
+map.on('mousedown', e => {
+  if (e.originalEvent.button !== 0) return;
+  map.dragging.disable();
+  startDraw(e.latlng);
+});
+map.on('mousemove', e => { moveDraw(e.latlng); });
+map.on('mouseup',   e => {
+  map.dragging.enable();
+  endDraw(e.latlng);
+});
+// Annuler si souris sort de la fenêtre
+window.addEventListener('mouseup', () => {
+  if (drawing) { drawing = false; map.dragging.enable(); }
+});
+
+// ── Mode sélection tactile ─────────────────────────────────────
+function setSelectMode(active) {
+  selectModeActive = active;
+  btnSelectMode.classList.toggle('active', active);
+  touchOverlay.classList.toggle('active', active);
+  selectModeLabel.textContent = active ? 'Navigation' : 'Sélectionner';
+  document.getElementById('select-mode-icon').textContent = active ? '🗺️' : '✏️';
+  drawHint.textContent = active
+    ? '☝️ Glisser un doigt pour sélectionner'
+    : '✏️ Appuyez sur "Sélectionner" puis glissez';
+  drawHint.style.display = '';
+}
+
+btnSelectMode.addEventListener('click', () => setSelectMode(!selectModeActive));
+
+// Overlay touch events (intercepte le geste AVANT Leaflet)
+touchOverlay.addEventListener('touchstart', e => {
+  e.preventDefault();
+  if (e.touches.length !== 1) return;
+  const t = e.touches[0];
+  startDraw(containerPointToLatLng(t.clientX, t.clientY));
+}, { passive: false });
+
+touchOverlay.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (e.touches.length !== 1) return;
+  const t = e.touches[0];
+  moveDraw(containerPointToLatLng(t.clientX, t.clientY));
+}, { passive: false });
+
+touchOverlay.addEventListener('touchend', e => {
+  e.preventDefault();
+  const t = e.changedTouches[0];
+  endDraw(containerPointToLatLng(t.clientX, t.clientY));
+  // Repasser automatiquement en mode navigation après sélection
+  setSelectMode(false);
+}, { passive: false });
+
+function setBbox(b) {
+  bbox = {
+    west:  b.getWest(),  south: b.getSouth(),
+    east:  b.getEast(),  north: b.getNorth()
+  };
+  document.getElementById('bbox-display').classList.add('active');
+  document.getElementById('bbox-display').innerHTML =
+    `N: ${bbox.north.toFixed(5)}<br>S: ${bbox.south.toFixed(5)}<br>W: ${bbox.west.toFixed(5)}<br>E: ${bbox.east.toFixed(5)}`;
+  document.getElementById('status-badge').textContent = 'Zone sélectionnée';
+  document.getElementById('status-badge').className = 'ready';
+  updateTileInfo();
+  document.getElementById('btn-generate').disabled = false;
+  drawHint.style.display = 'none';
+}
+
+document.getElementById('btn-clear').onclick = () => {
+  bbox = null;
+  if (drawRect) { map.removeLayer(drawRect); drawRect = null; }
+  document.getElementById('bbox-display').classList.remove('active');
+  document.getElementById('bbox-display').textContent = 'Dessinez un rectangle sur la carte →';
+  document.getElementById('status-badge').textContent = 'Aucune sélection';
+  document.getElementById('status-badge').className = '';
+  document.getElementById('tile-info').textContent = '–';
+  document.getElementById('tile-info').className = '';
+  document.getElementById('btn-generate').disabled = true;
+  drawHint.textContent = selectModeActive
+    ? '☝️ Glisser un doigt pour sélectionner'
+    : '🖱 Cliquer–glisser pour sélectionner une zone';
+  drawHint.style.display = '';
+};
+
+// ── Calcul du nombre de tuiles ─────────────────────────────────
+function lon2tile(lon, z) { return Math.floor((lon + 180) / 360 * Math.pow(2, z)); }
+function lat2tile(lat, z) { return Math.floor((1 - Math.log(Math.tan(lat * Math.PI/180) + 1/Math.cos(lat * Math.PI/180)) / Math.PI) / 2 * Math.pow(2, z)); }
+
+function countTiles(b, zMin, zMax) {
+  let total = 0;
+  for (let z = zMin; z <= zMax; z++) {
+    const xMin = lon2tile(b.west, z), xMax = lon2tile(b.east, z);
+    const yMin = lat2tile(b.north, z), yMax = lat2tile(b.south, z);
+    total += (xMax - xMin + 1) * (yMax - yMin + 1);
+  }
+  return total;
+}
+
+function updateTileInfo() {
+  if (!bbox) return;
+  const zMin = parseInt(document.getElementById('zoom-min').value);
+  const zMax = parseInt(document.getElementById('zoom-max').value);
+  const n = countTiles(bbox, zMin, zMax);
+  const el = document.getElementById('tile-info');
+  el.textContent = `≈ ${n.toLocaleString('fr-FR')} tuiles`;
+  el.className = n > 50000 ? 'warn' : 'ok';
+}
+
+['zoom-min','zoom-max'].forEach(id =>
+  document.getElementById(id).addEventListener('input', updateTileInfo)
+);
+
+// ── Construction URL WMTS IGN ──────────────────────────────────
+function buildUrl(zoom, x, y) {
+  const key    = document.getElementById('api-key').value.trim() || 'ign_scan_ws';
+  const layer  = document.getElementById('layer').value;
+  const fmt    = document.getElementById('format').value;
+  const folder = 'private/wmts';
+
+  if (zoom < 7) {
+    // Fallback Google (comme le .bsh modèle)
+    return `https://mt0.google.com/vt/lyrs=m@176103410&hl=fr&s=Galileo&scale=1&z=${zoom}&x=${x}&y=${y}`;
+  }
+  return `https://data.geopf.fr/${folder}?apikey=${key}&Layer=${layer}&Style=normal&Timestamp=&TileMatrixSet=PM&SERVICE=WMTS&REQUEST=GetTile&Version=1.0.0&FORMAT=${encodeURIComponent(fmt)}&TileMatrix=${zoom}&TileCol=${x}&TileRow=${y}`;
+}
+
+// ── Log ────────────────────────────────────────────────────────
+function log(msg, cls='log-info') {
+  const el = document.getElementById('log-area');
+  const line = document.createElement('div');
+  line.className = cls;
+  line.textContent = msg;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+// ── Génération MBTiles ─────────────────────────────────────────
+document.getElementById('btn-generate').onclick = generateMbtiles;
+document.getElementById('btn-stop').onclick = () => { abortFlag = true; log('⏹ Arrêt demandé…', 'log-err'); };
+
+async function generateMbtiles() {
+  if (!bbox) return;
+  const zMin = parseInt(document.getElementById('zoom-min').value);
+  const zMax  = parseInt(document.getElementById('zoom-max').value);
+  const ua    = document.getElementById('user-agent').value;
+  const name  = document.getElementById('output-name').value.trim() || 'carte_ign';
+  const fmt   = document.getElementById('format').value;
+  const ext   = fmt.includes('png') ? 'png' : 'jpg';
+
+  // Validation
+  if (zMin > zMax) { alert('Zoom min doit être ≤ zoom max'); return; }
+  const total = countTiles(bbox, zMin, zMax);
+  if (total > 200000) {
+    if (!confirm(`Attention : ${total.toLocaleString('fr-FR')} tuiles. Cela peut prendre très longtemps et générer un fichier volumineux. Continuer ?`)) return;
+  }
+
+  // UI
+  abortFlag = false;
+  document.getElementById('btn-generate').disabled = true;
+  document.getElementById('btn-stop').disabled = false;
+  document.getElementById('progress-section').classList.add('active');
+  document.getElementById('log-area').innerHTML = '';
+  log(`Initialisation sql.js…`);
+
+  // Init sql.js
+  let SQL;
+  try {
+    SQL = await initSqlJs({
+      locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${file}`
+    });
+  } catch(e) {
+    log('Erreur sql.js : ' + e.message, 'log-err');
+    document.getElementById('btn-generate').disabled = false;
+    return;
+  }
+
+  const db = new SQL.Database();
+
+  // Schéma MBTiles (spec 1.3)
+  db.run(`CREATE TABLE IF NOT EXISTS metadata (name TEXT, value TEXT);`);
+  db.run(`CREATE TABLE IF NOT EXISTS tiles (zoom_level INTEGER, tile_column INTEGER, tile_row INTEGER, tile_data BLOB);`);
+  db.run(`CREATE UNIQUE INDEX IF NOT EXISTS tile_index ON tiles (zoom_level, tile_column, tile_row);`);
+
+  // Métadonnées
+  const meta = [
+    ['name',        name],
+    ['type',        'overlay'],
+    ['version',     '1'],
+    ['description', `IGN ${document.getElementById('layer').value}`],
+    ['format',      ext],
+    ['bounds',      `${bbox.west},${bbox.south},${bbox.east},${bbox.north}`],
+    ['minzoom',     String(zMin)],
+    ['maxzoom',     String(zMax)],
+  ];
+  const insM = db.prepare('INSERT OR REPLACE INTO metadata VALUES (?,?)');
+  meta.forEach(([k,v]) => { insM.run([k,v]); });
+  insM.free();
+
+  const insT = db.prepare('INSERT OR REPLACE INTO tiles VALUES (?,?,?,?)');
+
+  let done = 0, errors = 0;
+  const pb = document.getElementById('prog-bar');
+  const pt = document.getElementById('prog-text');
+
+  const CONCURRENCY = 4;
+  const queue = [];
+
+  for (let z = zMin; z <= zMax; z++) {
+    const xMin = lon2tile(bbox.west, z),  xMax = lon2tile(bbox.east, z);
+    const yMin = lat2tile(bbox.north, z), yMax = lat2tile(bbox.south, z);
+    for (let x = xMin; x <= xMax; x++) {
+      for (let y = yMin; y <= yMax; y++) {
+        // MBTiles : TMS y inversé
+        const tmsY = Math.pow(2, z) - 1 - y;
+        queue.push({ z, x, y, tmsY });
+      }
+    }
+  }
+
+  log(`${total.toLocaleString('fr-FR')} tuiles à télécharger (Z${zMin}–Z${zMax})`);
+
+  async function fetchTile({ z, x, y, tmsY }) {
+    const url = buildUrl(z, x, y);
+    try {
+      const resp = await fetch(url, {
+        headers: { 'User-Agent': ua }
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const buf = await resp.arrayBuffer();
+      insT.run([z, x, tmsY, new Uint8Array(buf)]);
+      return true;
+    } catch(e) {
+      errors++;
+      if (errors <= 5) log(`✗ Z${z}/${x}/${y}: ${e.message}`, 'log-err');
+      return false;
+    }
+  }
+
+  // Pool de téléchargement parallèle
+  let qi = 0;
+  async function worker() {
+    while (qi < queue.length && !abortFlag) {
+      const item = queue[qi++];
+      await fetchTile(item);
+      done++;
+      const pct = Math.round(done / total * 100);
+      pb.style.width = pct + '%';
+      pt.textContent = `${done}/${total} tuiles (${pct}%) — erreurs: ${errors}`;
+      if (done % 50 === 0) log(`✓ ${done}/${total} tuiles…`, 'log-ok');
+    }
+  }
+
+  const workers = [];
+  for (let i = 0; i < CONCURRENCY; i++) workers.push(worker());
+  await Promise.all(workers);
+
+  insT.free();
+
+  if (abortFlag) {
+    log('⏹ Téléchargement interrompu.', 'log-err');
+  } else {
+    log(`✅ ${done} tuiles téléchargées (${errors} erreurs)`, 'log-ok');
+  }
+
+  // Export du fichier
+  log('Exportation du fichier .mbtiles…');
+  const binaryArray = db.export();
+  db.close();
+  const blob = new Blob([binaryArray], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name + '.mbtiles';
+  a.click();
+  URL.revokeObjectURL(url);
+
+  log(`💾 Téléchargement de "${name}.mbtiles" lancé`, 'log-ok');
+  document.getElementById('btn-generate').disabled = false;
+  document.getElementById('btn-stop').disabled = true;
+  document.getElementById('status-badge').textContent = 'Terminé';
+}
+
+// ── Service Worker ─────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
