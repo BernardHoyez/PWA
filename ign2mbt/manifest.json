@@ -1,0 +1,33 @@
+{
+  "name": "IGN2MBT – Générateur MBTiles",
+  "short_name": "IGN2MBT",
+  "description": "Générez des fichiers .mbtiles depuis la géoplateforme IGN par sélection sur carte OSM",
+  "start_url": "/PWA/ign2mbt/index.html",
+  "scope": "/PWA/ign2mbt/",
+  "display": "standalone",
+  "background_color": "#0f1a10",
+  "theme_color": "#1a2a1a",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "icon192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["utilities", "maps"],
+  "shortcuts": [
+    {
+      "name": "Nouvelle carte",
+      "url": "/PWA/ign2mbt/index.html",
+      "description": "Ouvrir IGN2MBT"
+    }
+  ]
+}
