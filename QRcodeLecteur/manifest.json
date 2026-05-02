@@ -1,0 +1,26 @@
+{
+  "name": "QRcodeLecteur",
+  "short_name": "QRLecteur",
+  "description": "Application PWA de lecture et partage de QR codes",
+  "start_url": "/PWA/QRcodeLecteur/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["utilities", "productivity"],
+  "lang": "fr-FR"
+}

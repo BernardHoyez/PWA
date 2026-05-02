@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="description" content="QRcodeLecteur - Application PWA de lecture de QR codes">
+  <title>QRcodeLecteur</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon192.png">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header>
+    <h1>🔍 QRcodeLecteur</h1>
+  </header>
+
+  <main>
+    <section id="scanner-section">
+      <div id="reader" class="qr-reader"></div>
+      <button id="start-scan" class="btn primary">📷 Démarrer la lecture</button>
+      <button id="stop-scan" class="btn secondary" disabled>⏹ Arrêter</button>
+    </section>
+
+    <section id="result-section" class="hidden">
+      <h2>Résultat détecté :</h2>
+      <div id="qr-result" class="result-box"></div>
+      <div class="actions">
+        <button id="copy-btn" class="btn primary">📋 Copier</button>
+        <button id="share-btn" class="btn success">🔗 Partager</button>
+        <button id="reset-btn" class="btn secondary">🔄 Nouveau scan</button>
+      </div>
+    </section>
+
+    <section id="status" class="status-message"></section>
+  </main>
+
+  <footer>
+    <p>© 2026 QRcodeLecteur - PWA par Bernard Hoyez</p>
+  </footer>
+
+  <script>
+    // Enregistrement du Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('SW enregistré:', reg.scope))
+          .catch(err => console.log('SW échec:', err));
+      });
+    }
+  </script>
+</body>
+</html>
