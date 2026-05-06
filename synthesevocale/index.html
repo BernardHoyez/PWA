@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Synthèse vocale PWA - Générez et sauvegardez de l'audio depuis du texte"/>
+  <meta name="theme-color" content="#4a90e2"/>
+  
+  <title>Synthèse Vocale</title>
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="icon192.png"/>
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <header>
+    <h1>🎙️ Synthèse Vocale</h1>
+    <p>Transformez votre texte en audio</p>
+  </header>
+
+  <main>
+    <section class="input-section">
+      <label for="textInput">Texte à synthétiser :</label>
+      <textarea 
+        id="textInput" 
+        placeholder="Entrez votre texte ici..." 
+        rows="6"
+        maxlength="5000"
+      ></textarea>
+      <div class="char-count"><span id="charCount">0</span>/5000 caractères</div>
+    </section>
+
+    <section class="controls-section">
+      <div class="control-group">
+        <label for="voiceSelect">Voix :</label>
+        <select id="voiceSelect"></select>
+      </div>
+
+      <div class="control-group">
+        <label for="rateSlider">Vitesse : <span id="rateValue">1.0</span>x</label>
+        <input type="range" id="rateSlider" min="0.5" max="2" step="0.1" value="1"/>
+      </div>
+
+      <div class="control-group">
+        <label for="pitchSlider">Ton : <span id="pitchValue">1.0</span></label>
+        <input type="range" id="pitchSlider" min="0.5" max="2" step="0.1" value="1"/>
+      </div>
+    </section>
+
+    <section class="actions-section">
+      <button id="speakBtn" class="btn primary">🔊 Lire</button>
+      <button id="pauseBtn" class="btn secondary" disabled>⏸️ Pause</button>
+      <button id="stopBtn" class="btn secondary" disabled>⏹️ Stop</button>
+      <button id="downloadBtn" class="btn success" disabled>💾 Sauvegarder</button>
+    </section>
+
+    <section class="status-section" id="statusSection" hidden>
+      <div class="status-bar">
+        <div class="status-indicator" id="statusIndicator"></div>
+        <span id="statusText">Prêt</span>
+      </div>
+      <div class="progress-container" id="progressContainer" hidden>
+        <progress id="progressBar" value="0" max="100"></progress>
+      </div>
+    </section>
+
+    <section class="info-section">
+      <h3>ℹ️ Informations</h3>
+      <ul>
+        <li>✅ Lecture via Web Speech API (natif navigateur)</li>
+        <li>💾 Sauvegarde : Enregistrement via MediaRecorder (expérimental)</li>
+        <li>📱 Installation possible sur mobile et desktop</li>
+        <li>🔄 Fonctionne hors ligne (après premier chargement)</li>
+      </ul>
+      <p class="note">
+        <strong>Note :</strong> La sauvegarde audio utilise l'API MediaRecorder. 
+        Selon votre navigateur, la qualité peut varier. 
+        Pour un résultat optimal, utilisez Chrome ou Edge récent.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Synthèse Vocale PWA • <a href="https://BernardHoyez.github.io/PWA/synthesevocale" target="_blank">GitHub Pages</a></p>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+</body>
+</html>
