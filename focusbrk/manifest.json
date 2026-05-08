@@ -1,0 +1,27 @@
+{
+  "name": "FocusBrk — Focus Bracketing Controller",
+  "short_name": "FocusBrk",
+  "description": "Contrôleur de focus bracketing pour Xiaomi 14T Pro",
+  "start_url": "/PWA/focusbrk/",
+  "scope": "/PWA/focusbrk/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/PWA/focusbrk/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/PWA/focusbrk/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["photo", "utilities"],
+  "lang": "fr"
+}

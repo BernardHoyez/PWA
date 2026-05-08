@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="description" content="Focus Bracketing Controller for Xiaomi 14T Pro">
+  <title>FocusBrk</title>
+  <link rel="manifest" href="/PWA/focusbrk/manifest.json">
+  <link rel="icon" type="image/png" href="/PWA/focusbrk/icon-192.png">
+  <link rel="apple-touch-icon" href="/PWA/focusbrk/icon-192.png">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500;600&display=swap');
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface2: #18181f;
+      --border: #2a2a38;
+      --border2: #3a3a50;
+      --accent: #4af0c0;
+      --accent2: #2dd4a8;
+      --accent-dim: rgba(74, 240, 192, 0.12);
+      --accent-dim2: rgba(74, 240, 192, 0.06);
+      --text: #e8e8f0;
+      --muted: #7878a0;
+      --warn: #f0c44a;
+      --danger: #f06060;
+      --success: #4af0c0;
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Space Grotesk', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* GRID BACKGROUND */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: 0.3;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem 3rem;
+    }
+
+    /* HEADER */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      border: 1.5px solid var(--accent);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .logo-icon::after {
+      content: '';
+      width: 14px;
+      height: 14px;
+      background: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--accent);
+    }
+
+    .logo-text {
+      font-family: var(--mono);
+      font-size: 1.3rem;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      color: var(--text);
+    }
+
+    .logo-text span { color: var(--accent); }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.05em;
+      background: var(--surface);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--danger);
+      transition: background 0.3s;
+    }
+
+    .status-dot.connected { background: var(--success); box-shadow: 0 0 6px var(--success); }
+    .status-dot.connecting { background: var(--warn); animation: pulse 1s infinite; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* SECTIONS */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.85rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .section-title {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .section-body { padding: 1.25rem; }
+
+    /* CONNECTION */
+    .conn-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    input[type="text"], input[type="number"] {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      padding: 0.5rem 0.75rem;
+      width: 100%;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+
+    input:focus { border-color: var(--accent); }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+    .btn:active { transform: scale(0.97); }
+    .btn.primary { border-color: var(--accent); color: var(--accent); background: var(--accent-dim2); }
+    .btn.primary:hover { background: var(--accent-dim); }
+    .btn.danger-btn { border-color: var(--danger); color: var(--danger); }
+    .btn.danger-btn:hover { background: rgba(240, 96, 96, 0.1); }
+
+    /* PARAMS GRID */
+    .params-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 600px) { .params-grid { grid-template-columns: 1fr; } }
+
+    .param-block label {
+      display: block;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+
+    .param-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .param-row input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 3px;
+      background: var(--border2);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .param-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 0 6px var(--accent);
+    }
+
+    .param-value {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      min-width: 3rem;
+      text-align: right;
+    }
+
+    /* FOCUS STACK VISUALIZER */
+    .stack-viz {
+      margin-top: 1rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .stack-label {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+
+    .stack-bar-container {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 60px;
+    }
+
+    .stack-bar {
+      flex: 1;
+      border-radius: 2px 2px 0 0;
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    .stack-bar.active {
+      background: var(--accent);
+      box-shadow: 0 0 8px rgba(74, 240, 192, 0.5);
+    }
+
+    .stack-bar.inactive {
+      background: var(--border2);
+    }
+
+    .stack-bar.done {
+      background: var(--accent2);
+      opacity: 0.6;
+    }
+
+    /* SEQUENCE CONTROL */
+    .seq-controls {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .big-btn {
+      padding: 0.75rem 1.5rem;
+      border: 1.5px solid var(--accent);
+      border-radius: 8px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .big-btn:hover { background: rgba(74, 240, 192, 0.2); box-shadow: 0 0 16px rgba(74, 240, 192, 0.2); }
+    .big-btn:active { transform: scale(0.97); }
+    .big-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .big-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+    /* PROGRESS */
+    .progress-section { display: none; }
+    .progress-section.visible { display: block; }
+
+    .progress-bar-wrap {
+      background: var(--surface2);
+      border-radius: 3px;
+      height: 6px;
+      overflow: hidden;
+      margin: 0.75rem 0;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+      border-radius: 3px;
+      transition: width 0.4s ease;
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .progress-info span:last-child { color: var(--accent); }
+
+    /* LOG */
+    .log-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      height: 140px;
+      overflow-y: auto;
+      padding: 0.75rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      line-height: 1.6;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border2) transparent;
+    }
+
+    .log-entry { color: var(--muted); }
+    .log-entry.info { color: var(--text); }
+    .log-entry.success { color: var(--accent); }
+    .log-entry.warn { color: var(--warn); }
+    .log-entry.error { color: var(--danger); }
+
+    .log-ts { color: var(--border2); margin-right: 0.5rem; }
+
+    /* SEQUENCE LIST */
+    .shot-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      max-height: 200px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border2) transparent;
+    }
+
+    .shot-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.45rem 0.75rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      transition: border-color 0.2s;
+    }
+
+    .shot-item.active-shot { border-color: var(--accent); background: var(--accent-dim); }
+    .shot-item.done-shot { opacity: 0.5; }
+
+    .shot-num {
+      color: var(--muted);
+      min-width: 1.5rem;
+    }
+
+    .shot-focus { color: var(--accent); flex: 1; }
+    .shot-delay { color: var(--muted); }
+
+    .shot-status {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: 1px solid var(--border2);
+    }
+
+    .shot-status.active-status { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 4px var(--accent); }
+    .shot-status.done-status { background: var(--accent2); border-color: var(--accent2); opacity: 0.5; }
+
+    /* QR / AIDE */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 500px) { .info-grid { grid-template-columns: 1fr; } }
+
+    .info-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .info-card h4 {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+
+    .info-card ol, .info-card ul {
+      padding-left: 1.1rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .info-card li { margin-bottom: 0.1rem; }
+    .info-card a { color: var(--accent); text-decoration: none; }
+    .info-card a:hover { text-decoration: underline; }
+
+    .tag {
+      display: inline-block;
+      padding: 0.15rem 0.45rem;
+      border-radius: 3px;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid rgba(74, 240, 192, 0.25);
+    }
+
+    .tag.warn { background: rgba(240, 196, 74, 0.1); color: var(--warn); border-color: rgba(240, 196, 74, 0.25); }
+
+    /* TOGGLE */
+    .section-chevron {
+      width: 16px;
+      height: 16px;
+      color: var(--muted);
+      transition: transform 0.2s;
+    }
+
+    .section.collapsed .section-body { display: none; }
+    .section.collapsed .section-chevron { transform: rotate(-90deg); }
+
+    /* SEPARATOR */
+    hr { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon"></div>
+      <span class="logo-text">focus<span>brk</span></span>
+    </div>
+    <div class="status-badge">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">déconnecté</span>
+    </div>
+  </header>
+
+  <!-- CONNEXION -->
+  <div class="section" id="sec-conn">
+    <div class="section-header" onclick="toggleSection('sec-conn')">
+      <span class="section-title">01 / Connexion WebSocket</span>
+      <svg class="section-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="4,6 8,10 12,6"/>
+      </svg>
+    </div>
+    <div class="section-body">
+      <div class="conn-row">
+        <input type="text" id="wsUrl" value="ws://192.168.1.x:8765" placeholder="ws://IP_XIAOMI:8765">
+        <button class="btn primary" id="btnConnect" onclick="connectWS()">Connecter</button>
+        <button class="btn danger-btn" id="btnDisconnect" onclick="disconnectWS()" style="display:none">Couper</button>
+      </div>
+      <p style="font-size:0.72rem; color:var(--muted); margin-top:0.6rem; font-family:var(--mono);">
+        <span class="tag warn">⚠</span>&nbsp;Entrez l'IP locale du Xiaomi 14T Pro (même réseau Wi-Fi).
+        L'app Android compagnon doit être lancée sur le téléphone.
+      </p>
+    </div>
+  </div>
+
+  <!-- PARAMÈTRES -->
+  <div class="section" id="sec-params">
+    <div class="section-header" onclick="toggleSection('sec-params')">
+      <span class="section-title">02 / Paramètres de bracketing</span>
+      <svg class="section-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="4,6 8,10 12,6"/>
+      </svg>
+    </div>
+    <div class="section-body">
+      <div class="params-grid">
+        <div class="param-block">
+          <label>Nombre de clichés</label>
+          <div class="param-row">
+            <input type="range" id="shotCount" min="2" max="20" value="5" step="1" oninput="updateParams()">
+            <span class="param-value" id="shotCountVal">5</span>
+          </div>
+        </div>
+        <div class="param-block">
+          <label>Mise au point min.</label>
+          <div class="param-row">
+            <input type="range" id="focusMin" min="0" max="0.9" value="0.1" step="0.01" oninput="updateParams()">
+            <span class="param-value" id="focusMinVal">0.10</span>
+          </div>
+        </div>
+        <div class="param-block">
+          <label>Mise au point max.</label>
+          <div class="param-row">
+            <input type="range" id="focusMax" min="0.1" max="1.0" value="0.9" step="0.01" oninput="updateParams()">
+            <span class="param-value" id="focusMaxVal">0.90</span>
+          </div>
+        </div>
+        <div class="param-block">
+          <label>Délai entre clichés (ms)</label>
+          <div class="param-row">
+            <input type="range" id="delay" min="200" max="5000" value="800" step="100" oninput="updateParams()">
+            <span class="param-value" id="delayVal">800</span>
+          </div>
+        </div>
+        <div class="param-block">
+          <label>Courbe de progression</label>
+          <select id="curve" onchange="updateParams()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:0.8rem;padding:0.45rem 0.6rem;width:100%;outline:none;cursor:pointer;">
+            <option value="linear">Linéaire</option>
+            <option value="near-to-far">Proche → Lointain</option>
+            <option value="far-to-near">Lointain → Proche</option>
+            <option value="center-out">Centre → Bords</option>
+          </select>
+        </div>
+        <div class="param-block">
+          <label>ISO</label>
+          <select id="iso" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:0.8rem;padding:0.45rem 0.6rem;width:100%;outline:none;cursor:pointer;">
+            <option value="auto">AUTO</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+            <option value="400">400</option>
+            <option value="800">800</option>
+            <option value="1600">1600</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- VISUALISEUR DE STACK -->
+      <div class="stack-viz">
+        <div class="stack-label">aperçu de la séquence de mise au point</div>
+        <div class="stack-bar-container" id="stackViz"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SÉQUENCE PLANIFIÉE -->
+  <div class="section" id="sec-seq">
+    <div class="section-header" onclick="toggleSection('sec-seq')">
+      <span class="section-title">03 / Séquence planifiée</span>
+      <svg class="section-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="4,6 8,10 12,6"/>
+      </svg>
+    </div>
+    <div class="section-body">
+      <div class="shot-list" id="shotList"></div>
+    </div>
+  </div>
+
+  <!-- CONTRÔLE -->
+  <div class="section" id="sec-ctrl">
+    <div class="section-header" onclick="toggleSection('sec-ctrl')">
+      <span class="section-title">04 / Déclenchement</span>
+      <svg class="section-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="4,6 8,10 12,6"/>
+      </svg>
+    </div>
+    <div class="section-body">
+      <div class="seq-controls">
+        <button class="big-btn" id="btnStart" onclick="startSequence()">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          Lancer la séquence
+        </button>
+        <button class="btn" id="btnStop" onclick="stopSequence()" disabled>
+          ■ Arrêter
+        </button>
+        <button class="btn" id="btnTest" onclick="testShot()">
+          ◎ Cliché test
+        </button>
+      </div>
+
+      <!-- PROGRESSION -->
+      <div class="progress-section" id="progressSection">
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+        </div>
+        <div class="progress-info">
+          <span id="progressLabel">Cliché 0 / 0</span>
+          <span id="progressFocus">mise au point: —</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOG -->
+  <div class="section" id="sec-log">
+    <div class="section-header" onclick="toggleSection('sec-log')">
+      <span class="section-title">05 / Journal</span>
+      <svg class="section-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="4,6 8,10 12,6"/>
+      </svg>
+    </div>
+    <div class="section-body">
+      <div class="log-box" id="logBox"></div>
+      <div style="margin-top:0.6rem; display:flex; justify-content:flex-end;">
+        <button class="btn" onclick="clearLog()" style="font-size:0.7rem; padding:0.3rem 0.6rem;">Effacer le journal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AIDE / SETUP -->
+  <div class="section" id="sec-help">
+    <div class="section-header" onclick="toggleSection('sec-help')">
+      <span class="section-title">06 / Installation &amp; Protocole</span>
+      <svg class="section-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="4,6 8,10 12,6"/>
+      </svg>
+    </div>
+    <div class="section-body">
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>Setup côté Android (Xiaomi 14T Pro)</h4>
+          <ol>
+            <li>Installer <strong>FocusBrk Server</strong> (APK fourni) ou utiliser <strong>Tasker + AutoRemote</strong></li>
+            <li>Activer les <strong>permissions caméra</strong></li>
+            <li>S'assurer que le téléphone et le PC sont sur le <strong>même réseau Wi-Fi</strong></li>
+            <li>Lancer le serveur → noter l'IP affichée</li>
+            <li>Entrer cette IP dans le champ connexion ci-dessus</li>
+          </ol>
+        </div>
+        <div class="info-card">
+          <h4>Protocole WebSocket (JSON)</h4>
+          <ul style="list-style:none; padding:0;">
+            <li style="margin-bottom:0.5rem;">
+              <span class="tag">CAPTURE</span>
+              <code style="display:block; font-size:0.68rem; color:var(--muted); margin-top:0.25rem;">{"cmd":"capture","focus":0.45,"iso":"auto"}</code>
+            </li>
+            <li style="margin-bottom:0.5rem;">
+              <span class="tag">PING</span>
+              <code style="display:block; font-size:0.68rem; color:var(--muted); margin-top:0.25rem;">{"cmd":"ping"}</code>
+            </li>
+            <li>
+              <span class="tag">STATUS</span>
+              <code style="display:block; font-size:0.68rem; color:var(--muted); margin-top:0.25rem;">{"status":"ok","shot":3}</code>
+            </li>
+          </ul>
+          <p style="font-size:0.72rem; color:var(--muted); margin-top:0.75rem;">
+            La valeur <code style="color:var(--accent)">focus</code> va de 0.0 (minimum) à 1.0 (infini). Le serveur Android utilise l'API <strong>Camera2</strong>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let ws = null;
+  let sequence = [];
+  let running = false;
+  let currentShot = 0;
+  let seqTimer = null;
+
+  // ── CONNEXION ───────────────────────────────────────────
+  function connectWS() {
+    const url = document.getElementById('wsUrl').value.trim();
+    if (!url) return;
+    setStatus('connecting');
+    log('Connexion à ' + url + '…', 'info');
+    try {
+      ws = new WebSocket(url);
+      ws.onopen = () => {
+        setStatus('connected');
+        log('Connecté au Xiaomi 14T Pro', 'success');
+        document.getElementById('btnConnect').style.display = 'none';
+        document.getElementById('btnDisconnect').style.display = '';
+        send({ cmd: 'ping' });
+      };
+      ws.onclose = () => {
+        setStatus('disconnected');
+        log('Connexion fermée', 'warn');
+        document.getElementById('btnConnect').style.display = '';
+        document.getElementById('btnDisconnect').style.display = 'none';
+        ws = null;
+        if (running) stopSequence();
+      };
+      ws.onerror = () => {
+        log('Erreur WebSocket — vérifiez IP et serveur Android', 'error');
+        setStatus('disconnected');
+      };
+      ws.onmessage = (e) => {
+        try {
+          const d = JSON.parse(e.data);
+          if (d.status === 'ok') log('ACK cliché #' + (d.shot || '?') + ' → OK', 'success');
+          else if (d.status === 'error') log('Erreur téléphone : ' + (d.msg || '?'), 'error');
+          else log('← ' + e.data, 'info');
+        } catch { log('← ' + e.data, 'info'); }
+      };
+    } catch (err) {
+      log('WebSocket invalide : ' + err.message, 'error');
+      setStatus('disconnected');
+    }
+  }
+
+  function disconnectWS() {
+    if (ws) ws.close();
+  }
+
+  function setStatus(state) {
+    const dot = document.getElementById('statusDot');
+    const txt = document.getElementById('statusText');
+    dot.className = 'status-dot';
+    if (state === 'connected') { dot.classList.add('connected'); txt.textContent = 'connecté'; }
+    else if (state === 'connecting') { dot.classList.add('connecting'); txt.textContent = 'connexion…'; }
+    else { txt.textContent = 'déconnecté'; }
+  }
+
+  function send(obj) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(obj));
+    } else {
+      log('Non connecté — commande ignorée', 'warn');
+    }
+  }
+
+  // ── PARAMÈTRES ──────────────────────────────────────────
+  function updateParams() {
+    const n = parseInt(document.getElementById('shotCount').value);
+    const fMin = parseFloat(document.getElementById('focusMin').value);
+    const fMax = parseFloat(document.getElementById('focusMax').value);
+    const delay = parseInt(document.getElementById('delay').value);
+    const curve = document.getElementById('curve').value;
+
+    document.getElementById('shotCountVal').textContent = n;
+    document.getElementById('focusMinVal').textContent = fMin.toFixed(2);
+    document.getElementById('focusMaxVal').textContent = fMax.toFixed(2);
+    document.getElementById('delayVal').textContent = delay;
+
+    sequence = buildSequence(n, fMin, fMax, curve, delay);
+    renderShotList();
+    renderStackViz();
+  }
+
+  function buildSequence(n, fMin, fMax, curve, delay) {
+    const shots = [];
+    for (let i = 0; i < n; i++) {
+      const t = n > 1 ? i / (n - 1) : 0;
+      let f;
+      switch (curve) {
+        case 'near-to-far': f = fMin + t * (fMax - fMin); break;
+        case 'far-to-near': f = fMax - t * (fMax - fMin); break;
+        case 'center-out': {
+          const mid = (fMin + fMax) / 2;
+          const half = (fMax - fMin) / 2;
+          f = i % 2 === 0 ? mid + (t * half) : mid - (t * half);
+          break;
+        }
+        default: f = fMin + t * (fMax - fMin);
+      }
+      shots.push({ index: i + 1, focus: parseFloat(f.toFixed(3)), delay });
+    }
+    return shots;
+  }
+
+  function renderShotList() {
+    const el = document.getElementById('shotList');
+    el.innerHTML = sequence.map((s, i) => `
+      <div class="shot-item" id="shot-${i}">
+        <span class="shot-num">#${s.index}</span>
+        <span class="shot-focus">focus: ${s.focus.toFixed(3)}</span>
+        <span class="shot-delay">${s.delay}ms</span>
+        <div class="shot-status" id="shot-status-${i}"></div>
+      </div>
+    `).join('');
+  }
+
+  function renderStackViz() {
+    const el = document.getElementById('stackViz');
+    if (!sequence.length) { el.innerHTML = ''; return; }
+    const max = Math.max(...sequence.map(s => s.focus));
+    el.innerHTML = sequence.map((s, i) => {
+      const h = Math.round(10 + (s.focus / (max || 1)) * 50);
+      return `<div class="stack-bar inactive" id="viz-${i}" style="height:${h}px" title="cliché ${s.index}: focus ${s.focus.toFixed(3)}"></div>`;
+    }).join('');
+  }
+
+  // ── SÉQUENCE ────────────────────────────────────────────
+  function startSequence() {
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      log('Connexion requise avant de lancer la séquence', 'warn');
+      return;
+    }
+    if (running) return;
+    running = true;
+    currentShot = 0;
+    document.getElementById('btnStart').disabled = true;
+    document.getElementById('btnStop').disabled = false;
+    document.getElementById('progressSection').classList.add('visible');
+    log(`Démarrage : ${sequence.length} clichés`, 'info');
+    renderShotList();
+    renderStackViz();
+    fireNext();
+  }
+
+  function fireNext() {
+    if (!running || currentShot >= sequence.length) {
+      finishSequence();
+      return;
+    }
+    const s = sequence[currentShot];
+    const pct = Math.round((currentShot / sequence.length) * 100);
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = `Cliché ${currentShot + 1} / ${sequence.length}`;
+    document.getElementById('progressFocus').textContent = `mise au point : ${s.focus.toFixed(3)}`;
+
+    // Update shot list
+    document.querySelectorAll('.shot-item').forEach((el, i) => {
+      el.classList.remove('active-shot', 'done-shot');
+      document.getElementById('shot-status-' + i).className = 'shot-status';
+      if (i < currentShot) { el.classList.add('done-shot'); document.getElementById('shot-status-' + i).classList.add('done-status'); }
+      if (i === currentShot) { el.classList.add('active-shot'); document.getElementById('shot-status-' + i).classList.add('active-status'); el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+    });
+
+    // Update viz bars
+    document.querySelectorAll('.stack-bar').forEach((el, i) => {
+      el.className = 'stack-bar ' + (i < currentShot ? 'done' : i === currentShot ? 'active' : 'inactive');
+    });
+
+    log(`Cliché ${s.index}/${sequence.length} → focus: ${s.focus.toFixed(3)}`, 'info');
+    send({ cmd: 'capture', focus: s.focus, iso: document.getElementById('iso').value });
+    currentShot++;
+    seqTimer = setTimeout(fireNext, s.delay);
+  }
+
+  function finishSequence() {
+    running = false;
+    document.getElementById('btnStart').disabled = false;
+    document.getElementById('btnStop').disabled = true;
+    document.getElementById('progressBar').style.width = '100%';
+    document.getElementById('progressLabel').textContent = `Terminé — ${sequence.length} clichés`;
+    document.getElementById('progressFocus').textContent = '✓';
+    log(`Séquence terminée (${sequence.length} clichés)`, 'success');
+
+    document.querySelectorAll('.shot-item').forEach(el => { el.classList.remove('active-shot'); el.classList.add('done-shot'); });
+    document.querySelectorAll('.shot-status').forEach(el => { el.className = 'shot-status done-status'; });
+    document.querySelectorAll('.stack-bar').forEach(el => { el.className = 'stack-bar done'; });
+  }
+
+  function stopSequence() {
+    if (seqTimer) clearTimeout(seqTimer);
+    running = false;
+    document.getElementById('btnStart').disabled = false;
+    document.getElementById('btnStop').disabled = true;
+    log('Séquence interrompue au cliché ' + currentShot, 'warn');
+  }
+
+  function testShot() {
+    const fMin = parseFloat(document.getElementById('focusMin').value);
+    const fMax = parseFloat(document.getElementById('focusMax').value);
+    const mid = ((fMin + fMax) / 2).toFixed(3);
+    log(`Cliché test — focus: ${mid}`, 'info');
+    send({ cmd: 'capture', focus: parseFloat(mid), iso: document.getElementById('iso').value });
+  }
+
+  // ── LOG ─────────────────────────────────────────────────
+  function log(msg, type = '') {
+    const box = document.getElementById('logBox');
+    const now = new Date();
+    const ts = now.toLocaleTimeString('fr-FR', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const el = document.createElement('div');
+    el.className = 'log-entry ' + type;
+    el.innerHTML = `<span class="log-ts">[${ts}]</span>${msg}`;
+    box.appendChild(el);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function clearLog() {
+    document.getElementById('logBox').innerHTML = '';
+  }
+
+  // ── SECTIONS ────────────────────────────────────────────
+  function toggleSection(id) {
+    document.getElementById(id).classList.toggle('collapsed');
+  }
+
+  // ── INIT ─────────────────────────────────────────────────
+  updateParams();
+  log('FocusBrk prêt — connectez votre Xiaomi 14T Pro', '');
+
+  // Service Worker registration
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/PWA/focusbrk/sw.js', { scope: '/PWA/focusbrk/' }).catch(() => {});
+  }
+</script>
+</body>
+</html>
