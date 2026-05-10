@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0d1117" />
+  <meta name="description" content="Cuisine — Analyse et exploration de recettes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="apple-mobile-web-app-title" content="Cuisine" />
+  <title>Cuisine</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <!-- SheetJS for Excel parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- ══ SIDEBAR ══ -->
+    <aside id="sidebar">
+      <div class="brand">
+        <span class="brand-mark">◈</span>
+        <span class="brand-name">Cuisine</span>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" data-view="import">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Importer
+        </button>
+        <button class="nav-item" data-view="compare" id="nav-compare">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="18"/></svg>
+          Comparer
+        </button>
+        <button class="nav-item" data-view="search" id="nav-search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          Rechercher
+        </button>
+        <button class="nav-item" data-view="catalog" id="nav-catalog">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          Catalogue
+        </button>
+      </nav>
+
+      <div class="data-status" id="data-status">
+        <div class="status-row">
+          <span class="status-dot" id="dot-recettes"></span>
+          <span id="lbl-recettes">Recettes — non chargé</span>
+        </div>
+        <div class="status-row">
+          <span class="status-dot" id="dot-ingredients"></span>
+          <span id="lbl-ingredients">Ingrédients — non chargé</span>
+        </div>
+        <div class="status-row">
+          <span class="status-dot" id="dot-compo"></span>
+          <span id="lbl-compo">Compositions — 0 fichier</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ══ MOBILE TOPBAR ══ -->
+    <div class="topbar">
+      <button id="btn-menu-toggle" class="icon-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <span class="topbar-title">◈ Cuisine</span>
+    </div>
+
+    <!-- ══ MAIN CONTENT ══ -->
+    <main id="main">
+
+      <!-- ── IMPORT VIEW ── -->
+      <section class="view active" id="view-import">
+        <div class="view-header">
+          <h1>Importer les données</h1>
+          <p class="view-sub">Chargez vos fichiers Excel pour commencer l'analyse</p>
+        </div>
+
+        <div class="import-grid">
+          <!-- Recettes -->
+          <div class="import-card" id="card-recettes">
+            <div class="import-card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            </div>
+            <h3>Tableau Recettes</h3>
+            <p>Fichier Excel contenant les codes, noms et attributs des recettes (~25 colonnes × 1000 lignes)</p>
+            <label class="drop-zone" id="dz-recettes">
+              <input type="file" accept=".xlsx,.xls,.csv" id="file-recettes" />
+              <div class="dz-inner">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+                <span>Glisser-déposer ou cliquer</span>
+                <small>XLSX, XLS, CSV</small>
+              </div>
+            </label>
+            <div class="import-success hidden" id="ok-recettes">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              <span id="ok-recettes-txt"></span>
+            </div>
+          </div>
+
+          <!-- Ingrédients -->
+          <div class="import-card" id="card-ingredients">
+            <div class="import-card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/><path d="M12 8v4l3 3"/></svg>
+            </div>
+            <h3>Tableau Ingrédients</h3>
+            <p>Fichier Excel contenant les codes, noms et attributs des ingrédients (beurre, chocolat…)</p>
+            <label class="drop-zone" id="dz-ingredients">
+              <input type="file" accept=".xlsx,.xls,.csv" id="file-ingredients" />
+              <div class="dz-inner">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+                <span>Glisser-déposer ou cliquer</span>
+                <small>XLSX, XLS, CSV</small>
+              </div>
+            </label>
+            <div class="import-success hidden" id="ok-ingredients">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              <span id="ok-ingredients-txt"></span>
+            </div>
+          </div>
+
+          <!-- Compositions -->
+          <div class="import-card wide" id="card-compo">
+            <div class="import-card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            </div>
+            <h3>Fichiers de composition</h3>
+            <p>Un ou plusieurs fichiers Excel par recette. Chaque fichier a le nom de la recette en A1, les ingrédients en colonne B et les pourcentages en colonne C.</p>
+            <label class="drop-zone" id="dz-compo">
+              <input type="file" accept=".xlsx,.xls,.csv" id="file-compo" multiple />
+              <div class="dz-inner">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+                <span>Glisser-déposer (sélection multiple)</span>
+                <small>Plusieurs fichiers XLSX acceptés</small>
+              </div>
+            </label>
+            <div class="compo-list" id="compo-list"></div>
+          </div>
+        </div>
+
+        <div class="import-cta" id="import-cta">
+          <button class="btn-primary" id="btn-validate-import" disabled>
+            Valider et accéder à l'analyse
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+
+        <!-- Demo data button -->
+        <div class="demo-section">
+          <hr class="divider" />
+          <p class="demo-label">Pas encore de fichiers ? Testez avec des données de démonstration</p>
+          <button class="btn-ghost" id="btn-demo">Charger les données de démonstration</button>
+        </div>
+      </section>
+
+      <!-- ── COMPARE VIEW ── -->
+      <section class="view hidden" id="view-compare">
+        <div class="view-header">
+          <h1>Comparer des recettes</h1>
+          <p class="view-sub">Sélectionnez plusieurs recettes pour visualiser leur composition côte à côte</p>
+        </div>
+
+        <div class="compare-controls">
+          <div class="recipe-selector-wrap">
+            <label>Recettes à comparer</label>
+            <div class="multi-select" id="compare-recipe-select">
+              <input type="text" id="compare-search-input" placeholder="Rechercher une recette…" autocomplete="off" />
+              <div class="dropdown-list hidden" id="compare-dropdown"></div>
+            </div>
+            <div class="selected-chips" id="selected-chips"></div>
+          </div>
+          <button class="btn-primary" id="btn-compare">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="18"/></svg>
+            Comparer
+          </button>
+        </div>
+
+        <div id="compare-result"></div>
+      </section>
+
+      <!-- ── SEARCH VIEW ── -->
+      <section class="view hidden" id="view-search">
+        <div class="view-header">
+          <h1>Recherche avancée</h1>
+          <p class="view-sub">Trouvez les recettes selon leur composition en ingrédients</p>
+        </div>
+
+        <div class="search-builder">
+          <div class="criteria-list" id="criteria-list"></div>
+          <button class="btn-ghost" id="btn-add-criterion">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            Ajouter un critère
+          </button>
+
+          <div class="search-actions">
+            <button class="btn-primary" id="btn-run-search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              Lancer la recherche
+            </button>
+            <button class="btn-ghost" id="btn-clear-criteria">Effacer tout</button>
+          </div>
+        </div>
+
+        <div id="search-result"></div>
+      </section>
+
+      <!-- ── CATALOG VIEW ── -->
+      <section class="view hidden" id="view-catalog">
+        <div class="view-header">
+          <h1>Catalogue</h1>
+          <p class="view-sub">Explorez toutes les recettes et ingrédients chargés</p>
+        </div>
+
+        <div class="catalog-tabs">
+          <button class="cat-tab active" data-tab="recettes">Recettes</button>
+          <button class="cat-tab" data-tab="ingredients">Ingrédients</button>
+        </div>
+
+        <div class="catalog-toolbar">
+          <input type="text" id="catalog-filter" placeholder="Filtrer…" class="filter-input" />
+          <span class="result-count" id="catalog-count"></span>
+        </div>
+
+        <div id="catalog-table-wrap"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
