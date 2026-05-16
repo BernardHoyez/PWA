@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AjouteWpts</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>AjouteWpts</h1>
+        <p>Outil PWA pour créer des waypoints de randonnée</p>
+    </header>
+
+    <div class="container">
+        <section id="step1">
+            <h2>Étape 1 : Création des waypoints bruts</h2>
+            <input type="file" id="folderInput" webkitdirectory directory multiple accept="image/jpeg,image/png">
+            <button onclick="processPhotos()">Traiter les photos</button>
+            <div id="rawList"></div>
+        </section>
+
+        <section id="step2">
+            <h2>Étape 2 : Géolocalisation</h2>
+            <button onclick="openDualWindows()">Ouvrir les deux fenêtres</button>
+        </section>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
