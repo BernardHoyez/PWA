@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>kmz2htmlcp – Visualisation de randonnée</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b3d91" />
+
+  <!-- Manifest PWA -->
+  <link rel="manifest" href="manifest.webmanifest" />
+
+  <!-- Icônes PWA (placeholders) -->
+  <link rel="icon" sizes="192x192" href="icon192.png" />
+  <link rel="icon" sizes="512x512" href="icon512.png" />
+
+  <!-- Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <!-- JSZip pour lire le KMZ -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    header {
+      padding: 0.5rem 1rem;
+      background: #0b3d91;
+      color: #fff;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    header h1 {
+      font-size: 1rem;
+      margin: 0;
+    }
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+    }
+    .buttons button,
+    .buttons a {
+      border: none;
+      padding: 0.35rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      background: #fff;
+      color: #0b3d91;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .buttons button[disabled],
+    .buttons a[disabled] {
+      opacity: 0.4;
+      cursor: default;
+    }
+    .buttons button:hover:not([disabled]),
+    .buttons a:hover:not([disabled]) {
+      background: #e0e7ff;
+    }
+
+    #top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: #f3f4f6;
+      align-items: center;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    #kmz-input {
+      display: none;
+    }
+    #kmz-label {
+      border: 1px dashed #0b3d91;
+      padding: 0.4rem 0.7rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      background: #fff;
+      color: #0b3d91;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    #kmz-label:hover {
+      background: #eff6ff;
+    }
+    #drop-zone {
+      flex: 1;
+      min-height: 2.2rem;
+      border: 1px dashed #9ca3af;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      padding: 0.3rem 0.5rem;
+      color: #4b5563;
+    }
+    #drop-zone.dragover {
+      border-color: #0b3d91;
+      background: #e0f2fe;
+      color: #0b3d91;
+    }
+    #status {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-left: 0.5rem;
+    }
+
+    #map {
+      flex: 1;
+      width: 100%;
+    }
+
+    /* Popup responsive */
+    .wp-popup {
+      max-width: 260px;
+    }
+    .wp-popup h3 {
+      margin: 0 0 0.25rem 0;
+      font-size: 1rem;
+    }
+    .wp-popup img {
+      width: 100%;
+      height: auto;
+      border-radius: 4px;
+      margin-bottom: 0.25rem;
+    }
+    .wp-popup .meta {
+      font-size: 0.75rem;
+      color: #555;
+      margin-top: 0.25rem;
+    }
+    .wp-popup .comment {
+      font-size: 0.8rem;
+      margin-top: 0.25rem;
+    }
+    .wp-popup .actions {
+      margin-top: 0.35rem;
+      text-align: right;
+    }
+    .wp-popup .actions button {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      border: none;
+      background: #0b3d91;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    @media (min-width: 768px) {
+      .wp-popup {
+        max-width: 360px;
+      }
+    }
+
+    /* Modal agrandissement photo */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    .modal-backdrop.active {
+      display: flex;
+    }
+    .modal-content {
+      max-width: 95vw;
+      max-height: 95vh;
+    }
+    .modal-content img {
+      max-width: 100%;
+      max-height: 100%;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>kmz2htmlcp – Tracé de randonnée</h1>
+      <div class="buttons">
+        <a id="btn-kml" href="#" download="trace.kml" disabled>KML</a>
+        <a id="btn-gpx" href="#" download="trace.gpx" disabled>GPX</a>
+        <a id="btn-json" href="#" download="trace.json" disabled>JSON</a>
+        <a id="btn-pdf" href="#" download="trace.pdf" disabled>PDF</a>
+        <button id="btn-print" disabled>Imprimer</button>
+      </div>
+    </header>
+
+    <div id="top-bar">
+      <label id="kmz-label" for="kmz-input">
+        📁 Importer un fichier KMZ
+      </label>
+      <input id="kmz-input" type="file" accept=".kmz" />
+      <div id="drop-zone">
+        Glissez-déposez un fichier .kmz ici ou utilisez le bouton « Importer ».
+      </div>
+      <span id="status"></span>
+    </div>
+
+    <div id="map"></div>
+  </div>
+
+  <!-- Modal agrandissement photo -->
+  <div id="photo-modal" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="modal-content">
+      <img id="photo-modal-img" src="" alt="Photo du waypoint" />
+    </div>
+  </div>
+
+  <script>
+    // --- Éléments DOM ---
+    const kmzInput = document.getElementById("kmz-input");
+    const dropZone = document.getElementById("drop-zone");
+    const statusEl = document.getElementById("status");
+
+    const btnKml = document.getElementById("btn-kml");
+    const btnGpx = document.getElementById("btn-gpx");
+    const btnJson = document.getElementById("btn-json");
+    const btnPdf = document.getElementById("btn-pdf");
+    const btnPrint = document.getElementById("btn-print");
+
+    const modal = document.getElementById("photo-modal");
+    const modalImg = document.getElementById("photo-modal-img");
+
+    modal.addEventListener("click", () => {
+      modal.classList.remove("active");
+      modalImg.src = "";
+    });
+
+    function openPhotoModal(src) {
+      modalImg.src = src;
+      modal.classList.add("active");
+    }
+
+    function setStatus(msg) {
+      statusEl.textContent = msg || "";
+    }
+
+    function enableExportButtons(enabled) {
+      [btnKml, btnGpx, btnJson, btnPdf, btnPrint].forEach(el => {
+        if (enabled) {
+          el.removeAttribute("disabled");
+        } else {
+          el.setAttribute("disabled", "true");
+        }
+      });
+    }
+
+    enableExportButtons(false);
+
+    // --- Leaflet ---
+    const map = L.map("map");
+    const osm = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+    }).addTo(map);
+
+    // Placeholders pour IGN (à adapter si besoin)
+    const baseLayers = {
+      "OSM": osm
+    };
+    L.control.layers(baseLayers, null, { position: "topright" }).addTo(map);
+    map.setView([46.5, 2.5], 6);
+
+    let currentTrackCoords = [];
+    let currentWaypoints = [];
+    let originalKmlText = "";
+    let geojsonData = null;
+
+    // --- Drag & drop KMZ ---
+    ["dragenter", "dragover"].forEach(evtName => {
+      dropZone.addEventListener(evtName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.add("dragover");
+      });
+    });
+    ["dragleave", "drop"].forEach(evtName => {
+      dropZone.addEventListener(evtName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.remove("dragover");
+      });
+    });
+    dropZone.addEventListener("drop", (e) => {
+      const files = e.dataTransfer.files;
+      if (files && files[0]) {
+        handleKmzFile(files[0]);
+      }
+    });
+
+    kmzInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        handleKmzFile(file);
+      }
+    });
+
+    // --- Lecture KMZ ---
+    async function handleKmzFile(file) {
+      setStatus("Chargement du KMZ : " + file.name + " …");
+      enableExportButtons(false);
+      currentTrackCoords = [];
+      currentWaypoints = [];
+      originalKmlText = "";
+      geojsonData = null;
+
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const zip = await JSZip.loadAsync(arrayBuffer);
+
+        // Cherche doc.kml (ou le premier .kml)
+        let kmlFile = null;
+        zip.forEach((path, entry) => {
+          if (!entry.dir && path.toLowerCase().endsWith(".kml")) {
+            if (!kmlFile || path.toLowerCase().endsWith("doc.kml")) {
+              kmlFile = entry;
+            }
+          }
+        });
+
+        if (!kmlFile) {
+          setStatus("Aucun fichier KML trouvé dans le KMZ.");
+          return;
+        }
+
+        originalKmlText = await kmlFile.async("text");
+
+        // Prépare un mapping des photos : chemin -> URL (Blob)
+        const photoUrlMap = {};
+        const photoPromises = [];
+
+        zip.forEach((path, entry) => {
+          const lower = path.toLowerCase();
+          if (!entry.dir && (lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png"))) {
+            const p = entry.async("blob").then(blob => {
+              const url = URL.createObjectURL(blob);
+              photoUrlMap[path] = url;
+            });
+            photoPromises.push(p);
+          }
+        });
+
+        await Promise.all(photoPromises);
+
+        parseKmlAndDisplay(originalKmlText, photoUrlMap);
+        prepareExports();
+
+        setStatus("KMZ chargé : " + file.name);
+        enableExportButtons(true);
+      } catch (err) {
+        console.error(err);
+        setStatus("Erreur lors de la lecture du KMZ.");
+      }
+    }
+
+    // --- Parsing KML + affichage ---
+    function parseKmlAndDisplay(kmlText, photoUrlMap) {
+      // Nettoie la carte
+      map.eachLayer(layer => {
+        if (layer !== osm) {
+          map.removeLayer(layer);
+        }
+      });
+
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(kmlText, "application/xml");
+
+      const placemarks = Array.from(xml.getElementsByTagName("Placemark"));
+
+      const trackCoords = [];
+      const waypointMarkers = [];
+
+      placemarks.forEach(pm => {
+        const nameEl = pm.getElementsByTagName("name")[0];
+        const name = nameEl ? nameEl.textContent.trim() : "Waypoint";
+
+        const lineString = pm.getElementsByTagName("LineString")[0];
+        const point = pm.getElementsByTagName("Point")[0];
+
+        const descriptionEl = pm.getElementsByTagName("description")[0];
+        const descriptionHtml = descriptionEl ? descriptionEl.textContent : "";
+
+        const extended = pm.getElementsByTagName("ExtendedData")[0];
+        const data = {};
+        if (extended) {
+          const datas = extended.getElementsByTagName("Data");
+          Array.from(datas).forEach(d => {
+            const key = d.getAttribute("name");
+            const valueEl = d.getElementsByTagName("value")[0];
+            if (key && valueEl) {
+              data[key] = valueEl.textContent;
+            }
+          });
+        }
+
+        if (lineString) {
+          const coordsEl = lineString.getElementsByTagName("coordinates")[0];
+          if (coordsEl) {
+            const coordsText = coordsEl.textContent.trim();
+            coordsText.split(/\s+/).forEach(c => {
+              const [lon, lat, alt] = c.split(",").map(Number);
+              if (!isNaN(lat) && !isNaN(lon)) {
+                trackCoords.push([lat, lon, alt]);
+              }
+            });
+          }
+        }
+
+        if (point) {
+          const coordsEl = point.getElementsByTagName("coordinates")[0];
+          if (coordsEl) {
+            const [lon, lat, alt] = coordsEl.textContent.trim().split(",").map(Number);
+            if (!isNaN(lat) && !isNaN(lon)) {
+              let photoPath = data["photo"] || data["image"] || null;
+
+              if (!photoPath && descriptionHtml) {
+                const m = descriptionHtml.match(/<img[^>]+src=["']([^"']+)["']/i);
+                if (m) {
+                  photoPath = m[1];
+                }
+              }
+
+              let photoUrl = null;
+              if (photoPath) {
+                const normalized = photoPath.replace(/^\.?\//, "");
+                if (photoUrlMap[normalized]) {
+                  photoUrl = photoUrlMap[normalized];
+                } else {
+                  const altKey = Object.keys(photoUrlMap).find(p => p.endsWith(normalized));
+                  if (altKey) {
+                    photoUrl = photoUrlMap[altKey];
+                  }
+                }
+              }
+
+              const commentHtml = data["comment"] || data["description"] || descriptionHtml || "";
+              const altitude = data["altitude"] || (!isNaN(alt) ? alt.toFixed(0) : "");
+              const latStr = lat.toFixed(6);
+              const lonStr = lon.toFixed(6);
+
+              const popupDiv = document.createElement("div");
+              popupDiv.className = "wp-popup";
+
+              const titleEl = document.createElement("h3");
+              titleEl.textContent = name;
+              popupDiv.appendChild(titleEl);
+
+              if (photoUrl) {
+                const img = document.createElement("img");
+                img.src = photoUrl;
+                img.alt = name;
+                popupDiv.appendChild(img);
+              }
+
+              const commentDiv = document.createElement("div");
+              commentDiv.className = "comment";
+              commentDiv.innerHTML = commentHtml;
+              popupDiv.appendChild(commentDiv);
+
+              const metaDiv = document.createElement("div");
+              metaDiv.className = "meta";
+              metaDiv.textContent =
+                "Alt : " + (altitude || "?") + " m – " +
+                "Lat : " + latStr + " / Lon : " + lonStr;
+              popupDiv.appendChild(metaDiv);
+
+              if (photoUrl) {
+                const actionsDiv = document.createElement("div");
+                actionsDiv.className = "actions";
+                const btn = document.createElement("button");
+                btn.textContent = "Agrandir";
+                btn.addEventListener("click", (e) => {
+                  e.stopPropagation();
+                  openPhotoModal(photoUrl);
+                });
+                actionsDiv.appendChild(btn);
+                popupDiv.appendChild(actionsDiv);
+              }
+
+              const marker = L.marker([lat, lon]).bindPopup(popupDiv);
+              waypointMarkers.push(marker);
+
+              currentWaypoints.push({
+                name,
+                lat,
+                lon,
+                altitude: altitude || null,
+                commentHtml,
+                photoPath,
+                photoUrl
+              });
+            }
+          }
+        }
+      });
+
+      currentTrackCoords = trackCoords;
+
+      let bounds = null;
+
+      if (trackCoords.length > 0) {
+        const latlngs = trackCoords.map(c => [c[0], c[1]]);
+        const polyline = L.polyline(latlngs, {
+          color: "#d62828",
+          weight: 4
+        }).addTo(map);
+        bounds = polyline.getBounds();
+      }
+
+      if (waypointMarkers.length > 0) {
+        const group = L.featureGroup(waypointMarkers).addTo(map);
+        if (bounds) {
+          bounds = bounds.extend(group.getBounds());
+        } else {
+          bounds = group.getBounds();
+        }
+      }
+
+      if (bounds) {
+        map.fitBounds(bounds, { padding: [20, 20] });
+      } else {
+        map.setView([46.5, 2.5], 6);
+      }
+
+      buildGeoJSON();
+    }
+
+    // --- GeoJSON ---
+    function buildGeoJSON() {
+      const features = [];
+
+      if (currentTrackCoords.length > 0) {
+        const coords = currentTrackCoords.map(c => [c[1], c[0], c[2]]);
+        features.push({
+          type: "Feature",
+          properties: { type: "track" },
+          geometry: {
+            type: "LineString",
+            coordinates: coords
+          }
+        });
+      }
+
+      currentWaypoints.forEach(wp => {
+        features.push({
+          type: "Feature",
+          properties: {
+            type: "waypoint",
+            name: wp.name,
+            altitude: wp.altitude,
+            commentHtml: wp.commentHtml,
+            photoPath: wp.photoPath
+          },
+          geometry: {
+            type: "Point",
+            coordinates: [wp.lon, wp.lat, wp.altitude ? Number(wp.altitude) : null]
+          }
+        });
+      });
+
+      geojsonData = {
+        type: "FeatureCollection",
+        features
+      };
+    }
+
+    // --- Exports ---
+    function prepareExports() {
+      // KML : on réutilise le KML original
+      if (originalKmlText) {
+        const blobKml = new Blob([originalKmlText], { type: "application/vnd.google-earth.kml+xml" });
+        const urlKml = URL.createObjectURL(blobKml);
+        btnKml.href = urlKml;
+      }
+
+      // GPX simple à partir du tracé
+      if (currentTrackCoords.length > 0) {
+        let gpx = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+        gpx += `<gpx version="1.1" creator="kmz2htmlcp" xmlns="http://www.topografix.com/GPX/1/1">\n`;
+        gpx += `<trk><name>Trace</name><trkseg>\n`;
+        currentTrackCoords.forEach(c => {
+          const lat = c[0];
+          const lon = c[1];
+          const ele = c[2];
+          gpx += `<trkpt lat="${lat}" lon="${lon}">`;
+          if (!isNaN(ele)) {
+            gpx += `<ele>${ele}</ele>`;
+          }
+          gpx += `</trkpt>\n`;
+        });
+        gpx += `</trkseg></trk>\n</gpx>\n`;
+        const blobGpx = new Blob([gpx], { type: "application/gpx+xml" });
+        const urlGpx = URL.createObjectURL(blobGpx);
+        btnGpx.href = urlGpx;
+      }
+
+      // JSON (GeoJSON)
+      if (geojsonData) {
+        const jsonStr = JSON.stringify(geojsonData, null, 2);
+        const blobJson = new Blob([jsonStr], { type: "application/json" });
+        const urlJson = URL.createObjectURL(blobJson);
+        btnJson.href = urlJson;
+      }
+
+      // PDF : on s'appuie sur la fonction d'impression (l'utilisateur peut choisir "Enregistrer en PDF")
+      btnPdf.addEventListener("click", () => {
+        window.print();
+      }, { once: true });
+
+      // Imprimer
+      btnPrint.addEventListener("click", () => {
+        window.print();
+      }, { once: true });
+    }
+
+    // --- Service worker ---
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("./sw.js")
+          .catch(err => console.error("SW registration failed:", err));
+      });
+    }
+  </script>
+</body>
+</html>
