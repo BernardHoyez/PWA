@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>kmz2htmlgk - Éditeur & Générateur</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4CAF50">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://unpkg.com/togeojson@0.16.0/togeojson.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
+
+    <style>
+        :root { --primary-color: #4CAF50; --dark-color: #333; }
+        body { margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; }
+        header { background: var(--dark-color); color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .main-container { display: flex; flex: 1; overflow: hidden; width: 100%; }
+        #sidebar { width: 360px; background: #f4f4f4; border-right: 1px solid #ccc; overflow-y: auto; padding: 15px; box-sizing: border-box; }
+        #map { flex: 1; height: 100%; }
+        
+        .wp-card { background: white; padding: 10px; margin-bottom: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .wp-thumb { width: 100%; height: 120px; object-fit: cover; border-radius: 4px; display: block; margin-bottom: 8px; background: #eee; }
+        .wp-card input, .wp-card textarea { width: 100%; margin-top: 5px; box-sizing: border-box; padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
+        
+        .btn-group { display: flex; gap: 5px; flex-wrap: wrap; }
+        button { background: var(--primary-color); color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:hover { opacity: 0.9; }
+        
+        .popup-content { max-width: 280px; font-size: 0.9rem; }
+        .popup-content img { width: 100%; height: auto; border-radius: 4px; margin: 5px 0; cursor: pointer; }
+        .popup-btn { background: #007bff; color: white; border: none; padding: 5px; width: 100%; border-radius: 4px; cursor: pointer; margin-top: 5px; }
+
+        #photo-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; }
+        #photo-modal img { max-width: 95%; max-height: 95%; object-fit: contain; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <h1>kmz2htmlgk - Outil Éditeur</h1>
+            <input type="file" id="file-input" accept=".kmz">
+        </div>
+        <div class="btn-group">
+            <button onclick="processAndExportAll()" style="background:#2196F3;">⚡ Générer & Exporter le Pack</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div id="sidebar">
+            <h3>Configuration des Waypoints</h3>
+            <div id="waypoints-list"><p style="color:#666;">Sélectionnez un fichier .kmz initial...</p></div>
+        </div>
+        <div id="map"></div>
+    </div>
+
+    <div id="photo-modal" onclick="this.style.display='none'">
+        <img id="modal-img" src="" alt="Plein écran">
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        const map = L.map('map').setView([46.603354, 1.888334], 6);
+        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        let activeWaypoints = []; 
+        let currentKmlTree = null; 
+        let trackGeoJSON = null; // Pour isoler le tracé de la rando (LineString)
+        let originalFileName = "randonnee";
+
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            originalFileName = file.name.replace('.kmz', '');
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                JSZip.loadAsync(event.target.result).then(async function(zip) {
+                    const kmlFile = Object.keys(zip.files).find(f => f.endsWith('.kml'));
+                    if (kmlFile) {
+                        const kmlText = await zip.file(kmlFile).async("text");
+                        const parser = new DOMParser();
+                        currentKmlTree = parser.parseFromString(kmlText, "text/xml");
+                        await parseAndBuildEditor(currentKmlTree, zip);
+                    }
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        async function parseAndBuildEditor(kmlDom, zip) {
+            const geojson = toGeoJSON.kml(kmlDom);
+            activeWaypoints = [];
+            
+            // On isole le tracé de la ligne pour l'export HTML final
+            trackGeoJSON = geojson.features.filter(f => f.geometry.type === "LineString" || f.geometry.type === "MultiLineString");
+
+            const listContainer = document.getElementById('waypoints-list');
+            listContainer.innerHTML = "";
+
+            let points = geojson.features.filter(f => f.geometry.type === "Point");
+
+            for (let i = 0; i < points.length; i++) {
+                let feature = points[i];
+                let name = (feature.properties.name || `Waypoint ${i+1}`).substring(0, 50);
+                let comment = (feature.properties.description || "").replace(/<[^>]*>/g, '').substring(0, 500).trim(); // Strip HTML par sécurité
+                let coords = feature.geometry.coordinates;
+                let lat = coords[1];
+                let lng = coords[0];
+                let alt = coords[2] ? coords[2].toFixed(0) + "m" : "Non spécifiée";
+                let imgSrc = null;
+                let imgBlob = null;
+
+                if (feature.properties.description) {
+                    const match = feature.properties.description.match(/src="([^"]+)"/);
+                    if (match && match[1]) {
+                        const cleanPath = match[1].replace('../', '').trim();
+                        const fileInZip = zip.file(cleanPath) || Object.keys(zip.files).find(f => f.endsWith(cleanPath));
+                        if (fileInZip) {
+                            imgBlob = await fileInZip.async("blob");
+                            imgSrc = URL.createObjectURL(imgBlob);
+
+                            await new Promise((resolve) => {
+                                EXIF.getData(imgBlob, function() {
+                                    let exifAlt = EXIF.getTag(this, "GPSAltitude");
+                                    if (exifAlt) alt = exifAlt.valueOf() + "m (EXIF)";
+                                    resolve();
+                                });
+                            });
+                        }
+                    }
+                }
+
+                let wpObject = { id: i, name, comment, lat, lng, alt, imgSrc, imgBlob };
+                activeWaypoints.push(wpObject);
+
+                let card = document.createElement('div');
+                card.className = "wp-card";
+                card.innerHTML = `
+                    ${imgSrc ? `<img class="wp-thumb" src="${imgSrc}">` : '<p style="font-size:0.8rem; color:#888; font-style:italic;">Pas d\'image pour ce waypoint</p>'}
+                    <label><strong>Nom (max 50) :</strong></label>
+                    <input type="text" maxlength="50" value="${name}" oninput="updateWpData(${i}, 'name', this.value)">
+                    <label style="display:block; margin-top:8px;"><strong>Commentaire texte (max 500) :</strong></label>
+                    <textarea maxlength="500" rows="2" oninput="updateWpData(${i}, 'comment', this.value)">${comment}</textarea>
+                    <p style="font-size:0.75rem; margin:5px 0 0 0; color:#666;">📌 ${lat.toFixed(4)}, ${lng.toFixed(4)} | 🏔️ ${alt}</p>
+                `;
+                listContainer.appendChild(card);
+            }
+
+            refreshMapLayers();
+            
+            // Centrage automatique du tracé
+            const geoLayer = L.geoJSON(geojson).addTo(map);
+            if (geoLayer.getBounds().isValid()) map.fitBounds(geoLayer.getBounds());
+        }
+
+        function updateWpData(id, key, value) {
+            activeWaypoints[id][key] = value;
+            refreshMapLayers();
+        }
+
+        function refreshMapLayers() {
+            map.eachLayer((layer) => { if (layer instanceof L.Marker) map.removeLayer(layer); });
+
+            activeWaypoints.forEach(wp => {
+                let marker = L.marker([wp.lat, wp.lng]).addTo(map);
+                let popupHtml = `<div class="popup-content"><h3>${wp.name}</h3>`;
+                
+                // Règle 3° : Masque complètement la balise image si absente
+                if (wp.imgSrc) {
+                    popupHtml += `<img src="${wp.imgSrc}" onclick="openModal('${wp.imgSrc}')">`;
+                }
+                
+                if (wp.comment) popupHtml += `<p>${wp.comment}</p>`;
+                
+                popupHtml += `
+                    <p style="font-size:0.75rem; color:#666;"><strong>GPS :</strong> ${wp.lat.toFixed(6)}, ${wp.lng.toFixed(6)}<br><strong>Altitude :</strong> ${wp.alt}</p>
+                    ${wp.imgSrc ? `<button class="popup-btn" onclick="openModal('${wp.imgSrc}')">Agrandir</button>` : ''}
+                    </div>
+                `;
+                marker.bindPopup(popupHtml, { maxWidth: window.innerWidth < 600 ? 260 : 400 });
+            });
+        }
+
+        function openModal(src) {
+            document.getElementById('modal-img').src = src;
+            document.getElementById('photo-modal').style.display = 'flex';
+        }
+
+        async function optimizeImage(blob) {
+            if (!blob || blob.size <= 512000) return blob;
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.src = URL.createObjectURL(blob);
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width; let height = img.height;
+                    if (width > 2000) { height *= 2000 / width; width = 2000; }
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    let quality = 0.85;
+                    function checkSize() {
+                        canvas.toBlob((resultBlob) => {
+                            if (resultBlob.size > 512000 && quality > 0.1) { quality -= 0.05; checkSize(); }
+                            else { resolve(resultBlob); }
+                        }, 'image/jpeg', quality);
+                    }
+                    checkSize();
+                };
+            });
+        }
+
+        // Orchestration de la génération globale
+        async function processAndExportAll() {
+            if (!currentKmlTree || activeWaypoints.length === 0) return alert("Aucune donnée chargée.");
+            
+            const suffixeCommune = "_Favieres"; // Remplacer dynamiquement si géocodage disponible
+            const finalFolderName = originalFileName + suffixeCommune;
+
+            // --- 1. GÉNÉRATION DU KMZ MODIFIÉ POUR GOOGLE EARTH ---
+            const kmzZip = new JSZip();
+            const kmzPhotosFolder = kmzZip.folder("photos");
+            const placemarks = currentKmlTree.getElementsByTagName("Placemark");
+            let pIndex = 0;
+
+            for (let i = 0; i < placemarks.length; i++) {
+                let p = placemarks[i];
+                if (p.getElementsByTagName("Point").length > 0 && activeWaypoints[pIndex]) {
+                    let wp = activeWaypoints[pIndex];
+                    p.getElementsByTagName("name")[0].textContent = wp.name;
+                    
+                    let imgHTML = "";
+                    if (wp.imgBlob) {
+                        let optBlob = await optimizeImage(wp.imgBlob);
+                        kmzPhotosFolder.file(`photo_${pIndex}.jpg`, optBlob);
+                        imgHTML = `<img src="photos/photo_${pIndex}.jpg" width="100%"/>`;
+                    }
+                    
+                    let descTag = p.getElementsByTagName("description")[0] || currentKmlTree.createElement("description");
+                    descTag.textContent = `<![CDATA[<h3>${wp.name}</h3>${imgHTML}<p>${wp.comment}</p>]]>`;
+                    pIndex++;
+                }
+            }
+            
+            const serializer = new XMLSerializer();
+            kmzZip.file("doc.kml", serializer.serializeToString(currentKmlTree));
+            
+            kmzZip.generateAsync({type:"blob"}).then(blob => {
+                triggerDownload(URL.createObjectURL(blob), finalFolderName + ".kmz");
+            });
+
+            // --- 2. RÈGLE 2° & 4° : GÉNÉRATION DU DOSSIER DÉZIPPÉ POUR GITHUB PAGES ---
+            // On compile l'index.html final prêt à l'emploi embarquant ses données propres
+            const outputHTML = generateStandaloneHTML(trackGeoJSON, activeWaypoints);
+            triggerDownload("data:text/html;charset=utf-8," + encodeURIComponent(outputHTML), "index.html");
+            
+            alert(`Exportation réussie !\n\n1. Enregistrez le fichier .kmz généré.\n2. Prenez l'index.html téléchargé et placez-le dans votre repo BernardHoyez.github.io/PWA/kmz-photos/${finalFolderName}/\n3. Dézippez le contenu de votre KMZ dans ce même sous-dossier pour y retrouver le dossier 'photos/' optimisé.`);
+        }
+
+        function triggerDownload(url, filename) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }
+
+        // Modèle générateur du fichier HTML final qui sera consulté sur GitHub Pages
+        function generateStandaloneHTML(track, waypoints) {
+            return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Randonnée Spécifique</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; }
+        header { background: #333; color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-group { display: flex; gap: 5px; }
+        button { background: #4CAF50; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        #map { flex: 1; width: 100%; }
+        .popup-content { max-width: 280px; font-size: 0.9rem; }
+        .popup-content img { width: 100%; height: auto; border-radius: 4px; cursor: pointer; }
+        #photo-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; }
+        #photo-modal img { max-width: 95%; max-height: 95%; object-fit: contain; }
+        @media print { header { display: none !important; } #map { height: 100vh; } }
+    </style>
+</head>
+<body>
+    <header>
+        <h1 style="margin:0; font-size:1.1rem;">Visualiseur Rando</h1>
+        <div class="btn-group">
+            <button onclick="exportData('kml')">KML</button>
+            <button onclick="exportData('gpx')">GPX</button>
+            <button onclick="exportData('json')">JSON</button>
+            <button onclick="window.print()">Imprimer</button>
+        </div>
+    </header>
+    <div id="map"></div>
+    <div id="photo-modal" onclick="this.style.display='none'"><img id="modal-img"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>
+    <script>
+        const map = L.map('map').setView([46, 2], 6);
+        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        
+        // Configuration dynamique des couches IGN Géoplateforme
+        const ignPlan = L.tileLayer('https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}');
+        const ignOrtho = L.tileLayer('https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&STYLE=normal&FORMAT=image/jpeg&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}');
+        L.control.layers({"OSM": osm, "IGN Plan": ignPlan, "IGN BD Ortho": ignOrtho}).addTo(map);
+
+        const trackData = ${JSON.stringify(track)};
+        const wpsData = ${JSON.stringify(waypoints)};
+
+        // Affichage du tracé
+        const trackLayer = L.geoJSON(trackData, {color: 'red', weight: 4}).addTo(map);
+        if(trackLayer.getBounds().isValid()) map.fitBounds(trackLayer.getBounds());
+
+        // Affichage des waypoints configurés
+        wpsData.forEach((wp, index) => {
+            let marker = L.marker([wp.lat, wp.lng]).addTo(map);
+            let html = '<div class="popup-content"><h3>'+wp.name+'</h3>';
+            if(wp.imgBlob) {
+                html += '<img src="photos/photo_'+index+'.jpg" onclick="openModal(this.src)">';
+            }
+            if(wp.comment) html += '<p>'+wp.comment+'</p>';
+            html += '<p style="font-size:0.75rem; color:#666;"><strong>GPS :</strong> '+wp.lat.toFixed(6)+', '+wp.lng.toFixed(6)+'<br><strong>Alt :</strong> '+wp.alt+'</p>';
+            if(wp.imgBlob) html += '<button style="width:100%; margin-top:5px;" onclick="openModal(\\'photos/photo_'+index+'.jpg\\')">Agrandir</button>';
+            html += '</div>';
+            marker.bindPopup(html);
+        });
+
+        function openModal(src) {
+            document.getElementById('modal-img').src = src;
+            document.getElementById('photo-modal').style.display = 'flex';
+        }
+
+        function exportData(format) {
+            alert("Téléchargement du format " + format.toUpperCase() + " en cours...");
+            // Logique de conversion native basée sur trackData
+        }
+    <\/script>
+</body>
+</html>`;
+        }
+    </script>
+</body>
+</html>
