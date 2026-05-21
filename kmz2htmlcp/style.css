@@ -1,0 +1,130 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: system-ui, sans-serif;
+}
+
+header {
+  background: #0b3d91;
+  color: white;
+  padding: 0.5rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.buttons a,
+.buttons button {
+  background: white;
+  color: #0b3d91;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  border: none;
+  text-decoration: none;
+  margin-left: 0.3rem;
+  cursor: pointer;
+}
+
+.buttons a[disabled],
+.buttons button[disabled] {
+  opacity: 0.4;
+  cursor: default;
+}
+
+#map {
+  height: calc(100% - 150px);
+}
+
+#import-zone {
+  padding: 0.5rem 1rem;
+  background: #f3f4f6;
+  border-bottom: 1px solid #ddd;
+}
+
+#kmz-label {
+  display: inline-block;
+  padding: 0.4rem 0.7rem;
+  border: 1px dashed #0b3d91;
+  border-radius: 4px;
+  cursor: pointer;
+  background: white;
+}
+
+#drop-zone {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  border: 1px dashed #999;
+  border-radius: 4px;
+  color: #555;
+}
+
+#drop-zone.dragover {
+  background: #e0f2fe;
+  border-color: #0b3d91;
+  color: #0b3d91;
+}
+
+.wp-popup {
+  max-width: 260px;
+}
+
+.wp-popup img {
+  width: 100%;
+  border-radius: 4px;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal img {
+  max-width: 95vw;
+  max-height: 95vh;
+}
+#editor-panel {
+  position: absolute;
+  top: 120px;
+  right: 10px;
+  width: 300px;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ccc;
+  padding: 0.7rem;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  z-index: 999;
+}
+
+#editor-panel h2 {
+  margin-top: 0;
+}
+
+.wp-editor {
+  border: 1px solid #ddd;
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin-bottom: 0.7rem;
+}
+
+.wp-editor input,
+.wp-editor textarea {
+  width: 100%;
+  margin-bottom: 0.3rem;
+}
+
+.wp-editor img {
+  width: 100%;
+  border-radius: 4px;
+  margin-bottom: 0.3rem;
+}

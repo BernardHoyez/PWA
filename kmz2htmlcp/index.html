@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>kmz2htmlcp – Visualisation & Édition de randonnée</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b3d91" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" sizes="192x192" href="icon192.png" />
+  <link rel="icon" sizes="512x512" href="icon512.png" />
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+  </script>
+
+  <!-- JSZip -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+  <!-- EXIF -->
+  <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+</head>
+
+<body>
+  <!-- HEADER -->
+  <header>
+    <h1>kmz2htmlcp</h1>
+    <div class="buttons">
+      <a id="btn-kml" download="trace.kml" disabled>KML</a>
+      <a id="btn-gpx" download="trace.gpx" disabled>GPX</a>
+      <a id="btn-json" download="trace.json" disabled>JSON</a>
+      <a id="btn-pdf" download="trace.pdf" disabled>PDF</a>
+      <button id="btn-print" disabled>Imprimer</button>
+    </div>
+  </header>
+
+  <!-- IMPORT KMZ -->
+  <section id="import-zone">
+    <label for="kmz-input" id="kmz-label">📁 Importer un fichier KMZ</label>
+    <input id="kmz-input" type="file" accept=".kmz" />
+    <div id="drop-zone">Glissez-déposez un fichier .kmz ici</div>
+    <div id="status"></div>
+  </section>
+
+  <!-- PANNEAU D'ÉDITION -->
+  <aside id="editor-panel">
+    <h2>Édition des waypoints</h2>
+    <div id="wp-list"></div>
+    <button id="btn-generate-kmz" disabled>Générer KMZ optimisé</button>
+  </aside>
+
+  <!-- CARTE -->
+  <div id="map"></div>
+
+  <!-- MODAL PHOTO -->
+  <div id="photo-modal" class="modal">
+    <img id="photo-modal-img" />
+  </div>
+
+  <!-- JS PRINCIPAL -->
+  <script src="app.js"></script>
+
+  <!-- SERVICE WORKER -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js");
+    }
+  </script>
+</body>
+</html>
