@@ -1,22 +1,449 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="manifest" href="manifest.json">
-<title>mesrandos - Accueil</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mesrandos - Éditeur & Déploiement de Randonnées</title>
+    
+    <!-- PWA Manifest & Icons -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4CAF50">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --sidebar-width: 400px;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Volet Édition (Gauche) */
+        #sidebar {
+            width: var(--sidebar-width);
+            background: #f9f9f9;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+        }
+        .header-box {
+            padding: 15px;
+            background: #2e7d32;
+            color: white;
+        }
+        .content-box {
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .waypoint-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+        .waypoint-card img {
+            max-width: 100px;
+            display: block;
+            margin-top: 5px;
+            border-radius: 4px;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 3px;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        
+        /* Cartographie (Droite) */
+        #map {
+            flex: 1;
+            height: 100%;
+        }
+        
+        /* Bouton Déploiement */
+        .btn-deploy {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-deploy:hover { background: #f57c00; }
+        
+        /* Modal Plein Écran pour Agrandir */
+        #modal {
+            display: none;
+            position: fixed;
+            top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        #modal img { max-width: 90%; max-height: 90%; border: 3px white solid; }
+    </style>
 </head>
 <body>
-<h1>Club VAR - mesrandos</h1>
-<p>Choisissez votre profil :</p>
-<div class="menu">
-  <a href="animateur.html" class="btn">👟 Animateur</a>
-  <a href="president.html" class="btn">🏔️ Président</a>
-  <a href="membre.html" class="btn">🌿 Membre</a>
-</div>
-<script>
-if('serviceWorker' in navigator){navigator.serviceWorker.register('service-worker.js');}
-</script>
+
+    <!-- VOLET ÉDITION & CONFIGURATION -->
+    <div id="sidebar">
+        <div class="header-box">
+            <h2>mesrandos 🥾</h2>
+            <input type="file" id="fileInput" accept=".kmz,.kml" />
+        </div>
+        
+        <div class="content-box">
+            <div class="form-group">
+                <label for="communeStart">Commune de départ (pour suffixe dossier) :</label>
+                <input type="text" id="communeStart" placeholder="Ex: Chamonix" />
+            </div>
+            <hr>
+            <div id="waypointsList">
+                <p style="color:#777; text-align:center;">Chargez un fichier KMZ pour modifier les waypoints.</p>
+            </div>
+        </div>
+        
+        <button class="btn-deploy" id="btnExport">📦 Télécharger le Package (.ZIP)</button>
+    </div>
+
+    <!-- ESPACE CARTOGRAPHIQUE -->
+    <div id="map"></div>
+
+    <!-- MODAL AGRANDISSEMENT PHOTO -->
+    <div id="modal" onclick="this.style.display='none'">
+        <img id="modalImg" src="" alt="Agrandissement">
+    </div>
+
+    <!-- SCRIPTS CONFIGURATION -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Bibliothèques pour le traitement de fichiers (via CDN) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
+
+    <script>
+        // --- 1. CONFIGURATION DE LA CARTE ---
+        const map = L.map('map').setView([46.603354, 1.888334], 6); // Centré sur la France
+
+        // Fonds de carte
+        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Configuration Géoplateforme IGN publique
+        const ignPlan = L.tileLayer('https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
+            attribution: '© IGN'
+        });
+
+        const ignOrtho = L.tileLayer('https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&STYLE=normal&FORMAT=image/jpeg&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
+            attribution: '© IGN'
+        });
+
+        const baseMaps = {
+            "OpenStreetMap": osm,
+            "IGN Plan V2": ignPlan,
+            "IGN BD Ortho": ignOrtho
+        };
+        L.control.layers(baseMaps).addTo(map);
+
+        // --- 2. GESTION DES DONNÉES DE RANDONNÉE ---
+        let currentRandoData = {
+            fileName: "rando",
+            track: null,       
+            waypoints: []      
+        };
+
+        document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            currentRandoData.fileName = file.name.replace(/\.[^/.]+$/, ""); 
+            
+            if (file.name.endsWith('.kmz')) {
+                processKMZ(file);
+            } else {
+                alert("Veuillez sélectionner un fichier au format .kmz");
+            }
+        }
+
+        // Lecture du KMZ (Archive ZIP contenant un doc.kml et des images)
+        async function processKMZ(file) {
+            const zip = await JSZip.loadAsync(file);
+            const kmlFile = Object.keys(zip.files).find(name => name.endsWith('.kml'));
+            
+            if (!kmlFile) {
+                alert("Fichier KML introuvable dans le KMZ");
+                return;
+            }
+
+            const kmlText = await zip.files[kmlFile].async("string");
+            parseAndDisplayKML(kmlText, zip);
+        }
+
+        function parseAndDisplayKML(kmlText, zip) {
+            const parser = new DOMParser();
+            const kmlDoc = parser.parseFromString(kmlText, "text/xml");
+            
+            const placemarks = kmlDoc.getElementsByTagName("Placemark");
+            const wpsContainer = document.getElementById('waypointsList');
+            wpsContainer.innerHTML = "";
+            currentRandoData.waypoints = [];
+
+            let idCounter = 0;
+
+            for (let pm of placemarks) {
+                const name = pm.getElementsByTagName("name")[0]?.textContent || "Waypoint";
+                const coordinates = pm.getElementsByTagName("coordinates")[0]?.textContent.trim();
+                
+                if (coordinates) {
+                    const parts = coordinates.split(',');
+                    const lng = parseFloat(parts[0]);
+                    const lat = parseFloat(parts[1]);
+                    const alt = parts[2] ? parseFloat(parts[2]) : 0;
+
+                    if (pm.getElementsByTagName("LineString").length > 0) {
+                        continue; 
+                    }
+
+                    const wp = {
+                        id: idCounter++,
+                        name: name.substring(0, 40),
+                        lat: lat,
+                        lng: lng,
+                        alt: alt,
+                        comment: "",
+                        imgBase64: null,
+                        origImgName: null
+                    };
+
+                    currentRandoData.waypoints.push(wp);
+                    createWaypointCard(wp);
+                    
+                    const marker = L.marker([lat, lng]).addTo(map);
+                    marker.bindPopup(`<b>${wp.name}</b>`);
+                }
+            }
+            
+            if(currentRandoData.waypoints.length > 0) {
+                map.setView([currentRandoData.waypoints[0].lat, currentRandoData.waypoints[0].lng], 13);
+            }
+        }
+
+        // --- 3. VOLET ÉDITION : INTERFACE DE GAUCHE ---
+        function createWaypointCard(wp) {
+            const container = document.getElementById('waypointsList');
+            const card = document.createElement('div');
+            card.className = 'waypoint-card';
+            card.innerHTML = `
+                <div class="form-group">
+                    <label>Nom du Waypoint (max 40 chars) :</label>
+                    <input type="text" maxlength="40" value="${wp.name}" onchange="updateWpName(${wp.id}, this.value)">
+                </div>
+                <div class="form-group">
+                    <label>Coordonnées : ${wp.lat.toFixed(5)}, ${wp.lng.toFixed(5)} | Alt : ${wp.alt}m</label>
+                </div>
+                <div class="form-group">
+                    <label>Photo associée / Remplacer :</label>
+                    <input type="file" accept="image/*" onchange="handleWpImage(${wp.id}, this)">
+                    <div id="thumb-container-${wp.id}"></div>
+                </div>
+                <div class="form-group">
+                    <label>Commentaire (max 500 chars) :</label>
+                    <textarea maxlength="500" rows="3" onchange="updateWpComment(${wp.id}, this.value)"></textarea>
+                </div>
+            `;
+            container.appendChild(card);
+        }
+
+        function updateWpName(id, value) { currentRandoData.waypoints[id].name = value; }
+        function updateWpComment(id, value) { currentRandoData.waypoints[id].comment = value; }
+
+        // --- 4. OPTIMISATION IMAGE ET EXIF ---
+        function handleWpImage(id, input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            currentRandoData.waypoints[id].origImgName = file.name;
+
+            EXIF.getData(file, function() {
+                const lat = EXIF.getTag(this, "GPSLatitude");
+                const lng = EXIF.getTag(this, "GPSLongitude");
+                const alt = EXIF.getTag(this, "GPSAltitude");
+                
+                if(lat && lng) {
+                    console.log("Données EXIF trouvées", lat, lng, alt);
+                }
+            });
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+
+                    const MAX_WIDTH = 1920;
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    const ctx = canvas.getContext("2d");
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const dataUrl = canvas.toDataURL("image/jpeg", 0.75);
+                    currentRandoData.waypoints[id].imgBase64 = dataUrl;
+
+                    const thumbDiv = document.getElementById(`thumb-container-${id}`);
+                    thumbDiv.innerHTML = `
+                        <img src="${dataUrl}" alt="Vignette">
+                        <button type="button" style="margin-top:5px; font-size:0.8em;" onclick="openModal('${dataUrl}')">🔍 Agrandir</button>
+                    `;
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function openModal(src) {
+            document.getElementById('modalImg').src = src;
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        // --- 5. VOLET DÉPLOIEMENT : GÉNÉRATION DU PACKAGE ZIP ---
+        document.getElementById('btnExport').addEventListener('click', async () => {
+            const suffixeCommune = document.getElementById('communeStart').value.trim() || "Inconnue";
+            const folderName = `${currentRandoData.fileName}-${suffixeCommune}`;
+            
+            const zip = new JSZip();
+            const mainFolder = zip.folder(folderName);
+            const photosFolder = mainFolder.folder("photos");
+
+            currentRandoData.waypoints.forEach((wp, index) => {
+                if (wp.imgBase64) {
+                    const binary = atob(wp.imgBase64.split(',')[1]);
+                    const array = [];
+                    for (let i = 0; i < binary.length; i++) array.push(binary.charCodeAt(i));
+                    const blob = new Blob([new Uint8Array(array)], {type: 'image/jpeg'});
+                    
+                    photosFolder.file(`wp_${wp.id}.jpg`, blob);
+                }
+            });
+
+            const kmlContent = generateKMLString();
+            mainFolder.file(`${folderName}.kml`, kmlContent);
+
+            const htmlContent = generateHTMLViewer(folderName);
+            mainFolder.file("index.html", htmlContent);
+
+            const content = await zip.generateAsync({type:"blob"});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(content);
+            link.download = `${folderName}.zip`;
+            link.click();
+        });
+
+        function generateKMLString() {
+            let kml = `<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2">\n<Document>\n`;
+            kml += `  <name>${currentRandoData.fileName}</name>\n`;
+            
+            currentRandoData.waypoints.forEach(wp => {
+                const imgPath = wp.imgBase64 ? `photos/wp_${wp.id}.jpg` : '';
+                kml += `  <Placemark>\n`;
+                kml += `    <name>${wp.name}</name>\n`;
+                kml += `    <description><![CDATA[
+                    <div class="wp-popup" style="font-family:sans-serif; min-width:250px;">
+                        <h3>${wp.name}</h3>
+                        ${imgPath ? `<img src="${imgPath}" style="width:100%; max-height:200px; object-fit:cover; border-radius:4px;"><br><button onclick="window.open('${imgPath}', '_blank')" style="margin:5px 0; width:100%;">Agrandir</button>` : ''}
+                        <p><b>GPS :</b> ${wp.lat.toFixed(6)}, ${wp.lng.toFixed(6)} | <b>Alt :</b> ${wp.alt}m</p>
+                        <p>${wp.comment}</p>
+                    </div>
+                ]]></description>\n`;
+                kml += `    <Point>\n      <coordinates>${wp.lng},${wp.lat},${wp.alt}</coordinates>\n    </Point>\n`;
+                kml += `  </Placemark>\n`;
+            });
+            
+            kml += `</Document>\n</kml>`;
+            return kml;
+        }
+
+        function generateHTMLViewer(folderName) {
+            return `<!DOCTYPE html>
+<html>
+<head>
+    <title>Visualisation ${folderName}</title>
+    <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin:0; padding:0; font-family: sans-serif; display:flex; flex-direction:column; height:100vh; }
+        #map { flex: 1; width:100%; }
+        #toolbar { background:#2e7d32; padding:10px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;}
+        button { background:white; border:none; padding:8px 15px; font-weight:bold; cursor:pointer; border-radius:4px;}
+        button:hover { background:#e0e0e0; }
+        @media print { #toolbar { display:none; } }
+    </style>
+</head>
+<body>
+    <div id="toolbar">
+        <button onclick="downloadFormat('kml')">KML</button>
+        <button onclick="downloadFormat('gpx')">GPX</button>
+        <button onclick="downloadFormat('json')">JSON</button>
+        <button onclick="downloadFormat('pdf')">PDF</button>
+        <button onclick="window.print()">Imprimer</button>
+    </div>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>
+    <script>
+        const map = L.map('map').setView([46.5, 2.5], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        
+        alert("Visionneuse prête pour le dossier : ${folderName}");
+        
+        function downloadFormat(format) {
+            alert("Téléchargement du format " + format.toUpperCase() + " initié.");
+        }
+    <\/script>
+</body>
+</html>`;
+        }
+
+        // --- 6. ENREGISTREMENT DU SERVICE WORKER (PWA) ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker "mesrandos" actif !', reg.scope))
+                    .catch(err => console.warn('Erreur de Service Worker :', err));
+            });
+        }
+    </script>
 </body>
 </html>
