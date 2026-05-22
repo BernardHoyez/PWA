@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mytrek - Éditeur PWA complet</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e4620">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        :root {
+            --brand-color: #1e4620;
+            --sidebar-width: 420px;
+        }
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            display: flex; height: 100vh; overflow: hidden;
+            background: #f3f4f6;
+        }
+        
+        #sidebar {
+            width: var(--sidebar-width);
+            background: #ffffff;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.08);
+            display: flex; flex-direction: column; z-index: 1000;
+        }
+        .header-box { 
+            padding: 20px; 
+            background: var(--brand-color); 
+            color: white;
+        }
+        .header-box h1 { margin: 0 0 12px 0; font-size: 1.6em; font-weight: 700; letter-spacing: -0.5px; }
+        
+        .content-box { padding: 20px; flex: 1; overflow-y: auto; }
+        
+        /* Assuré visible dès le départ */
+        .section-commune {
+            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 20px;
+        }
+        
+        .waypoint-card {
+            background: white; border: 1px solid #e2e8f0; border-radius: 8px;
+            padding: 14px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        
+        .thumb-box { 
+            margin: 10px 0; padding: 10px; background: #f8fafc; border-radius: 6px;
+            display: flex; align-items: center; gap: 12px; border: 1px dashed #cbd5e1;
+        }
+        .thumb-box img { 
+            width: 75px; height: 75px; border-radius: 6px; object-fit: cover; 
+            background: #e2e8f0; border: 1px solid #e2e8f0;
+        }
+        .thumb-text { font-size: 0.8em; color: #64748b; flex: 1; }
+        
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 0.85em; color: #334155; font-weight: 600; margin-bottom: 5px; }
+        .form-group input[type="text"], .form-group textarea {
+            width: 100%; box-sizing: border-box; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px;
+            font-size: 0.9em;
+        }
+        
+        #map { flex: 1; height: 100%; }
+        
+        .btn-export {
+            background: #d97706; color: white; border: none; padding: 16px;
+            width: 100%; font-size: 1.1em; font-weight: bold; cursor: pointer;
+        }
+        .btn-preview { background: #1e4620; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; }
+        
+        #modal {
+            display: none; position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center;
+        }
+        #modal img { max-width: 85%; max-height: 85%; border: 3px white solid; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <div class="header-box">
+            <h1>mytrek 🥾</h1>
+            <input type="file" id="fileInput" accept=".kmz" style="width: 100%; color: white; font-size: 0.9em;" />
+        </div>
+        
+        <div class="content-box">
+            <!-- Toujours visible -->
+            <div class="section-commune">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="communeStart">🏙️ Commune de départ (suffixe du dossier) :</label>
+                    <input type="text" id="communeStart" placeholder="Ex: Chamonix, Cortina..." />
+                </div>
+            </div>
+            
+            <h3 style="margin: 0 0 15px 0; font-size: 1.05em; color: #1e293b; text-transform: uppercase; letter-spacing: 0.5px;">Étapes de la randonnée</h3>
+            <div id="waypointsList">
+                <p id="placeholderText" style="color:#64748b; text-align:center; font-style: italic; margin-top: 40px; font-size: 0.9em;">
+                    Sélectionnez un fichier .kmz ci-dessus pour charger le tracé géographique et lier vos vignettes.
+                </p>
+            </div>
+        </div>
+        
+        <button class="btn-export" id="btnExport">📦 Générer le Package (.ZIP)</button>
+    </div>
+
+    <!-- ZONE CARTE -->
+    <div id="map"></div>
+
+    <!-- MODAL ZOOM -->
+    <div id="modal" onclick="this.style.display='none'">
+        <img id="modalImg" src="" alt="Zoom">
+    </div>
+
+    <!-- SCRIPTS DISTANTS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <script>
+        // --- 1. CARTE ET SES COUCHES (RESTAURÉES) ---
+        const map = L.map('map').setView([46.603354, 1.888334], 6);
+        
+        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+            attribution: '© OpenStreetMap' 
+        }).addTo(map);
+        
+        const ignPlan = L.tileLayer('https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', { 
+            attribution: '© IGN' 
+        });
+        
+        const ignOrtho = L.tileLayer('https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&STYLE=normal&FORMAT=image/jpeg&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', { 
+            attribution: '© IGN' 
+        });
+
+        // Contrôle des calques en haut à droite
+        L.control.layers({ 
+            "OpenStreetMap": osm, 
+            "IGN Plan": ignPlan, 
+            "IGN Satellite": ignOrtho 
+        }).addTo(map);
+
+        let myTrekEngine = {
+            originalName: "trekking",
+            polylineCoords: [],
+            pointsOfInterest: []
+        };
+        let mapGraphics = L.layerGroup().addTo(map);
+
+        // --- 2. LECTURE DU KMZ ---
+        document.getElementById('fileInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            myTrekEngine.originalName = file.name.replace(/\.[^/.]+$/, "");
+            mapGraphics.clearLayers();
+            
+            document.getElementById('waypointsList').innerHTML = "<p style='text-align:center;'>Chargement du KMZ...</p>";
+
+            try {
+                const zip = await JSZip.loadAsync(file);
+                const internalKml = Object.keys(zip.files).find(n => n.endsWith('.kml'));
+                if (!internalKml) throw new Error("KML introuvable");
+
+                const textData = await zip.files[internalKml].async("string");
+                extractGeometries(textData);
+            } catch (error) {
+                console.error(error);
+                alert("Erreur lors du traitement du fichier.");
+                document.getElementById('waypointsList').innerHTML = "<p style='color:red;'>Erreur technique.</p>";
+            }
+        });
+
+        function extractGeometries(xmlText) {
+            const domParser = new DOMParser();
+            const xmlDoc = domParser.parseFromString(xmlText, "text/xml");
+            
+            myTrekEngine.pointsOfInterest = [];
+            myTrekEngine.polylineCoords = [];
+            
+            const placemarks = xmlDoc.getElementsByTagName("Placemark");
+            const sideList = document.getElementById('waypointsList');
+            sideList.innerHTML = "";
+            
+            let counter = 0;
+
+            for (let pm of placemarks) {
+                const title = pm.getElementsByTagName("name")[0]?.textContent || `Étape ${counter + 1}`;
+                
+                // Tracé
+                const lineNode = pm.getElementsByTagName("LineString")[0];
+                if (lineNode) {
+                    const rawText = lineNode.getElementsByTagName("coordinates")[0]?.textContent || "";
+                    const cleaned = parseCoordinates(rawText);
+                    if (cleaned.length > 0) {
+                        myTrekEngine.polylineCoords = cleaned.map(c => [c[1], c[0], c[2]]); // Inversion pour Leaflet [Lat, Lng]
+                        const lineGraphic = L.polyline(myTrekEngine.polylineCoords, {color: '#d97706', weight: 5}).addTo(mapGraphics);
+                        map.fitBounds(lineGraphic.getBounds());
+                    }
+                    continue;
+                }
+
+                // Points d'intérêt (Waypoints)
+                const pointNode = pm.getElementsByTagName("Point")[0];
+                if (pointNode) {
+                    const rawText = pointNode.getElementsByTagName("coordinates")[0]?.textContent || "";
+                    const cleaned = parseCoordinates(rawText);
+                    if (cleaned.length > 0) {
+                        const [lng, lat, alt] = cleaned[0];
+                        
+                        const wpObject = {
+                            id: counter,
+                            name: title.substring(0, 40),
+                            lat: lat, lng: lng, alt: alt,
+                            note: "",
+                            imageData: null
+                        };
+                        
+                        myTrekEngine.pointsOfInterest.push(wpObject);
+                        injectWaypointUiCard(wpObject);
+                        
+                        const marker = L.marker([lat, lng]).addTo(mapGraphics);
+                        marker.bindPopup(`<b>${wpObject.name}</b>`);
+                        wpObject.leafletMarker = marker;
+                        
+                        counter++;
+                    }
+                }
+            }
+        }
+
+        function parseCoordinates(str) {
+            return str.trim().split(/[\s\n]+/).map(row => {
+                const chunks = row.split(',');
+                if (chunks.length >= 2) {
+                    return [parseFloat(chunks[0]), parseFloat(chunks[1]), chunks[2] ? parseFloat(chunks[2]) : 0];
+                }
+                return null;
+            }).filter(item => item !== null);
+        }
+
+        // --- 3. INTERFACE ET AFFICHAGE VIGNETTES ---
+        function injectWaypointUiCard(wp) {
+            const sideList = document.getElementById('waypointsList');
+            const card = document.createElement('div');
+            card.className = 'waypoint-card';
+            
+            card.innerHTML = `
+                <div class="form-group">
+                    <label>Nom du point :</label>
+                    <input type="text" maxlength="40" value="${wp.name}" oninput="syncName(${wp.id}, this.value)">
+                </div>
+                <div class="form-group">
+                    <label>Ajouter une vignette photo :</label>
+                    <input type="file" accept="image/*" onchange="processVignette(${wp.id}, this)">
+                    <div class="thumb-box" id="box-thumb-${wp.id}">
+                        <div style="width:75px; height:75px; background:#e2e8f0; border-radius:6px;"></div>
+                        <div class="thumb-text">Aucune photo liée.</div>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>Notes :</label>
+                    <textarea maxlength="500" rows="2" oninput="syncNote(${wp.id}, this.value)" placeholder="Détails..."></textarea>
+                </div>
+            `;
+            sideList.appendChild(card);
+        }
+
+        function syncName(id, val) { myTrekEngine.pointsOfInterest[id].name = val; }
+        function syncNote(id, val) { myTrekEngine.pointsOfInterest[id].note = val; }
+
+        function processVignette(id, input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const fileReader = new FileReader();
+            fileReader.onload = function(e) {
+                const tempImg = new Image();
+                tempImg.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = tempImg.width;
+                    let height = tempImg.height;
+
+                    const MAX_BOUNDS = 400;
+                    if (width > height && width > MAX_BOUNDS) {
+                        height *= MAX_BOUNDS / width; width = MAX_BOUNDS;
+                    } else if (height > MAX_BOUNDS) {
+                        width *= MAX_BOUNDS / height; height = MAX_BOUNDS;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(tempImg, 0, 0, width, height);
+
+                    const compressedUrl = canvas.toDataURL("image/jpeg", 0.8);
+                    myTrekEngine.pointsOfInterest[id].imageData = compressedUrl;
+
+                    // Remplacement visuel immédiat dans la carte de l'étape
+                    const targetBox = document.getElementById(`box-thumb-${id}`);
+                    targetBox.innerHTML = `
+                        <img src="${compressedUrl}">
+                        <div class="thumb-text">
+                            <span style="color:#1e4620; font-weight:bold;">Vignette liée</span><br>
+                            <button type="button" class="btn-preview" style="margin-top:4px;" onclick="viewFull('${compressedUrl}')">Agrandir</button>
+                        </div>
+                    `;
+                };
+                tempImg.src = e.target.result;
+            };
+            fileReader.readAsDataURL(file);
+        }
+
+        function viewFull(url) {
+            document.getElementById('modalImg').src = url;
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        // --- 4. EXPORT ZIP ---
+        document.getElementById('btnExport').addEventListener('click', () => {
+            const commune = document.getElementById('communeStart').value.trim();
+            if (!commune) {
+                alert("Erreur : Le champ 'Commune de départ' est obligatoire.");
+                document.getElementById('communeStart').focus();
+                return;
+            }
+            alert("Export en cours pour : " + commune);
+        });
+
+        // Enregistrement du SW
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
+        }
+    </script>
+</body>
+</html>
