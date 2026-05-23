@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1a3a0f">
+<title>Marando</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root {
+  --forest: #1a3a0f; --moss: #2d5a1b; --fern: #4a7c35; --sage: #7aad5a;
+  --mist: #b8d4a0; --cream: #f0ebe0; --bark: #5c3d1e; --stone: #8a8070;
+  --ink: #0d1a09; --snow: #f8f5ee; --alert: #c84b1a;
+  --panel-bg: #111f0a; --sidebar-w: 340px; --header-h: 58px;
+  --radius: 8px; --transition: 0.22s cubic-bezier(.4,0,.2,1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; font-family: 'Outfit', sans-serif; background: var(--ink); color: var(--cream); }
+
+/* HEADER */
+#header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: var(--header-h);
+  background: linear-gradient(135deg, var(--forest), #0d2208);
+  border-bottom: 1px solid var(--moss); display: flex; align-items: center;
+  box-shadow: 0 2px 20px rgba(0,0,0,.5);
+}
+#logo {
+  display: flex; align-items: center; gap: 10px; padding: 0 20px;
+  font-family: 'Space Mono', monospace; font-size: 1.3rem; font-weight: 700;
+  color: var(--sage); letter-spacing: .08em; flex-shrink: 0;
+}
+#tab-bar { display: flex; height: 100%; flex: 1; border-left: 1px solid rgba(255,255,255,.07); }
+.tab-btn {
+  display: flex; align-items: center; gap: 8px; padding: 0 24px;
+  font-size: .88rem; font-weight: 500; color: var(--stone);
+  cursor: pointer; border: none; background: none;
+  border-bottom: 3px solid transparent; transition: var(--transition);
+}
+.tab-btn:hover { color: var(--mist); background: rgba(255,255,255,.04); }
+.tab-btn.active { color: var(--sage); border-bottom-color: var(--sage); background: rgba(74,124,53,.08); }
+
+/* APP */
+#app { position: fixed; top: var(--header-h); left: 0; right: 0; bottom: 0; display: flex; }
+.panel { display: none; width: 100%; height: 100%; }
+.panel.active { display: flex; }
+#editor-panel { flex-direction: row; }
+
+/* SIDEBAR */
+#sidebar {
+  width: var(--sidebar-w); flex-shrink: 0; background: var(--panel-bg);
+  border-right: 1px solid rgba(255,255,255,.06);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+#sidebar-header { padding: 14px 16px 10px; border-bottom: 1px solid rgba(255,255,255,.06); background: rgba(0,0,0,.2); }
+#sidebar-header h3 { font-size: .78rem; text-transform: uppercase; letter-spacing: .12em; color: var(--stone); margin-bottom: 8px; }
+
+/* DROP ZONE */
+#file-drop-zone {
+  border: 2px dashed var(--moss); border-radius: var(--radius);
+  padding: 18px 12px; text-align: center; cursor: pointer;
+  transition: var(--transition); background: rgba(45,90,27,.06);
+}
+#file-drop-zone:hover, #file-drop-zone.drag-over { border-color: var(--sage); background: rgba(74,124,53,.12); }
+#file-drop-zone input { display: none; }
+#file-drop-zone .drop-icon { font-size: 1.8rem; margin-bottom: 4px; }
+#file-drop-zone p { font-size: .78rem; color: var(--stone); line-height: 1.4; }
+#file-drop-zone p strong { color: var(--sage); }
+#file-name-display { margin-top: 6px; font-size: .72rem; color: var(--mist); font-family: 'Space Mono', monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* MAP CONTROLS */
+#map-controls { padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,.06); display: flex; gap: 6px; }
+.map-btn {
+  flex: 1; padding: 6px 8px; font-size: .72rem; font-weight: 500;
+  border: 1px solid rgba(255,255,255,.1); border-radius: 5px;
+  background: rgba(255,255,255,.04); color: var(--stone); cursor: pointer; transition: var(--transition);
+}
+.map-btn:hover { color: var(--cream); border-color: var(--fern); }
+.map-btn.active { background: var(--moss); color: var(--snow); border-color: var(--sage); }
+
+/* WAYPOINTS */
+#waypoints-list { flex: 1; overflow-y: auto; padding: 8px; }
+#waypoints-list::-webkit-scrollbar { width: 4px; }
+#waypoints-list::-webkit-scrollbar-thumb { background: var(--moss); border-radius: 2px; }
+
+.wp-card {
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07);
+  border-radius: var(--radius); margin-bottom: 6px; overflow: hidden; cursor: pointer;
+}
+.wp-card:hover { border-color: var(--fern); }
+.wp-card.selected { border-color: var(--sage); background: rgba(74,124,53,.14); }
+.wp-card-header { display: flex; align-items: center; gap: 8px; padding: 8px 10px; }
+.wp-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .85rem; flex-shrink: 0; background: var(--moss); }
+.wp-icon.has-photo { background: var(--bark); }
+.wp-info { flex: 1; min-width: 0; }
+.wp-name-display { font-size: .83rem; font-weight: 500; color: var(--cream); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wp-coords { font-size: .67rem; color: var(--stone); font-family: 'Space Mono', monospace; }
+.wp-card-body { padding: 0 10px 10px; display: none; }
+.wp-card.expanded .wp-card-body { display: block; }
+.wp-thumb { width: 100%; height: 100px; object-fit: cover; border-radius: 5px; margin-bottom: 8px; }
+.form-group { margin-bottom: 8px; }
+.form-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--stone); display: block; margin-bottom: 4px; }
+.form-input {
+  width: 100%; padding: 6px 8px; background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1); border-radius: 5px;
+  color: var(--cream); font-family: 'Outfit', sans-serif; font-size: .82rem;
+  transition: var(--transition); resize: none;
+}
+.form-input:focus { outline: none; border-color: var(--fern); }
+.char-count { font-size: .65rem; color: var(--stone); text-align: right; margin-top: 2px; }
+.wp-meta { font-size: .7rem; color: var(--stone); font-family: 'Space Mono', monospace; margin-bottom: 6px; line-height: 1.6; }
+.wp-meta span { color: var(--mist); }
+.btn-enlarge {
+  width: 100%; padding: 5px; background: rgba(74,124,53,.15); border: 1px solid var(--fern);
+  border-radius: 5px; color: var(--sage); font-size: .75rem; cursor: pointer; font-family: 'Outfit', sans-serif;
+}
+.btn-enlarge:hover { background: var(--moss); color: var(--snow); }
+
+/* STATS */
+#stats-bar { padding: 8px 16px; border-top: 1px solid rgba(255,255,255,.06); background: rgba(0,0,0,.2); display: flex; gap: 16px; }
+.stat { font-size: .7rem; color: var(--stone); }
+.stat strong { color: var(--mist); font-family: 'Space Mono', monospace; }
+
+/* MAP */
+#map-container { flex: 1; position: relative; }
+#map { position: absolute; inset: 0; }
+
+/* LEAFLET POPUP */
+.leaflet-popup-content-wrapper { background: var(--panel-bg) !important; border: 1px solid var(--fern) !important; border-radius: 10px !important; color: var(--cream) !important; box-shadow: 0 8px 32px rgba(0,0,0,.6) !important; }
+.leaflet-popup-tip { background: var(--panel-bg) !important; }
+.leaflet-popup-content { margin: 0 !important; }
+.popup-inner { padding: 14px; min-width: 220px; }
+.popup-name { font-weight: 600; font-size: .95rem; color: var(--sage); margin-bottom: 8px; }
+.popup-img { width: 100%; max-height: 200px; object-fit: cover; border-radius: 6px; margin-bottom: 8px; display: block; }
+.popup-coords { font-family: 'Space Mono', monospace; font-size: .7rem; color: var(--stone); margin-bottom: 6px; line-height: 1.7; }
+.popup-comment { font-size: .8rem; color: var(--mist); margin-bottom: 8px; line-height: 1.5; }
+.popup-enlarge { width: 100%; padding: 6px; border-radius: 5px; background: rgba(74,124,53,.2); border: 1px solid var(--fern); color: var(--sage); font-size: .78rem; cursor: pointer; }
+.popup-enlarge:hover { background: var(--moss); color: white; }
+
+/* MODAL */
+#modal-overlay { position: fixed; inset: 0; z-index: 9000; background: rgba(0,0,0,.85); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; }
+#modal-overlay.open { display: flex; }
+#modal-img { max-width: 92vw; max-height: 88vh; border-radius: 8px; }
+#modal-close { position: absolute; top: 20px; right: 20px; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.15); border: none; color: white; font-size: 1.2rem; cursor: pointer; }
+
+/* TOASTS */
+#toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+.toast { padding: 10px 16px; border-radius: var(--radius); font-size: .82rem; background: var(--forest); border: 1px solid var(--fern); color: var(--cream); animation: slideIn .25s ease; max-width: 320px; }
+.toast.error { background: #2a0d04; border-color: var(--alert); }
+.toast.success { background: #0d2a0a; border-color: var(--sage); }
+@keyframes slideIn { from { transform: translateX(60px); opacity:0; } to { transform: translateX(0); opacity:1; } }
+/* DEPLOY PANEL */
+#deploy-content {
+  max-width: 680px; width: 100%; margin: 0 auto; padding: 28px 24px; display: flex; flex-direction: column; gap: 20px;
+}
+.dp-section {
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+  border-radius: 10px; padding: 18px 20px;
+}
+.dp-title {
+  font-size: .8rem; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--sage); margin-bottom: 14px; font-weight: 600;
+}
+.dp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dp-info-item { background: rgba(0,0,0,.2); border-radius: 6px; padding: 8px 12px; }
+.dp-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; color: var(--stone); margin-bottom: 3px; }
+.dp-value { font-size: .85rem; color: var(--cream); font-family: 'Space Mono', monospace; word-break: break-all; }
+.dp-tree {
+  font-family: 'Space Mono', monospace; font-size: .75rem; line-height: 1.9;
+  color: var(--stone); background: rgba(0,0,0,.2); border-radius: 6px;
+  padding: 12px 14px; white-space: pre; overflow-x: auto; margin: 0;
+}
+.dp-prog-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: .78rem; color: var(--stone);
+}
+.dp-prog-row span:first-child { width: 160px; flex-shrink: 0; }
+.dp-prog-row span:last-child { width: 36px; text-align: right; font-family: 'Space Mono', monospace; font-size: .7rem; color: var(--mist); }
+.dp-bar { flex: 1; height: 5px; background: rgba(255,255,255,.08); border-radius: 3px; overflow: hidden; }
+.dp-fill { height: 100%; width: 0%; border-radius: 3px; background: linear-gradient(90deg, var(--moss), var(--sage)); transition: width .3s ease; }
+.dp-note {
+  background: rgba(200,150,42,.07); border: 1px solid rgba(200,150,42,.25);
+  border-radius: 8px; padding: 12px 16px; font-size: .78rem; color: #c8b06a; line-height: 1.7;
+}
+.dp-note strong { display: block; margin-bottom: 4px; }
+.dp-note code { background: rgba(0,0,0,.3); padding: 1px 5px; border-radius: 3px; font-size: .75rem; }
+.dp-btn-primary {
+  width: 100%; padding: 14px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--moss), var(--fern));
+  border: none; color: var(--snow); font-family: 'Outfit', sans-serif;
+  font-size: 1rem; font-weight: 600; cursor: pointer; letter-spacing: .02em;
+  box-shadow: 0 4px 16px rgba(45,90,27,.4); transition: var(--transition);
+}
+.dp-btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(45,90,27,.5); }
+.dp-btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<header id="header">
+  <div id="logo">
+    <svg viewBox="0 0 30 30" width="28" height="28" fill="none">
+      <path d="M15 2L27 26H3L15 2Z" stroke="#4a7c35" stroke-width="1.5"/>
+      <path d="M15 8L22 22H8L15 8Z" fill="#2d5a1b"/>
+      <circle cx="15" cy="15" r="2" fill="#7aad5a"/>
+    </svg>
+    marando
+  </div>
+  <div id="tab-bar">
+    <button class="tab-btn active" onclick="switchPanel('editor-panel')">🗺 Édition</button>
+    <button class="tab-btn" onclick="switchPanel('deploy-panel')">📦 Déploiement</button>
+  </div>
+</header>
+
+<main id="app">
+
+  <!-- VOLET ÉDITION -->
+  <div id="editor-panel" class="panel active">
+    <div id="sidebar">
+      <div id="sidebar-header">
+        <h3>Fichier KMZ</h3>
+        <div id="file-drop-zone" onclick="document.getElementById('kmz-input').click()">
+          <input type="file" id="kmz-input" accept=".kmz,.kml" onchange="loadKMZ(this.files[0])">
+          <div class="drop-icon">🗺️</div>
+          <p>Glissez un fichier <strong>KMZ</strong> ou cliquez pour parcourir</p>
+          <div id="file-name-display">Aucun fichier chargé</div>
+        </div>
+        <div id="map-controls" style="margin-top:10px;">
+          <button class="map-btn active" onclick="setLayer('osm',this)">OSM</button>
+          <button class="map-btn" onclick="setLayer('ign-plan',this)">IGN Plan</button>
+          <button class="map-btn" onclick="setLayer('ign-ortho',this)">IGN Ortho</button>
+        </div>
+      </div>
+      <div id="waypoints-list">
+        <div style="text-align:center;padding:40px 16px;color:var(--stone);font-size:.82rem;">
+          <div style="font-size:2rem;margin-bottom:8px;">🏔️</div>
+          Chargez un fichier KMZ pour voir les waypoints
+        </div>
+      </div>
+      <div id="stats-bar">
+        <div class="stat">Waypoints : <strong id="stat-wp">0</strong></div>
+        <div class="stat">Photos : <strong id="stat-photos">0</strong></div>
+        <div class="stat">Distance : <strong id="stat-dist">—</strong></div>
+      </div>
+    </div>
+    <div id="map-container">
+      <div id="map"></div>
+    </div>
+  </div>
+
+  <!-- VOLET DÉPLOIEMENT -->
+  <div id="deploy-panel" class="panel" style="flex-direction:column;overflow-y:auto;background:var(--panel-bg);">
+    <div id="deploy-content">
+
+      <div class="dp-section">
+        <h3 class="dp-title">📋 Informations du package</h3>
+        <div class="dp-grid">
+          <div class="dp-info-item"><div class="dp-label">Fichier source</div><div class="dp-value" id="di-src">—</div></div>
+          <div class="dp-info-item"><div class="dp-label">Dossier généré</div><div class="dp-value" id="di-folder">—</div></div>
+          <div class="dp-info-item"><div class="dp-label">Waypoints</div><div class="dp-value" id="di-wp">0</div></div>
+          <div class="dp-info-item"><div class="dp-label">Photos</div><div class="dp-value" id="di-photos">0</div></div>
+          <div class="dp-info-item"><div class="dp-label">Distance tracé</div><div class="dp-value" id="di-dist">—</div></div>
+          <div class="dp-info-item"><div class="dp-label">Fond de carte</div><div class="dp-value" id="di-layer">OSM</div></div>
+        </div>
+      </div>
+
+      <div class="dp-section">
+        <h3 class="dp-title">📁 Structure du package</h3>
+        <pre class="dp-tree" id="dp-tree">Chargez un fichier KMZ dans l'éditeur…</pre>
+      </div>
+
+      <div class="dp-section">
+        <h3 class="dp-title">⏳ Progression</h3>
+        <div class="dp-prog-row"><span>Optimisation photos</span><div class="dp-bar"><div class="dp-fill" id="prog-photos"></div></div><span id="pv-photos">0%</span></div>
+        <div class="dp-prog-row"><span>Génération KML</span><div class="dp-bar"><div class="dp-fill" id="prog-kml"></div></div><span id="pv-kml">0%</span></div>
+        <div class="dp-prog-row"><span>Génération GPX</span><div class="dp-bar"><div class="dp-fill" id="prog-gpx"></div></div><span id="pv-gpx">0%</span></div>
+        <div class="dp-prog-row"><span>Génération HTML</span><div class="dp-bar"><div class="dp-fill" id="prog-html"></div></div><span id="pv-html">0%</span></div>
+        <div class="dp-prog-row"><span>Archivage ZIP</span><div class="dp-bar"><div class="dp-fill" id="prog-zip"></div></div><span id="pv-zip">0%</span></div>
+      </div>
+
+      <div class="dp-section">
+        <div class="dp-note">
+          <strong>📦 Déploiement sur GitHub Pages</strong>
+          Décompressez l'archive et déposez le dossier dans votre dépôt :<br>
+          <code>BernardHoyez.github.io/PWA/kmz-photos/&lt;nom_dossier&gt;/</code>
+        </div>
+      </div>
+
+      <div class="dp-section">
+        <button id="btn-download" class="dp-btn-primary" onclick="generatePackage()" disabled>
+          ⬇ Télécharger le Package ZIP
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<div id="modal-overlay" onclick="closeModal(event)">
+  <button id="modal-close" onclick="closeModal()">✕</button>
+  <img id="modal-img" src="" alt="">
+</div>
+<div id="toast-container"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+
+// ── ÉTAT GLOBAL ──────────────────────────────────────
+const state = {
+  rawFileName: '',
+  waypoints: [],
+  trackCoords: [],
+  mapLayer: 'osm',
+  _photoMap: {},
+};
+
+// ── CARTE ────────────────────────────────────────────
+const map = L.map('map').setView([46.5, 2.5], 6);
+const layers = {
+  osm:        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                { attribution: '© OpenStreetMap', maxZoom: 19 }),
+  'ign-plan': L.tileLayer('https://data.geopf.fr/wmts?layer=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&style=normal&tilematrixset=PM&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image%2Fpng&TileMatrix={z}&TileCol={x}&TileRow={y}',
+                { attribution: '© IGN', maxZoom: 19 }),
+  'ign-ortho':L.tileLayer('https://data.geopf.fr/wmts?layer=ORTHOIMAGERY.ORTHOPHOTOS&style=normal&tilematrixset=PM&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image%2Fjpeg&TileMatrix={z}&TileCol={x}&TileRow={y}',
+                { attribution: '© IGN', maxZoom: 20 }),
+};
+layers.osm.addTo(map);
+
+function setLayer(name, btn) {
+  Object.values(layers).forEach(l => { if (map.hasLayer(l)) map.removeLayer(l); });
+  layers[name].addTo(map);
+  state.mapLayer = name;
+  document.querySelectorAll('.map-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── DRAG & DROP ──────────────────────────────────────
+const dropZone = document.getElementById('file-drop-zone');
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragenter', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', e => { dropZone.classList.remove('drag-over'); });
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) loadKMZ(f);
+});
+
+// ── CHARGEMENT KMZ ───────────────────────────────────
+async function loadKMZ(file) {
+  if (!file) return;
+  try {
+    toast('Chargement de ' + file.name + '…');
+    state.rawFileName = file.name.replace(/\.(kmz|kml)$/i, '');
+    document.getElementById('file-name-display').textContent = file.name;
+    state._photoMap = {};
+    let kmlText;
+
+    if (file.name.toLowerCase().endsWith('.kmz')) {
+      const zip = await JSZip.loadAsync(file);
+      const kmlEntry = Object.values(zip.files).find(e => e.name.toLowerCase().endsWith('.kml'));
+      if (!kmlEntry) throw new Error('Aucun fichier KML dans le KMZ');
+      kmlText = await kmlEntry.async('string');
+      const photoPromises = [];
+      zip.forEach((path, entry) => {
+        if (!entry.dir && /\.(jpg|jpeg|png|webp|gif)$/i.test(path)) {
+          photoPromises.push(entry.async('blob').then(blob => ({ name: path.split('/').pop(), blob })));
+        }
+      });
+      (await Promise.all(photoPromises)).forEach(p => { state._photoMap[p.name] = p.blob; });
+    } else {
+      kmlText = await file.text();
+    }
+
+    parseKML(kmlText);
+    toast(state.waypoints.length + ' waypoints chargés ✓', 'success');
+  } catch (err) {
+    toast('Erreur : ' + err.message, 'error');
+    console.error(err);
+  }
+}
+
+// ── PARSEUR KML ──────────────────────────────────────
+function parseKML(txt) {
+  const doc = new DOMParser().parseFromString(txt, 'application/xml');
+  state.waypoints = [];
+  state.trackCoords = [];
+  map.eachLayer(l => { if (l._isWp || l._isTrack) map.removeLayer(l); });
+
+  // Tracé
+  doc.querySelectorAll('LineString coordinates').forEach(cs => {
+    state.trackCoords.push(...parseCoords(cs.textContent));
+  });
+
+  if (state.trackCoords.length > 1) {
+    const pl = L.polyline(state.trackCoords.map(c => [c[0],c[1]]), { color:'#7aad5a', weight:3, opacity:.85 });
+    pl._isTrack = true;
+    pl.addTo(map);
+    map.fitBounds(pl.getBounds(), { padding:[40,40] });
+  }
+
+  // Waypoints
+  let idx = 0;
+  doc.querySelectorAll('Placemark').forEach(pm => {
+    const pt = pm.querySelector('Point');
+    if (!pt) return;
+    const coordEl = pt.querySelector('coordinates');
+    if (!coordEl) return;
+    const coords = parseCoords(coordEl.textContent);
+    if (!coords.length) return;
+    const [lat, lon, alt] = coords[0];
+    const name = pm.querySelector('name')?.textContent.trim() || ('Waypoint ' + (idx+1));
+    const desc = pm.querySelector('description')?.textContent || '';
+    const imgMatch = desc.match(/src=["']?([^"'\s>]+\.(jpg|jpeg|png|webp|gif))/i);
+    const photoName = imgMatch ? imgMatch[1].split('/').pop() : null;
+    state.waypoints.push({
+      id: idx++, name, lat, lon, alt: alt||0, comment: '',
+      photoName: photoName||null,
+      photoBlob: (photoName && state._photoMap[photoName]) ? state._photoMap[photoName] : null,
+      photoOptimized: null, marker: null, _optimizedFname: null,
+    });
+  });
+
+  state.waypoints.forEach(addMarker);
+  renderList();
+  updateStats();
+}
+
+function parseCoords(str) {
+  return str.trim().split(/\s+/).map(s => {
+    const p = s.split(',');
+    return p.length >= 2 ? [+p[1], +p[0], +(p[2]||0)] : null;
+  }).filter(Boolean);
+}
+
+// ── MARQUEURS ────────────────────────────────────────
+function addMarker(wp) {
+  const p = !!wp.photoBlob;
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="width:32px;height:32px;border-radius:50% 50% 50% 0;background:${p?'#5c3d1e':'#2d5a1b'};border:2px solid ${p?'#c87040':'#7aad5a'};display:flex;align-items:center;justify-content:center;font-size:14px;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,.5)"><span style="transform:rotate(45deg)">${p?'📷':'📍'}</span></div>`,
+    iconSize:[32,32], iconAnchor:[16,32], popupAnchor:[0,-34],
+  });
+  const m = L.marker([wp.lat, wp.lon], { icon });
+  m._isWp = true;
+  m.on('click', () => { openPopup(wp); selectCard(wp.id); });
+  m.addTo(map);
+  wp.marker = m;
+}
+
+function openPopup(wp) {
+  if (!wp.marker) return;
+  let imgHtml = '';
+  if (wp.photoBlob) {
+    const src = URL.createObjectURL(wp.photoOptimized || wp.photoBlob);
+    imgHtml = `<img class="popup-img" src="${src}"><button class="popup-enlarge" onclick="openModal('${src}')">🔍 Agrandir</button>`;
+  }
+  wp.marker.bindPopup(L.popup({ maxWidth:320 }).setContent(`
+    <div class="popup-inner">
+      <div class="popup-name">${esc(wp.name)}</div>
+      ${imgHtml}
+      <div class="popup-coords">🌐 ${wp.lat.toFixed(6)}, ${wp.lon.toFixed(6)}<br>⛰️ ${Math.round(wp.alt)} m</div>
+      ${wp.comment ? `<div class="popup-comment">💬 ${esc(wp.comment)}</div>` : ''}
+    </div>`)).openPopup();
+}
+
+// ── LISTE WAYPOINTS ───────────────────────────────────
+function renderList() {
+  const list = document.getElementById('waypoints-list');
+  if (!state.waypoints.length) {
+    list.innerHTML = '<div style="text-align:center;padding:40px 16px;color:var(--stone);">Aucun waypoint trouvé</div>';
+    return;
+  }
+  list.innerHTML = state.waypoints.map(wp => `
+    <div class="wp-card" id="wpc-${wp.id}">
+      <div class="wp-card-header" onclick="toggleCard(${wp.id})">
+        <div class="wp-icon ${wp.photoBlob?'has-photo':''}">${wp.photoBlob?'📷':'📍'}</div>
+        <div class="wp-info">
+          <div class="wp-name-display">${esc(wp.name)}</div>
+          <div class="wp-coords">${wp.lat.toFixed(4)}, ${wp.lon.toFixed(4)}</div>
+        </div>
+        <span style="color:var(--stone)">▼</span>
+      </div>
+      <div class="wp-card-body">
+        ${wp.photoBlob ? `<img class="wp-thumb" id="thumb-${wp.id}" alt=""><button class="btn-enlarge" id="enl-${wp.id}">🔍 Agrandir</button>` : ''}
+        <div class="form-group">
+          <label class="form-label">Nom (40 car. max)</label>
+          <input class="form-input" type="text" id="name-${wp.id}" value="${esc(wp.name)}" maxlength="40"
+            oninput="updateName(${wp.id},this.value)">
+          <div class="char-count" id="nc-${wp.id}">${wp.name.length}/40</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Commentaire (500 car. max)</label>
+          <textarea class="form-input" id="cmt-${wp.id}" rows="3" maxlength="500"
+            oninput="updateComment(${wp.id},this.value)">${esc(wp.comment)}</textarea>
+          <div class="char-count" id="cc-${wp.id}">${wp.comment.length}/500</div>
+        </div>
+        <div class="wp-meta">🌐 <span>${wp.lat.toFixed(6)}, ${wp.lon.toFixed(6)}</span><br>⛰️ <span>${Math.round(wp.alt)} m</span></div>
+      </div>
+    </div>`).join('');
+
+  state.waypoints.forEach(wp => { if (wp.photoBlob) loadThumb(wp); });
+}
+
+function toggleCard(id) {
+  const card = document.getElementById('wpc-'+id);
+  const opening = !card.classList.contains('expanded');
+  card.classList.toggle('expanded');
+  if (opening) {
+    const wp = state.waypoints.find(w => w.id===id);
+    if (wp) { map.panTo([wp.lat,wp.lon]); selectCard(id); openPopup(wp); }
+  }
+}
+
+function selectCard(id) {
+  document.querySelectorAll('.wp-card').forEach(c => c.classList.remove('selected'));
+  const c = document.getElementById('wpc-'+id);
+  if (c) { c.classList.add('selected'); c.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+}
+
+function updateName(id, val) {
+  const wp = state.waypoints.find(w=>w.id===id);
+  if (!wp) return;
+  wp.name = val.slice(0,40);
+  document.getElementById('nc-'+id).textContent = wp.name.length+'/40';
+  document.querySelector('#wpc-'+id+' .wp-name-display').textContent = wp.name;
+}
+
+function updateComment(id, val) {
+  const wp = state.waypoints.find(w=>w.id===id);
+  if (!wp) return;
+  wp.comment = val.slice(0,500);
+  document.getElementById('cc-'+id).textContent = wp.comment.length+'/500';
+}
+
+async function loadThumb(wp) {
+  if (!wp.photoOptimized) wp.photoOptimized = await optimizePhoto(wp.photoBlob);
+  const img = document.getElementById('thumb-'+wp.id);
+  if (img) img.src = URL.createObjectURL(wp.photoOptimized);
+  const btn = document.getElementById('enl-'+wp.id);
+  if (btn) btn.onclick = () => openModal(URL.createObjectURL(wp.photoOptimized));
+}
+
+// ── OPTIMISATION PHOTO ────────────────────────────────
+async function optimizePhoto(blob, maxBytes=500000) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement('canvas');
+      let {width:w, height:h} = img;
+      const max = 1600;
+      if (w>max||h>max) { const r=Math.min(max/w,max/h); w=Math.round(w*r); h=Math.round(h*r); }
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      let q = 0.85;
+      const attempt = () => {
+        canvas.toBlob(out => {
+          if (!out || out.size<=maxBytes || q<=0.3) { resolve(out||blob); return; }
+          q -= 0.1; attempt();
+        }, 'image/jpeg', q);
+      };
+      attempt();
+    };
+    img.onerror = () => resolve(blob);
+    img.src = url;
+  });
+}
+
+// ── STATS ────────────────────────────────────────────
+function updateStats() {
+  document.getElementById('stat-wp').textContent = state.waypoints.length;
+  document.getElementById('stat-photos').textContent = state.waypoints.filter(w=>w.photoBlob).length;
+  let d=0;
+  for (let i=1;i<state.trackCoords.length;i++) {
+    const [la1,lo1]= state.trackCoords[i-1], [la2,lo2]=state.trackCoords[i];
+    const R=6371000,r=Math.PI/180,dLa=(la2-la1)*r,dLo=(lo2-lo1)*r;
+    const a=Math.sin(dLa/2)**2+Math.cos(la1*r)*Math.cos(la2*r)*Math.sin(dLo/2)**2;
+    d+=R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  }
+  document.getElementById('stat-dist').textContent = d>0 ? (d/1000).toFixed(1)+' km' : '—';
+}
+
+// ── NAVIGATION ───────────────────────────────────────
+function switchPanel(id) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.textContent.includes(id==='editor-panel'?'Édition':'Déploiement')));
+  if (id==='editor-panel') setTimeout(()=>map.invalidateSize(),100);
+}
+
+// ── MODAL ────────────────────────────────────────────
+function openModal(src) {
+  document.getElementById('modal-img').src = src;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal(e) {
+  if (!e || e.target===document.getElementById('modal-overlay') || e.target===document.getElementById('modal-close'))
+    document.getElementById('modal-overlay').classList.remove('open');
+}
+
+// ── UTILS ────────────────────────────────────────────
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function sanitize(s) { return String(s).replace(/[^a-zA-Z0-9_-]/g,'_').toLowerCase(); }
+function toast(msg, type='') {
+  const el = document.createElement('div');
+  el.className = 'toast' + (type?' '+type:'');
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(()=>el.remove(), 3500);
+}
+
+
+// ═══════════════════════════════════════════════════
+//  VOLET DÉPLOIEMENT
+// ═══════════════════════════════════════════════════
+
+// Mise à jour de l'affichage du volet déploiement
+function refreshDeployPanel() {
+  if (!state.rawFileName) return;
+  document.getElementById('di-src').textContent = state.rawFileName;
+  document.getElementById('di-folder').textContent = '…calcul en cours…';
+  document.getElementById('di-wp').textContent = state.waypoints.length;
+  document.getElementById('di-photos').textContent = state.waypoints.filter(w=>w.photoBlob).length;
+  document.getElementById('di-dist').textContent = document.getElementById('stat-dist').textContent;
+  const layerNames = { osm:'OSM', 'ign-plan':'IGN Plan V2', 'ign-ortho':'IGN BD Ortho' };
+  document.getElementById('di-layer').textContent = layerNames[state.mapLayer] || state.mapLayer;
+  document.getElementById('btn-download').disabled = false;
+  refreshTreeAsync();
+}
+
+async function refreshTreeAsync() {
+  const base = sanitize(state.rawFileName) || 'randonnee';
+  const commune = await fetchCommune();
+  const folderName = commune ? base + '_' + commune : base;
+  document.getElementById('di-folder').textContent = folderName;
+  renderTree(folderName);
+}
+
+function renderTree(folderName) {
+  const photos = state.waypoints.filter(w => w.photoBlob);
+  const photoLines = photos.length
+    ? photos.map(wp => '│   ├── 📷 ' + (wp.photoName || sanitize(wp.name)+'.jpg')).join('\n')
+    : '│   └── (aucune photo)';
+  document.getElementById('dp-tree').textContent =
+    '📁 ' + folderName + '/\n' +
+    '├── 📁 photos/\n' +
+    photoLines + '\n' +
+    '├── 📄 ' + folderName + '.kml\n' +
+    '├── 📄 ' + folderName + '.gpx\n' +
+    '└── 🌐 ' + folderName + '.html';
+}
+
+// Reverse-geocoding commune du point de départ
+async function fetchCommune() {
+  let lat, lon;
+  if (state.trackCoords.length) { lat = state.trackCoords[0][0]; lon = state.trackCoords[0][1]; }
+  else if (state.waypoints.length) { lat = state.waypoints[0].lat; lon = state.waypoints[0].lon; }
+  else return '';
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=fr`);
+    const d = await r.json();
+    const a = d.address || {};
+    const nom = a.village || a.town || a.city || a.hamlet || a.municipality || '';
+    return sanitize(nom);
+  } catch { return ''; }
+}
+
+// Barre de progression
+function setProgress(key, pct) {
+  document.getElementById('prog-'+key).style.width = pct + '%';
+  document.getElementById('pv-'+key).textContent = pct + '%';
+}
+
+// ── GÉNÉRATION DU PACKAGE ────────────────────────────
+async function generatePackage() {
+  const btn = document.getElementById('btn-download');
+  btn.disabled = true;
+  btn.textContent = '⏳ Génération en cours…';
+  ['photos','kml','gpx','html','zip'].forEach(k => setProgress(k, 0));
+
+  try {
+    const base = sanitize(state.rawFileName) || 'randonnee';
+    const commune = await fetchCommune();
+    const folderName = commune ? base + '_' + commune : base;
+
+    const zip = new JSZip();
+    const folder = zip.folder(folderName);
+    const photosFolder = folder.folder('photos');
+
+    // 1. Photos
+    const photoWps = state.waypoints.filter(w => w.photoBlob);
+    for (let i = 0; i < photoWps.length; i++) {
+      const wp = photoWps[i];
+      if (!wp.photoOptimized) wp.photoOptimized = await optimizePhoto(wp.photoBlob);
+      const fname = sanitize(wp.photoName ? wp.photoName.replace(/\.[^.]+$/,'') : sanitize(wp.name)) + '.jpg';
+      wp._optimizedFname = fname;
+      photosFolder.file(fname, wp.photoOptimized);
+      setProgress('photos', Math.round((i+1)/photoWps.length*100));
+    }
+    if (!photoWps.length) setProgress('photos', 100);
+
+    // 2. KML
+    const kmlStr = buildKML(folderName);
+    folder.file(folderName + '.kml', kmlStr);
+    setProgress('kml', 100);
+
+    // 3. GPX
+    const gpxStr = buildGPX();
+    folder.file(folderName + '.gpx', gpxStr);
+    setProgress('gpx', 100);
+
+    // 4. HTML viewer
+    const htmlStr = buildViewer(folderName, kmlStr, gpxStr);
+    folder.file(folderName + '.html', htmlStr);
+    setProgress('html', 100);
+
+    // 5. ZIP
+    const zipBlob = await zip.generateAsync({ type:'blob', compression:'DEFLATE' }, m => {
+      setProgress('zip', Math.round(m.percent));
+    });
+
+    // Téléchargement
+    const url = URL.createObjectURL(zipBlob);
+    const a = document.createElement('a');
+    a.href = url; a.download = folderName + '.zip'; a.click();
+    URL.revokeObjectURL(url);
+
+    renderTree(folderName);
+    toast('Package "' + folderName + '.zip" prêt ✓', 'success');
+  } catch(err) {
+    toast('Erreur : ' + err.message, 'error');
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⬇ Télécharger le Package ZIP';
+  }
+}
+
+// ── KML ──────────────────────────────────────────────
+function buildKML(folderName) {
+  const escX = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+  const trackEl = state.trackCoords.length > 1
+    ? `  <Placemark><name>Tracé</name>
+    <Style><LineStyle><color>ff5aad7a</color><width>3</width></LineStyle></Style>
+    <LineString><altitudeMode>clampToGround</altitudeMode>
+      <coordinates>${state.trackCoords.map(c=>c[1]+','+c[0]+','+(c[2]||0)).join('\n')}</coordinates>
+    </LineString></Placemark>` : '';
+  const wpts = state.waypoints.map(wp => {
+    const photoEl = wp._optimizedFname
+      ? `<description><![CDATA[<img src="photos/${wp._optimizedFname}" style="max-width:300px">]]></description>` : '';
+    const cmtEl = wp.comment ? `<ExtendedData><Data name="comment"><value>${escX(wp.comment)}</value></Data></ExtendedData>` : '';
+    return `  <Placemark>
+    <name>${escX(wp.name)}</name>${photoEl}${cmtEl}
+    <Point><coordinates>${wp.lon},${wp.lat},${wp.alt||0}</coordinates></Point>
+  </Placemark>`;
+  }).join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document><name>${escX(folderName)}</name>
+${trackEl}
+${wpts}
+  </Document>
+</kml>`;
+}
+
+// ── GPX ──────────────────────────────────────────────
+function buildGPX() {
+  const escX = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const wpts = state.waypoints.map(wp =>
+    `  <wpt lat="${wp.lat}" lon="${wp.lon}"><ele>${wp.alt||0}</ele><name>${escX(wp.name)}</name>${wp.comment?`<desc>${escX(wp.comment)}</desc>`:''}</wpt>`
+  ).join('\n');
+  const trkpts = state.trackCoords.map(c =>
+    `      <trkpt lat="${c[0]}" lon="${c[1]}"><ele>${c[2]||0}</ele></trkpt>`
+  ).join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Marando" xmlns="http://www.topografix.com/GPX/1/1">
+${wpts}
+  <trk><name>${escX(state.rawFileName)}</name><trkseg>
+${trkpts}
+  </trkseg></trk>
+</gpx>`;
+}
+
+// ── HTML VIEWER ──────────────────────────────────────
+function buildViewer(folderName, kmlStr, gpxStr) {
+  const wpData = JSON.stringify(state.waypoints.map(wp=>({
+    name:wp.name, lat:wp.lat, lon:wp.lon, alt:wp.alt,
+    comment:wp.comment, photo:wp._optimizedFname?'photos/'+wp._optimizedFname:null
+  })));
+  const trackData = JSON.stringify(state.trackCoords.map(c=>[c[0],c[1]]));
+  const layerKey = state.mapLayer;
+
+  // Encodage base64 des fichiers téléchargeables
+  const toB64 = str => btoa(unescape(encodeURIComponent(str)));
+  const kmlB64  = toB64(kmlStr);
+  const gpxB64  = toB64(gpxStr);
+  const jsonB64 = toB64(JSON.stringify({
+    name: folderName,
+    waypoints: state.waypoints.map(wp=>({name:wp.name,lat:wp.lat,lon:wp.lon,alt:wp.alt,comment:wp.comment,photo:wp._optimizedFname||null})),
+    track: state.trackCoords
+  }, null, 2));
+
+  // Fermeture de balise script dans un template sans risque
+  const sc = '<scr'+'ipt';
+  const esc = '</scr'+'ipt>';
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${folderName}</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+body{margin:0;font-family:system-ui}
+#map{height:100vh}
+.controls{position:absolute;top:10px;left:10px;z-index:1000;background:white;padding:12px 15px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.2);display:flex;flex-wrap:wrap;gap:6px;max-width:92vw}
+.controls button{padding:10px 16px;border:none;border-radius:5px;cursor:pointer;background:#2d5a1b;color:white;font-size:14px;font-weight:600;white-space:nowrap}
+.controls button:hover{background:#4a7c35}
+.controls button:active{transform:scale(.96)}
+.lp-img{width:100%;max-height:170px;object-fit:cover;border-radius:5px;margin-bottom:6px;display:block}
+.lp-enl{width:100%;padding:5px;border-radius:4px;background:#e8f5e9;border:1px solid #4a7c35;color:#2d5a1b;font-size:13px;cursor:pointer;margin-bottom:4px}
+#modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center}
+#modal.open{display:flex}
+#modal img{max-width:92vw;max-height:88vh;border-radius:8px}
+#mx{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.2);border:none;color:white;font-size:1.1rem;cursor:pointer}
+@media print{.controls{display:none}}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="controls">
+  <button onclick="dl('${kmlB64}','${folderName}.kml','application/vnd.google-earth.kml+xml')">📥 KML</button>
+  <button onclick="dl('${gpxB64}','${folderName}.gpx','application/gpx+xml')">📥 GPX</button>
+  <button onclick="dl('${jsonB64}','${folderName}.json','application/json')">📥 JSON</button>
+  <button onclick="window.print()">🖨️ Imprimer / PDF</button>
+</div>
+<div id="modal" onclick="cm(event)"><button id="mx" onclick="cm()">✕</button><img id="mi" src="" alt=""></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+var wps=${wpData};
+var track=${trackData};
+var LAYER='${layerKey}';
+
+var map=L.map('map');
+(({'osm':L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}),'ign-plan':L.tileLayer('https://data.geopf.fr/wmts?layer=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&style=normal&tilematrixset=PM&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image%2Fpng&TileMatrix={z}&TileCol={x}&TileRow={y}',{attribution:'© IGN',maxZoom:19}),'ign-ortho':L.tileLayer('https://data.geopf.fr/wmts?layer=ORTHOIMAGERY.ORTHOPHOTOS&style=normal&tilematrixset=PM&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image%2Fjpeg&TileMatrix={z}&TileCol={x}&TileRow={y}',{attribution:'© IGN',maxZoom:20})})[LAYER]||L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19})).addTo(map);
+
+if(track.length>1){
+  var pl=L.polyline(track,{color:'#4a7c35',weight:4,opacity:.9}).addTo(map);
+  map.fitBounds(pl.getBounds(),{padding:[40,40]});
+}else if(wps.length){
+  map.setView([wps[0].lat,wps[0].lon],14);
+}
+if(track.length<=1&&wps.length>1){
+  map.fitBounds(L.latLngBounds(wps.map(function(w){return[w.lat,w.lon];})),{padding:[40,40]});
+}
+
+wps.forEach(function(wp){
+  var p=!!wp.photo;
+  var icon=L.divIcon({className:'',html:'<div style="width:30px;height:30px;border-radius:50% 50% 50% 0;background:'+(p?'#5c3d1e':'#2d5a1b')+';border:2px solid '+(p?'#c87040':'#7aad5a')+';display:flex;align-items:center;justify-content:center;font-size:13px;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.4)"><span style="transform:rotate(45deg)">'+(p?'📷':'📍')+'</span></div>',iconSize:[30,30],iconAnchor:[15,30],popupAnchor:[0,-32]});
+  var imgH=wp.photo?'<img class="lp-img" src="'+wp.photo+'"><button class="lp-enl" onclick="om(\''+wp.photo+'\')">🔍 Agrandir</button>':'';
+  var c='<div style="padding:10px;min-width:200px"><h4 style="margin:0 0 8px;color:#2d5a1b">'+wp.name+'</h4>'+imgH+'<p style="margin:4px 0;font-size:13px;color:#555">🌐 '+wp.lat.toFixed(6)+', '+wp.lon.toFixed(6)+'</p><p style="margin:4px 0;font-size:13px;color:#555">⛰️ '+Math.round(wp.alt)+' m</p>'+(wp.comment?'<p style="margin:6px 0;font-size:13px">💬 '+wp.comment+'</p>':'')+'</div>';
+  L.marker([wp.lat,wp.lon],{icon:icon}).bindPopup(c,{maxWidth:300}).addTo(map);
+});
+
+function dl(b64,name,mime){var a=document.createElement('a');a.href='data:'+mime+';base64,'+b64;a.download=name;document.body.appendChild(a);a.click();document.body.removeChild(a);}
+function om(src){document.getElementById('mi').src=src;document.getElementById('modal').classList.add('open');}
+function cm(e){if(!e||e.target===document.getElementById('modal')||e.target===document.getElementById('mx'))document.getElementById('modal').classList.remove('open');}
+</script>
+</body>
+</html>`;
+}
+
+// Rafraîchir le panel deploy quand on bascule dessus
+const _origSwitch = switchPanel;
+switchPanel = function(id) {
+  _origSwitch(id);
+  if (id === 'deploy-panel') refreshDeployPanel();
+};
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
