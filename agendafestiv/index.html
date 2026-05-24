@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4CAF50">
+    <title>AgendaFestiv - Festivités près de vous</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="apple-touch-icon" href="icons/icon192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+    <header>
+        <h1>🎉 AgendaFestiv</h1>
+        <p class="subtitle">Festivités dans un rayon de 25 km</p>
+    </header>
+
+    <main>
+        <div class="controls">
+            <button id="refreshBtn" class="btn primary">
+                <span class="icon">🔄</span> Rafraîchir
+            </button>
+            <div class="location-info">
+                <span class="icon">📍</span>
+                <span id="locationStatus">Localisation en cours...</span>
+            </div>
+        </div>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label for="dateRange">Période :</label>
+                <select id="dateRange">
+                    <option value="15">15 jours</option>
+                    <option value="7">7 jours</option>
+                    <option value="30">30 jours</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="distanceRange">Distance :</label>
+                <select id="distanceRange">
+                    <option value="25">25 km</option>
+                    <option value="10">10 km</option>
+                    <option value="50">50 km</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="priceFilter">Tarif :</label>
+                <select id="priceFilter">
+                    <option value="all">Tous</option>
+                    <option value="free">Gratuit seulement</option>
+                    <option value="paid">Payant seulement</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Chargement des événements...</p>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="events-container" id="eventsContainer">
+            <div class="no-events" id="noEvents">
+                <span class="icon">📅</span>
+                <p>Aucun événement trouvé dans ce périmètre.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Sources : Provence Verte | Données mises à jour automatiquement</p>
+    </footer>
+
+    <script src="js/app.js" type="module"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('js/sw.js', { scope: './' })
+                    .then(registration => {
+                        console.log('ServiceWorker enregistré:', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('Échec ServiceWorker:', err);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
