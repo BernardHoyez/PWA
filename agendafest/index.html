@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#121212">
+
+  <title>AgendaFest</title>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+
+  <link rel="stylesheet"
+        href="https://unpkg.com/leaflet/dist/leaflet.css">
+</head>
+<body>
+
+<header>
+  <h1>AgendaFest</h1>
+  <p>Festivités autour de moi</p>
+</header>
+
+<section id="filters">
+
+  <label>
+    Rayon :
+    <select id="radius">
+      <option value="5">5 km</option>
+      <option value="10">10 km</option>
+      <option value="25" selected>25 km</option>
+      <option value="50">50 km</option>
+    </select>
+  </label>
+
+  <label>
+    Période :
+    <select id="days">
+      <option value="3">3 jours</option>
+      <option value="7">7 jours</option>
+      <option value="15" selected>15 jours</option>
+      <option value="30">30 jours</option>
+    </select>
+  </label>
+
+  <button id="reloadBtn">Actualiser</button>
+
+</section>
+
+<div id="map"></div>
+
+<section id="events"></section>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
