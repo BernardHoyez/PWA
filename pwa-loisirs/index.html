@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loisirs Proches</title>
+  <meta name="description" content="Découvrez les festivités et événements près de chez vous">
+  <meta name="theme-color" content="#1a1a2e">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Loisirs">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Splash / Header -->
+  <header class="app-header">
+    <div class="header-bg"></div>
+    <div class="header-content">
+      <div class="app-logo">
+        <span class="logo-icon">✦</span>
+        <span class="logo-text">Loisirs <em>Proches</em></span>
+      </div>
+      <div class="location-badge" id="locationBadge">
+        <span class="loc-dot"></span>
+        <span id="locationText">Localisation…</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Filters Bar -->
+  <div class="filters-bar">
+    <div class="filters-inner">
+
+      <div class="filter-group">
+        <label class="filter-label">Rayon</label>
+        <div class="slider-wrap">
+          <input type="range" id="radiusSlider" min="1" max="25" value="10" step="1">
+          <span class="slider-val" id="radiusVal">10 km</span>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label class="filter-label">Horizon</label>
+        <div class="slider-wrap">
+          <input type="range" id="daysSlider" min="1" max="15" value="7" step="1">
+          <span class="slider-val" id="daysVal">7 jours</span>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label class="filter-label">Tarif</label>
+        <div class="pill-group" id="tariffFilter">
+          <button class="pill active" data-val="all">Tous</button>
+          <button class="pill" data-val="free">Gratuit</button>
+          <button class="pill" data-val="paid">Payant</button>
+        </div>
+      </div>
+
+      <button class="search-btn" id="searchBtn">
+        <span class="search-icon">⟳</span>
+        <span>Rechercher</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <main class="main-content">
+
+    <!-- Status bar -->
+    <div class="status-bar" id="statusBar">
+      <span id="statusText">Configurez les filtres et lancez la recherche.</span>
+    </div>
+
+    <!-- Results grid -->
+    <div class="events-grid" id="eventsGrid">
+      <!-- Populated by JS -->
+    </div>
+
+    <!-- Empty state -->
+    <div class="empty-state" id="emptyState" style="display:none">
+      <div class="empty-icon">🎪</div>
+      <p>Aucun événement trouvé dans ce périmètre.</p>
+      <p class="empty-sub">Essayez d'élargir le rayon ou l'horizon temporel.</p>
+    </div>
+
+    <!-- Loading state -->
+    <div class="loading-state" id="loadingState" style="display:none">
+      <div class="loader-ring"></div>
+      <p>Recherche en cours…</p>
+    </div>
+
+  </main>
+
+  <!-- Event detail modal -->
+  <div class="modal-overlay" id="modalOverlay" style="display:none">
+    <div class="modal-card" id="modalCard">
+      <button class="modal-close" id="modalClose">✕</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <!-- Offline banner -->
+  <div class="offline-banner" id="offlineBanner" style="display:none">
+    ⚡ Mode hors-ligne — données en cache
+  </div>
+
+  <!-- Install prompt -->
+  <div class="install-prompt" id="installPrompt" style="display:none">
+    <p>📲 Installer l'app sur votre écran d'accueil ?</p>
+    <div>
+      <button id="installYes">Installer</button>
+      <button id="installNo">Plus tard</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
