@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<link rel="stylesheet" href="style.css">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mes Randonnées</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+
+</head>
+<body>
+
+<header>
+  <div class="header-deco"><span class="compass">✦</span></div>
+  <h1>Mes Randonnées</h1>
+  <p class="subtitle">Carnets de route & itinéraires</p>
+</header>
+
+<div class="stats">
+  <div class="stat">
+    <div class="stat-num" id="stat-total">—</div>
+    <div class="stat-label">randonnées</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num" id="stat-years">—</div>
+    <div class="stat-label">années</div>
+  </div>
+</div>
+
+<div class="toolbar">
+  <div class="search-wrap">
+    <input id="search" type="search" placeholder="Rechercher une randonnée…" autocomplete="off">
+  </div>
+  <select id="year-filter">
+    <option value="">Toutes les années</option>
+  </select>
+</div>
+
+<main>
+  <div id="list"></div>
+  <p id="empty">Aucune randonnée trouvée.</p>
+</main>
+
+<footer>
+  Généré automatiquement · <span id="footer-date"></span>
+</footer>
+
+<script>
+(async () => {
+  const BASE = location.origin + location.pathname.replace(/\/[^/]*$/, '');
+
+  // ── Chargement du JSON ──────────────────────────────────────────
+  let randos = [];
+  try {
+    const r = await fetch('randonnees.json');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    randos = await r.json();
+  } catch(e) {
+    document.getElementById('list').innerHTML =
+      '<p style="color:#c00;text-align:center;padding:2rem">Impossible de charger randonnees.json : ' + e.message + '</p>';
+    return;
+  }
+
+  // ── Stats ───────────────────────────────────────────────────────
+  const years = [...new Set(randos.map(r => r.year))].sort().reverse();
+  document.getElementById('stat-total').textContent = randos.length;
+  document.getElementById('stat-years').textContent = years.length;
+  document.getElementById('footer-date').textContent =
+    new Date().toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
+
+  // ── Filtre années ───────────────────────────────────────────────
+  const sel = document.getElementById('year-filter');
+  years.forEach(y => {
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = y;
+    sel.appendChild(opt);
+  });
+
+  // ── Rendu ───────────────────────────────────────────────────────
+  function render(list) {
+    const container = document.getElementById('list');
+    container.innerHTML = '';
+    document.getElementById('empty').style.display = list.length ? 'none' : 'block';
+
+    let lastYear = null;
+    list.forEach((r, i) => {
+      if (r.year !== lastYear) {
+        const sep = document.createElement('div');
+        sep.className = 'year-sep';
+        sep.textContent = r.year;
+        container.appendChild(sep);
+        lastYear = r.year;
+      }
+
+      const viewerUrl = `randonnees/${r.name}/${r.name}.html`;
+      const fullUrl   = `${BASE}/randonnees/${r.name}/${r.name}.html`;
+
+      const card = document.createElement('div');
+      card.className = 'rando-card';
+      card.style.animationDelay = (i * 40) + 'ms';
+
+      // Label de l'année sur 2 lignes dans le badge
+      const yearParts = r.year ? r.year.match(/.{1,2}/g) || [r.year] : ['?'];
+
+      card.innerHTML = `
+        <div class="rando-year-badge" title="${r.year}">${r.year}</div>
+        <div class="rando-info">
+          <div class="rando-title" title="${r.title}">${r.title}</div>
+          <div class="rando-slug">${r.name}</div>
+        </div>
+        <div class="rando-actions">
+          ${r.hasViewer
+            ? `<a class="btn-viewer" href="${viewerUrl}" target="_blank">🗺 Ouvrir</a>`
+            : `<span class="btn-viewer" style="opacity:.4;cursor:default">⚠ Pas de viewer</span>`
+          }
+          <button class="btn-copy" data-url="${fullUrl}" title="Copier le lien">🔗 Copier</button>
+        </div>`;
+
+      container.appendChild(card);
+    });
+  }
+
+  // ── Filtrage ────────────────────────────────────────────────────
+  function filter() {
+    const q    = document.getElementById('search').value.toLowerCase().trim();
+    const year = document.getElementById('year-filter').value;
+    const res  = randos.filter(r =>
+      (!year || r.year === year) &&
+      (!q    || r.title.toLowerCase().includes(q) || r.name.toLowerCase().includes(q))
+    );
+    render(res);
+  }
+
+  document.getElementById('search').addEventListener('input', filter);
+  document.getElementById('year-filter').addEventListener('change', filter);
+
+  // ── Copie lien ──────────────────────────────────────────────────
+  document.getElementById('list').addEventListener('click', async e => {
+    const btn = e.target.closest('.btn-copy');
+    if (!btn) return;
+    const url = btn.dataset.url;
+    try {
+      await navigator.clipboard.writeText(url);
+      btn.textContent = '✓ Copié !';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = '🔗 Copier'; btn.classList.remove('copied'); }, 2000);
+    } catch {
+      prompt('Lien à copier :', url);
+    }
+  });
+
+  render(randos);
+})();
+</script>
+</body>
+</html>
