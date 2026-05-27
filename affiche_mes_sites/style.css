@@ -1,0 +1,237 @@
+/* ==========================================================================
+   Nouveau Style : Épuré, Lumineux & Sans Doublons
+   ========================================================================== */
+
+:root {
+  --primary-grad: linear-gradient(135deg, #1e7041, #34a853);
+  --bg-color:     #f4f7f6;
+  --card-bg:      #ffffff;
+  --text-main:    #2c3e50;
+  --text-muted:   #7f8c8d;
+  --border:       #e2e8f0;
+  --shadow:       rgba(0, 0, 0, 0.04);
+}
+
+/* --- Base --- */
+*, *::before, *::after { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  padding: 3rem 1.5rem;
+}
+
+body > * {
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* --- En-tête --- */
+h1 {
+  font-size: 3rem;
+  font-weight: 800;
+  background: var(--primary-grad);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.03em;
+}
+
+body > p:first-of-type, .subtitle {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  font-weight: 400;
+  margin-bottom: 2.5rem;
+}
+
+/* --- Stats et Barre de recherche (Structure index.html) --- */
+.stats {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+.stat-num {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1e7041;
+}
+.stat-label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.toolbar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.search-wrap { flex: 1; }
+
+input[type="search"], select, #search, #year-filter {
+  width: 100%;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  padding: 0.8rem 1.2rem;
+  border-radius: 10px;
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 6px var(--shadow);
+  outline: none;
+  transition: all 0.2s ease;
+}
+#year-filter { width: auto; min-width: 160px; }
+
+input[type="search"]:focus, select:focus {
+  border-color: #34a853;
+  box-shadow: 0 0 0 3px rgba(52, 168, 83, 0.15);
+}
+
+/* --- Liste de Randonnées --- */
+#list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Les Cartes */
+.rando-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.2rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  box-shadow: 0 4px 12px var(--shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rando-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Cache le badge de l'année répétitif et le remplace par un picto boussole discret */
+.rando-year-badge {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e1ede6;
+  color: #1e7041;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0px; /* Masque le texte de l'année */
+}
+.rando-year-badge::before {
+  content: "🧭"; /* Met une boussole à la place */
+  font-size: 1.2rem;
+}
+
+.rando-info {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Titre principal de la rando */
+.rando-title {
+  color: var(--text-main);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+/* C'EST ICI : On masque le nom technique en doublon */
+.rando-slug {
+  display: none !important;
+}
+
+/* --- Boutons --- */
+.rando-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-viewer, .btn-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.btn-viewer {
+  background: var(--primary-grad);
+  color: white !important;
+}
+.btn-viewer:hover {
+  opacity: 0.9;
+}
+
+.btn-copy {
+  background: #f0f4f2;
+  color: #1e7041;
+}
+.btn-copy:hover {
+  background: #e1ede6;
+}
+
+/* --- Séparateurs d'années --- */
+.year-sep {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #34a853;
+  margin: 2rem 0 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.year-sep::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(to right, var(--border), transparent);
+}
+
+/* --- Footer --- */
+footer {
+  text-align: center;
+  margin-top: 5rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* --- Mobile --- */
+@media (max-width: 650px) {
+  body { padding: 1.5rem 1rem; }
+  h1 { font-size: 2.2rem; }
+  .toolbar { flex-direction: column; }
+  #year-filter { width: 100%; }
+  .rando-card { flex-direction: column; align-items: stretch; text-align: center; gap: 1rem; }
+  .rando-year-badge { margin: 0 auto; }
+  .rando-actions { justify-content: center; }
+}
