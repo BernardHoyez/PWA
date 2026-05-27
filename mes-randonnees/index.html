@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mes Randonnées</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:      #1a1a18;
+  --paper:    #f5f0e8;
+  --moss:     #3a5a2a;
+  --fern:     #5a7c3a;
+  --lichen:   #8aab6a;
+  --cream:    #ede8da;
+  --rust:     #8b4513;
+  --mist:     #c8d4b8;
+  --shadow:   rgba(26,26,24,.12);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 18px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* — Texture de fond — */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse at 20% 10%, rgba(90,124,58,.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 90%, rgba(139,69,19,.06) 0%, transparent 55%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* — En-tête — */
+header {
+  position: relative;
+  z-index: 1;
+  padding: 3rem 2rem 2rem;
+  text-align: center;
+  border-bottom: 1px solid var(--mist);
+}
+
+.header-deco {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  margin-bottom: 0.6rem;
+}
+
+.header-deco::before,
+.header-deco::after {
+  content: '';
+  flex: 1;
+  max-width: 120px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--lichen));
+}
+.header-deco::after {
+  background: linear-gradient(to left, transparent, var(--lichen));
+}
+
+.compass {
+  font-size: 2rem;
+  animation: spin-slow 20s linear infinite;
+  display: inline-block;
+}
+@keyframes spin-slow { to { transform: rotate(360deg); } }
+
+h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-weight: 700;
+  color: var(--moss);
+  letter-spacing: -.02em;
+  line-height: 1.1;
+}
+
+.subtitle {
+  font-style: italic;
+  font-weight: 300;
+  color: var(--fern);
+  margin-top: .4rem;
+  font-size: 1.05rem;
+}
+
+/* — Stats — */
+.stats {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  padding: 1.2rem 2rem;
+  background: var(--cream);
+  border-bottom: 1px solid var(--mist);
+}
+
+.stat {
+  text-align: center;
+}
+.stat-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+  color: var(--moss);
+  line-height: 1;
+}
+.stat-label {
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--fern);
+  font-weight: 300;
+}
+
+/* — Barre de recherche / filtre — */
+.toolbar {
+  position: relative;
+  z-index: 1;
+  padding: 1.5rem 2rem 1rem;
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+}
+.search-wrap::before {
+  content: '⌕';
+  position: absolute;
+  left: .9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--lichen);
+  font-size: 1.2rem;
+  pointer-events: none;
+}
+#search {
+  width: 100%;
+  padding: .7rem 1rem .7rem 2.4rem;
+  border: 1px solid var(--mist);
+  border-radius: 6px;
+  background: white;
+  font-family: inherit;
+  font-size: .95rem;
+  color: var(--ink);
+  transition: border-color .2s, box-shadow .2s;
+}
+#search:focus {
+  outline: none;
+  border-color: var(--fern);
+  box-shadow: 0 0 0 3px rgba(90,124,58,.12);
+}
+
+#year-filter {
+  padding: .7rem 1rem;
+  border: 1px solid var(--mist);
+  border-radius: 6px;
+  background: white;
+  font-family: inherit;
+  font-size: .95rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+/* — Grille de randonnées — */
+main {
+  position: relative;
+  z-index: 1;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 2rem 4rem;
+}
+
+#list {
+  display: flex;
+  flex-direction: column;
+  gap: .7rem;
+}
+
+/* — Carte randonnée — */
+.rando-card {
+  background: white;
+  border: 1px solid var(--mist);
+  border-radius: 10px;
+  padding: 1.1rem 1.4rem;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  box-shadow: 0 2px 8px var(--shadow);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  animation: card-in .35s ease both;
+}
+.rando-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--shadow);
+  border-color: var(--lichen);
+}
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.rando-year-badge {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--moss), var(--fern));
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Playfair Display', serif;
+  font-size: .75rem;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.rando-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.rando-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.15rem;
+  color: var(--moss);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rando-slug {
+  font-size: .8rem;
+  color: #999;
+  font-style: italic;
+  margin-top: .15rem;
+}
+
+.rando-actions {
+  display: flex;
+  gap: .6rem;
+  flex-shrink: 0;
+}
+
+.btn-viewer {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .55rem 1.1rem;
+  background: var(--moss);
+  color: white;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: .9rem;
+  font-family: inherit;
+  font-weight: 400;
+  transition: background .18s;
+  white-space: nowrap;
+}
+.btn-viewer:hover { background: var(--fern); }
+
+.btn-copy {
+  display: inline-flex;
+  align-items: center;
+  padding: .55rem .8rem;
+  background: var(--cream);
+  color: var(--moss);
+  border: 1px solid var(--mist);
+  border-radius: 6px;
+  font-size: .85rem;
+  cursor: pointer;
+  transition: background .18s, border-color .18s;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.btn-copy:hover { background: var(--mist); border-color: var(--lichen); }
+.btn-copy.copied { background: #e8f5e9; border-color: var(--fern); color: var(--fern); }
+
+/* — Message vide — */
+#empty {
+  display: none;
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #aaa;
+  font-style: italic;
+}
+
+/* — Séparateur année — */
+.year-sep {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  margin: 1.4rem 0 .4rem;
+  color: var(--fern);
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+}
+.year-sep::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--mist);
+}
+
+/* — Footer — */
+footer {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 1.5rem;
+  font-size: .8rem;
+  color: #bbb;
+  border-top: 1px solid var(--mist);
+}
+
+/* — Responsive — */
+@media (max-width: 600px) {
+  header { padding: 2rem 1rem 1.5rem; }
+  .toolbar, main { padding-left: 1rem; padding-right: 1rem; }
+  .rando-card { flex-wrap: wrap; }
+  .rando-actions { width: 100%; }
+  .btn-viewer { flex: 1; justify-content: center; }
+  .stats { gap: 1rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-deco"><span class="compass">✦</span></div>
+  <h1>Mes Randonnées</h1>
+  <p class="subtitle">Carnets de route & itinéraires</p>
+</header>
+
+<div class="stats">
+  <div class="stat">
+    <div class="stat-num" id="stat-total">—</div>
+    <div class="stat-label">randonnées</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num" id="stat-years">—</div>
+    <div class="stat-label">années</div>
+  </div>
+</div>
+
+<div class="toolbar">
+  <div class="search-wrap">
+    <input id="search" type="search" placeholder="Rechercher une randonnée…" autocomplete="off">
+  </div>
+  <select id="year-filter">
+    <option value="">Toutes les années</option>
+  </select>
+</div>
+
+<main>
+  <div id="list"></div>
+  <p id="empty">Aucune randonnée trouvée.</p>
+</main>
+
+<footer>
+  Généré automatiquement · <span id="footer-date"></span>
+</footer>
+
+<script>
+(async () => {
+  const BASE = location.origin + location.pathname.replace(/\/[^/]*$/, '');
+
+  // ── Chargement du JSON ──────────────────────────────────────────
+  let randos = [];
+  try {
+    const r = await fetch('randonnees.json');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    randos = await r.json();
+  } catch(e) {
+    document.getElementById('list').innerHTML =
+      '<p style="color:#c00;text-align:center;padding:2rem">Impossible de charger randonnees.json : ' + e.message + '</p>';
+    return;
+  }
+
+  // ── Stats ───────────────────────────────────────────────────────
+  const years = [...new Set(randos.map(r => r.year))].sort().reverse();
+  document.getElementById('stat-total').textContent = randos.length;
+  document.getElementById('stat-years').textContent = years.length;
+  document.getElementById('footer-date').textContent =
+    new Date().toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
+
+  // ── Filtre années ───────────────────────────────────────────────
+  const sel = document.getElementById('year-filter');
+  years.forEach(y => {
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = y;
+    sel.appendChild(opt);
+  });
+
+  // ── Rendu ───────────────────────────────────────────────────────
+  function render(list) {
+    const container = document.getElementById('list');
+    container.innerHTML = '';
+    document.getElementById('empty').style.display = list.length ? 'none' : 'block';
+
+    let lastYear = null;
+    list.forEach((r, i) => {
+      if (r.year !== lastYear) {
+        const sep = document.createElement('div');
+        sep.className = 'year-sep';
+        sep.textContent = r.year;
+        container.appendChild(sep);
+        lastYear = r.year;
+      }
+
+      const viewerUrl = `randonnees/${r.name}/${r.name}.html`;
+      const fullUrl   = `${BASE}/randonnees/${r.name}/${r.name}.html`;
+
+      const card = document.createElement('div');
+      card.className = 'rando-card';
+      card.style.animationDelay = (i * 40) + 'ms';
+
+      // Label de l'année sur 2 lignes dans le badge
+      const yearParts = r.year ? r.year.match(/.{1,2}/g) || [r.year] : ['?'];
+
+      card.innerHTML = `
+        <div class="rando-year-badge" title="${r.year}">${r.year}</div>
+        <div class="rando-info">
+          <div class="rando-title" title="${r.title}">${r.title}</div>
+          <div class="rando-slug">${r.name}</div>
+        </div>
+        <div class="rando-actions">
+          ${r.hasViewer
+            ? `<a class="btn-viewer" href="${viewerUrl}" target="_blank">🗺 Ouvrir</a>`
+            : `<span class="btn-viewer" style="opacity:.4;cursor:default">⚠ Pas de viewer</span>`
+          }
+          <button class="btn-copy" data-url="${fullUrl}" title="Copier le lien">🔗 Copier</button>
+        </div>`;
+
+      container.appendChild(card);
+    });
+  }
+
+  // ── Filtrage ────────────────────────────────────────────────────
+  function filter() {
+    const q    = document.getElementById('search').value.toLowerCase().trim();
+    const year = document.getElementById('year-filter').value;
+    const res  = randos.filter(r =>
+      (!year || r.year === year) &&
+      (!q    || r.title.toLowerCase().includes(q) || r.name.toLowerCase().includes(q))
+    );
+    render(res);
+  }
+
+  document.getElementById('search').addEventListener('input', filter);
+  document.getElementById('year-filter').addEventListener('change', filter);
+
+  // ── Copie lien ──────────────────────────────────────────────────
+  document.getElementById('list').addEventListener('click', async e => {
+    const btn = e.target.closest('.btn-copy');
+    if (!btn) return;
+    const url = btn.dataset.url;
+    try {
+      await navigator.clipboard.writeText(url);
+      btn.textContent = '✓ Copié !';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = '🔗 Copier'; btn.classList.remove('copied'); }, 2000);
+    } catch {
+      prompt('Lien à copier :', url);
+    }
+  });
+
+  render(randos);
+})();
+</script>
+</body>
+</html>
