@@ -1,0 +1,30 @@
+{
+  "name": "Marando v4",
+  "short_name": "Marando v4",
+  "description": "Éditeur de randonnées KMZ — tracés animés, waypoints et photos",
+  "start_url": "/PWA/marando_v4/",
+  "scope": "/PWA/marando_v4/",
+  "display": "standalone",
+  "background_color": "#0d1a09",
+  "theme_color": "#1a3a0f",
+  "orientation": "any",
+  "lang": "fr",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "file_handlers": [
+    {
+      "action": "/PWA/marando_v4/",
+      "accept": {
+        "application/vnd.google-earth.kmz": [".kmz"],
+        "application/vnd.google-earth.kml+xml": [".kml"],
+        "application/gpx+xml": [".gpx"]
+      },
+      "icons": [
+        { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }
+      ],
+      "launch_type": "single-client"
+    }
+  ]
+}
