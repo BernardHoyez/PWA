@@ -1,0 +1,16 @@
+{
+  "name": "Randonneur",
+  "short_name": "Randonneur",
+  "description": "Éditeur de randonnées KMZ/KML/GPX avec tracé animé",
+  "start_url": "/PWA/randonneur/",
+  "scope": "/PWA/randonneur/",
+  "display": "standalone",
+  "background_color": "#0d1a09",
+  "theme_color": "#1a3a0f",
+  "orientation": "any",
+  "lang": "fr",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
