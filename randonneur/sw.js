@@ -1,4 +1,4 @@
-const VERSION = 'randonneur-v1';
+ const VERSION = 'randonneur-v1';
 
 self.addEventListener('install', () => self.skipWaiting());
 
