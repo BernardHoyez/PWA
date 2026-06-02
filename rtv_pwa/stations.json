@@ -1,0 +1,5 @@
+[
+ {"name":"France Inter","type":"Radio","url":"https://www.radiofrance.fr/franceinter"},
+ {"name":"France Info","type":"Radio/TV","url":"https://www.francetvinfo.fr/en-direct/radio.html"},
+ {"name":"ARTE","type":"TV","url":"https://www.arte.tv/fr/direct/"}
+]
