@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Guide d'installation PWA</title>
+<style>
+  :root {
+    --blue: #0078d4;
+    --android: #34a853;
+    --ios: #007aff;
+    --windows: #0078d4;
+    --macos: #555;
+    --bg: #f8f9fb;
+    --card: #ffffff;
+    --text: #1a1a2e;
+    --muted: #6b7280;
+    --radius: 14px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  /* ── Hero ── */
+  header {
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    color: #fff;
+    padding: 64px 24px 80px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(0,120,212,0.35) 0%, transparent 70%);
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 999px;
+    padding: 6px 16px;
+    font-size: 13px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  header h1 {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  header h1 span { color: #60a5fa; }
+  header p {
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.7);
+    max-width: 560px;
+    margin: 0 auto 40px;
+    position: relative;
+  }
+  .platforms-nav {
+    display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;
+    position: relative;
+  }
+  .platforms-nav a {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 22px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .platforms-nav a:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+  .nav-android { background: #34a853; color: #fff; }
+  .nav-ios     { background: #007aff; color: #fff; }
+  .nav-windows { background: #0078d4; color: #fff; }
+  .nav-macos   { background: #555;    color: #fff; }
+  /* ── Layout ── */
+  main { max-width: 1100px; margin: -40px auto 80px; padding: 0 20px; }
+  /* ── Platform section ── */
+  .platform {
+    background: var(--card);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    margin-bottom: 48px;
+    overflow: hidden;
+  }
+  .platform-header {
+    display: flex; align-items: center; gap: 16px;
+    padding: 28px 32px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .platform-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; flex-shrink: 0;
+  }
+  .p-android .platform-icon { background: #e6f4ea; }
+  .p-ios     .platform-icon { background: #e8f0fe; }
+  .p-windows .platform-icon { background: #e3f2fd; }
+  .p-macos   .platform-icon { background: #f3f3f3; }
+  .platform-header h2 {
+    font-size: 1.4rem; font-weight: 700; margin-bottom: 4px;
+  }
+  .platform-header p { font-size: 14px; color: var(--muted); }
+  /* ── Steps ── */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 0;
+  }
+  .step {
+    padding: 32px;
+    border-right: 1px solid #f0f0f0;
+    display: flex; flex-direction: column; align-items: flex-start;
+  }
+  .step:last-child { border-right: none; }
+  .step-num {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: #fff;
+    margin-bottom: 16px; flex-shrink: 0;
+  }
+  .p-android .step-num { background: #34a853; }
+  .p-ios     .step-num { background: #007aff; }
+  .p-windows .step-num { background: #0078d4; }
+  .p-macos   .step-num { background: #555; }
+  .step h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+  .step p  { font-size: 13.5px; color: var(--muted); margin-bottom: 16px; flex: 1; }
+  .step img {
+    width: 100%; border-radius: 10px;
+    border: 1px solid #e8e8e8;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    margin-top: auto;
+  }
+  /* portrait screens */
+  .portrait img { max-width: 240px; margin: 0 auto; display: block; }
+  /* ── Tip box ── */
+  .tip {
+    margin: 0 32px 28px;
+    padding: 14px 18px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    display: flex; gap: 10px;
+  }
+  .tip-icon { font-size: 18px; flex-shrink: 0; line-height: 1.4; }
+  .p-android .tip { background: #e6f4ea; color: #1e5631; }
+  .p-ios     .tip { background: #e8f0fe; color: #1a3a6e; }
+  .p-windows .tip { background: #e3f2fd; color: #0d3554; }
+  .p-macos   .tip { background: #f5f5f5; color: #333; }
+  /* ── What is a PWA ── */
+  .intro {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px; margin-bottom: 48px;
+  }
+  .intro-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow);
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .intro-card .ico { font-size: 28px; }
+  .intro-card h3 { font-size: 15px; font-weight: 700; }
+  .intro-card p  { font-size: 13px; color: var(--muted); }
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    padding: 40px 20px;
+    font-size: 13px;
+    color: var(--muted);
+    border-top: 1px solid #ebebeb;
+  }
+  @media (max-width: 600px) {
+    .steps { grid-template-columns: 1fr; }
+    .step { border-right: none; border-bottom: 1px solid #f0f0f0; }
+    .step:last-child { border-bottom: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hero-badge">⚡ Guide officiel</div>
+  <h1>Installer une <span>PWA</span><br>sur votre appareil</h1>
+  <p>Une Progressive Web App s'installe en quelques secondes — sans passer par un store — sur tous vos appareils.</p>
+  <nav class="platforms-nav">
+    <a href="#android" class="nav-android">🤖 Android</a>
+    <a href="#ios"     class="nav-ios">🍎 iOS / iPadOS</a>
+    <a href="#windows" class="nav-windows">🪟 Windows</a>
+    <a href="#macos"   class="nav-macos">💻 macOS</a>
+  </nav>
+</header>
+
+<main>
+
+  <!-- Intro cards -->
+  <section style="margin-top: 52px; margin-bottom: 24px;">
+    <h2 style="font-size:1.1rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:20px;">Pourquoi installer une PWA ?</h2>
+    <div class="intro">
+      <div class="intro-card"><div class="ico">🚀</div><h3>Lancement instantané</h3><p>Accès direct depuis l'écran d'accueil, sans passer par le navigateur.</p></div>
+      <div class="intro-card"><div class="ico">📡</div><h3>Fonctionne hors-ligne</h3><p>Le contenu est mis en cache et reste accessible sans connexion.</p></div>
+      <div class="intro-card"><div class="ico">🔔</div><h3>Notifications push</h3><p>Recevez des alertes en temps réel, comme une app native.</p></div>
+      <div class="intro-card"><div class="ico">🔒</div><h3>Sécurisée</h3><p>Toujours servie en HTTPS, sans risque de malware via un store tiers.</p></div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════ ANDROID -->
+  <section class="platform p-android" id="android">
+    <div class="platform-header">
+      <div class="platform-icon">🤖</div>
+      <div>
+        <h2>Android</h2>
+        <p>Chrome pour Android · Android 5.0+ recommandé</p>
+      </div>
+    </div>
+    <div class="steps">
+      <div class="step portrait">
+        <div class="step-num">1</div>
+        <h3>Ouvrez le site dans Chrome</h3>
+        <p>Naviguez vers l'URL de la PWA. Chrome affiche une icône <strong>⊕</strong> bleue dans la barre d'adresse dès que l'app est installable.</p>
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzYwIiBoZWlnaHQ9IjY0MCIgdmlld0JveD0iMCAwIDM2MCA2NDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgZm9udC1mYW1pbHk9IlJvYm90byxBcmlhbCxzYW5zLXNlcmlmIj4KICA8cmVjdCB3aWR0aD0iMzYwIiBoZWlnaHQ9IjY0MCIgZmlsbD0iI2YwZjBmMCIvPgogIDwhLS0gU3RhdHVzIGJhciAtLT4KICA8cmVjdCB3aWR0aD0iMzYwIiBoZWlnaHQ9IjI4IiBmaWxsPSIjMWE3M2U4Ii8+CiAgPHRleHQgeD0iMTIiIHk9IjE5IiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIxMSIgZm9udC13ZWlnaHQ9IjYwMCI+OTo0MTwvdGV4dD4KICA8dGV4dCB4PSIzMjAiIHk9IjE5IiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIxMCI+4peP4peP4pePPC90ZXh0PgogIDwhLS0gQ2hyb21lIHRvb2xiYXIgLS0+CiAgPHJlY3QgeT0iMjgiIHdpZHRoPSIzNjAiIGhlaWdodD0iNTIiIGZpbGw9IiNmZmZmZmYiIHJ4PSIwIi8+CiAgPHJlY3QgeD0iOCIgeT0iMzYiIHdpZHRoPSIyODgiIGhlaWdodD0iMzYiIHJ4PSIxOCIgZmlsbD0iI2YxZjNmNCIvPgogIDx0ZXh0IHg9IjUwIiB5PSI1OSIgZmlsbD0iIzVmNjM2OCIgZm9udC1zaXplPSIxNCI+bW9uYXBwLmV4ZW1wbGUuY29tPC90ZXh0PgogIDwhLS0gSW5zdGFsbCBpY29uIGhpZ2hsaWdodGVkIC0tPgogIDxyZWN0IHg9IjMwNSIgeT0iMzgiIHdpZHRoPSI0NiIgaGVpZ2h0PSIzMiIgcng9IjgiIGZpbGw9IiNlOGYwZmUiLz4KICA8dGV4dCB4PSIzMjgiIHk9IjU5IiBmaWxsPSIjMWE3M2U4IiBmb250LXNpemU9IjIwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7iipU8L3RleHQ+CiAgPCEtLSBDYWxsb3V0IGJ1YmJsZSAtLT4KICA8cmVjdCB4PSIxODAiIHk9Ijc4IiB3aWR0aD0iMTcwIiBoZWlnaHQ9IjQyIiByeD0iOCIgZmlsbD0iIzFhNzNlOCIvPgogIDxwb2x5Z29uIHBvaW50cz0iMjk1LDc4IDMxMCw2MiAzMjAsNzgiIGZpbGw9IiMxYTczZTgiLz4KICA8dGV4dCB4PSIyNjUiIHk9Ijk1IiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIxMSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+QWpvdXRlciDDoCBsJ8OpY3JhbiBkJ2FjY3VlaWw8L3RleHQ+CiAgPHRleHQgeD0iMjY1IiB5PSIxMTAiIGZpbGw9IiNiYmRlZmIiIGZvbnQtc2l6ZT0iMTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkFwcHV5ZXogc3VyIGNldHRlIGljw7RuZTwvdGV4dD4KICA8IS0tIFBhZ2UgY29udGVudCBtb2NrIC0tPgogIDxyZWN0IHg9IjE2IiB5PSIxMzAiIHdpZHRoPSIzMjgiIGhlaWdodD0iMjAwIiByeD0iMTIiIGZpbGw9IiNmZmYiLz4KICA8Y2lyY2xlIGN4PSIxODAiIGN5PSIyMDAiIHI9IjQwIiBmaWxsPSIjMWE3M2U4IiBvcGFjaXR5PSIuMTUiLz4KICA8cmVjdCB4PSI2MCIgeT0iMjU1IiB3aWR0aD0iMjQwIiBoZWlnaHQ9IjEyIiByeD0iNiIgZmlsbD0iI2UwZTBlMCIvPgogIDxyZWN0IHg9IjEwMCIgeT0iMjc1IiB3aWR0aD0iMTYwIiBoZWlnaHQ9IjEwIiByeD0iNSIgZmlsbD0iI2YwZjBmMCIvPgogIDwhLS0gQm90dG9tIG5hdiAtLT4KICA8cmVjdCB5PSI2MDAiIHdpZHRoPSIzNjAiIGhlaWdodD0iNDAiIGZpbGw9IiNmZmZmZmYiLz4KICA8dGV4dCB4PSI2MCIgeT0iNjI1IiBmaWxsPSIjOWU5ZTllIiBmb250LXNpemU9IjIwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7ihpA8L3RleHQ+CiAgPHRleHQgeD0iMTgwIiB5PSI2MjUiIGZpbGw9IiM5ZTllOWUiIGZvbnQtc2l6ZT0iMjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPuKXizwvdGV4dD4KICA8dGV4dCB4PSIzMDAiIHk9IjYyNSIgZmlsbD0iIzllOWU5ZSIgZm9udC1zaXplPSIyMCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+4pahPC90ZXh0Pgo8L3N2Zz4=" alt="Chrome affiche l'icône d'installation dans la barre d'adresse"/>
+      </div>
+      <div class="step portrait">
+        <div class="step-num">2</div>
+        <h3>Appuyez sur « Ajouter »</h3>
+        <p>Une fiche apparaît en bas de l'écran avec le nom et l'icône de l'app. Confirmez en appuyant sur <strong>Ajouter</strong>.</p>
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzYwIiBoZWlnaHQ9IjY0MCIgdmlld0JveD0iMCAwIDM2MCA2NDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgZm9udC1mYW1pbHk9IlJvYm90byxBcmlhbCxzYW5zLXNlcmlmIj4KICA8cmVjdCB3aWR0aD0iMzYwIiBoZWlnaHQ9IjY0MCIgZmlsbD0iI2YwZjBmMCIvPgogIDxyZWN0IHdpZHRoPSIzNjAiIGhlaWdodD0iMjgiIGZpbGw9IiMxYTczZTgiLz4KICA8dGV4dCB4PSIxMiIgeT0iMTkiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjExIiBmb250LXdlaWdodD0iNjAwIj45OjQxPC90ZXh0PgogIDwhLS0gRGltbWVkIGJhY2tncm91bmQgLS0+CiAgPHJlY3QgeT0iMjgiIHdpZHRoPSIzNjAiIGhlaWdodD0iNTcyIiBmaWxsPSJyZ2JhKDAsMCwwLDAuNCkiLz4KICA8IS0tIEJvdHRvbSBzaGVldCAtLT4KICA8cmVjdCB5PSIzNjAiIHdpZHRoPSIzNjAiIGhlaWdodD0iMjgwIiByeD0iMjAiIGZpbGw9IiNmZmZmZmYiLz4KICA8cmVjdCB4PSIxNTIiIHk9IjM3MiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjQiIHJ4PSIyIiBmaWxsPSIjZGFkY2UwIi8+CiAgPCEtLSBBcHAgaWNvbiAtLT4KICA8cmVjdCB4PSIxNDAiIHk9IjM5NiIgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiByeD0iMjAiIGZpbGw9IiMxYTczZTgiLz4KICA8dGV4dCB4PSIxODAiIHk9IjQ0OCIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPuKaoTwvdGV4dD4KICA8dGV4dCB4PSIxODAiIHk9IjQ5OCIgZmlsbD0iIzIwMjEyNCIgZm9udC1zaXplPSIxOCIgZm9udC13ZWlnaHQ9IjYwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+TW9uIEFwcGxpY2F0aW9uPC90ZXh0PgogIDx0ZXh0IHg9IjE4MCIgeT0iNTE4IiBmaWxsPSIjNWY2MzY4IiBmb250LXNpemU9IjEzIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5tb25hcHAuZXhlbXBsZS5jb208L3RleHQ+CiAgPHRleHQgeD0iMTgwIiB5PSI1NDgiIGZpbGw9IiM1ZjYzNjgiIGZvbnQtc2l6ZT0iMTMiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkFqb3V0ZXIgw6AgbCfDqWNyYW4gZCdhY2N1ZWlsID88L3RleHQ+CiAgPCEtLSBCdXR0b25zIC0tPgogIDxyZWN0IHg9IjI0IiB5PSI1NzUiIHdpZHRoPSIxNDAiIGhlaWdodD0iNDQiIHJ4PSIyMiIgZmlsbD0iI2YxZjNmNCIvPgogIDx0ZXh0IHg9Ijk0IiB5PSI2MDIiIGZpbGw9IiM1ZjYzNjgiIGZvbnQtc2l6ZT0iMTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtd2VpZ2h0PSI1MDAiPkFubnVsZXI8L3RleHQ+CiAgPHJlY3QgeD0iMTk2IiB5PSI1NzUiIHdpZHRoPSIxNDAiIGhlaWdodD0iNDQiIHJ4PSIyMiIgZmlsbD0iIzFhNzNlOCIvPgogIDx0ZXh0IHg9IjI2NiIgeT0iNjAyIiBmaWxsPSIjZmZmZmZmIiBmb250LXNpemU9IjE0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXdlaWdodD0iNTAwIj5Bam91dGVyPC90ZXh0Pgo8L3N2Zz4=" alt="Fiche d'installation avec le bouton Ajouter"/>
+      </div>
+      <div class="step portrait">
+        <div class="step-num">3</div>
+        <h3>L'app est sur votre écran</h3>
+        <p>Un raccourci apparaît sur l'écran d'accueil. L'app s'ouvre désormais en plein écran, sans interface navigateur.</p>
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzYwIiBoZWlnaHQ9IjY0MCIgdmlld0JveD0iMCAwIDM2MCA2NDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgZm9udC1mYW1pbHk9IlJvYm90byxBcmlhbCxzYW5zLXNlcmlmIj4KICA8cmVjdCB3aWR0aD0iMzYwIiBoZWlnaHQ9IjY0MCIgZmlsbD0iIzE1NjVjMCIvPgogIDwhLS0gV2FsbHBhcGVyIGdyYWRpZW50IC0tPgogIDxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwIiB5MT0iMCIgeDI9IjAiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjMTU2NWMwIi8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMGQ0N2ExIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+CiAgPHJlY3Qgd2lkdGg9IjM2MCIgaGVpZ2h0PSI2NDAiIGZpbGw9InVybCgjYmcpIi8+CiAgPHJlY3Qgd2lkdGg9IjM2MCIgaGVpZ2h0PSIyOCIgZmlsbD0icmdiYSgwLDAsMCwwLjIpIi8+CiAgPHRleHQgeD0iMTIiIHk9IjE5IiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIxMSIgZm9udC13ZWlnaHQ9IjYwMCI+OTo0MTwvdGV4dD4KICA8IS0tIEhvbWUgc2NyZWVuIGljb25zIGdyaWQgLS0+CiAgPCEtLSBSb3cgMSAtLT4KICA8cmVjdCB4PSIyMCIgeT0iNjAiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcng9IjE0IiBmaWxsPSIjRTkxRTYzIi8+CiAgPHRleHQgeD0iNTAiIHk9IjEwMCIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfk7c8L3RleHQ+CiAgPHRleHQgeD0iNTAiIHk9IjEzMiIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkFwcGFyZWlsPC90ZXh0PgogIDxyZWN0IHg9IjEwMCIgeT0iNjAiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcng9IjE0IiBmaWxsPSIjNENBRjUwIi8+CiAgPHRleHQgeD0iMTMwIiB5PSIxMDAiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjI2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7wn5OxPC90ZXh0PgogIDx0ZXh0IHg9IjEzMCIgeT0iMTMyIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIxMSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+TWVzc2FnZXM8L3RleHQ+CiAgPHJlY3QgeD0iMjAwIiB5PSI2MCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiByeD0iMTQiIGZpbGw9IiNGRjk4MDAiLz4KICA8dGV4dCB4PSIyMzAiIHk9IjEwMCIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfl7rvuI88L3RleHQ+CiAgPHRleHQgeD0iMjMwIiB5PSIxMzIiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjExIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5NYXBzPC90ZXh0PgogIDxyZWN0IHg9IjI4MCIgeT0iNjAiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcng9IjE0IiBmaWxsPSIjOUMyN0IwIi8+CiAgPHRleHQgeD0iMzEwIiB5PSIxMDAiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjI2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7wn461PC90ZXh0PgogIDx0ZXh0IHg9IjMxMCIgeT0iMTMyIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIxMSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+TXVzaXF1ZTwvdGV4dD4KICA8IS0tIFJvdyAyIOKAkyBBcHAgaGlnaGxpZ2h0IHdpdGggYmFkZ2UgLS0+CiAgPHJlY3QgeD0iMjAiIHk9IjE1NSIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiByeD0iMTQiIGZpbGw9IiMxYTczZTgiLz4KICA8dGV4dCB4PSI1MCIgeT0iMTk1IiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+4pqhPC90ZXh0PgogIDwhLS0gUHVsc2luZyByaW5nIC0tPgogIDxjaXJjbGUgY3g9IjUwIiBjeT0iMTg1IiByPSIzNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyLjUiIG9wYWNpdHk9IjAuOCIgc3Ryb2tlLWRhc2hhcnJheT0iNiAzIi8+CiAgPHRleHQgeD0iNTAiIHk9IjIyNyIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtd2VpZ2h0PSI3MDAiPk1vbiBBcHA8L3RleHQ+CiAgPCEtLSAiTm91dmVhdSIgYmFkZ2UgLS0+CiAgPHJlY3QgeD0iNjUiIHk9IjE1MiIgd2lkdGg9IjQ0IiBoZWlnaHQ9IjE4IiByeD0iOSIgZmlsbD0iI0ZGNTI1MiIvPgogIDx0ZXh0IHg9Ijg3IiB5PSIxNjUiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjEwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXdlaWdodD0iNjAwIj5Ob3V2ZWF1ICE8L3RleHQ+CiAgPCEtLSBEb2NrIC0tPgogIDxyZWN0IHg9IjE2IiB5PSI1NzIiIHdpZHRoPSIzMjgiIGhlaWdodD0iNjgiIHJ4PSIyMCIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjE1KSIvPgogIDx0ZXh0IHg9IjYwIiB5PSI2MTIiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjI4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7wn5OePC90ZXh0PgogIDx0ZXh0IHg9IjE0MCIgeT0iNjEyIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIyOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+8J+MkDwvdGV4dD4KICA8dGV4dCB4PSIyMjAiIHk9IjYxMiIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiPuKcie+4jzwvdGV4dD4KICA8dGV4dCB4PSIzMDAiIHk9IjYxMiIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfk4E8L3RleHQ+Cjwvc3ZnPg==" alt="Icône de la PWA sur l'écran d'accueil Android"/>
+      </div>
+    </div>
+    <div class="tip">
+      <span class="tip-icon">💡</span>
+      <span>Si l'icône ⊕ n'apparaît pas, ouvrez le menu <strong>⋮</strong> (trois points) puis choisissez <em>« Ajouter à l'écran d'accueil »</em>.</span>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════ iOS -->
+  <section class="platform p-ios" id="ios">
+    <div class="platform-header">
+      <div class="platform-icon">🍎</div>
+      <div>
+        <h2>iOS / iPadOS</h2>
+        <p>Safari uniquement · iOS 16.4+ pour les notifications push</p>
+      </div>
+    </div>
+    <div class="steps">
+      <div class="step portrait">
+        <div class="step-num">1</div>
+        <h3>Ouvrez Safari et naviguez</h3>
+        <p>Accédez au site dans <strong>Safari</strong> (obligatoire sur iOS). Appuyez ensuite sur l'icône <strong>⬆ Partager</strong> dans la barre d'outils du bas.</p>
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzkwIiBoZWlnaHQ9Ijg0NCIgdmlld0JveD0iMCAwIDM5MCA4NDQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgZm9udC1mYW1pbHk9Ii1hcHBsZS1zeXN0ZW0sSGVsdmV0aWNhIE5ldWUsc2Fucy1zZXJpZiI+CiAgPHJlY3Qgd2lkdGg9IjM5MCIgaGVpZ2h0PSI4NDQiIGZpbGw9IiNmMmYyZjciLz4KICA8IS0tIFN0YXR1cyBiYXIgaU9TIC0tPgogIDxyZWN0IHdpZHRoPSIzOTAiIGhlaWdodD0iNTAiIGZpbGw9IiNmZmZmZmYiLz4KICA8dGV4dCB4PSIyMiIgeT0iMzQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTUiIGZvbnQtd2VpZ2h0PSI2MDAiPjk6NDE8L3RleHQ+CiAgPCEtLSBEeW5hbWljIGlzbGFuZCAtLT4KICA8cmVjdCB4PSIxNDMiIHk9IjEyIiB3aWR0aD0iMTA0IiBoZWlnaHQ9IjMyIiByeD0iMTYiIGZpbGw9IiMwMDAiLz4KICA8IS0tIFNhZmFyaSB0b29sYmFyIHRvcCAtLT4KICA8cmVjdCB5PSI1MCIgd2lkdGg9IjM5MCIgaGVpZ2h0PSI1MiIgZmlsbD0iI2ZmZmZmZiIvPgogIDxyZWN0IHg9IjEwIiB5PSI1OCIgd2lkdGg9IjI5MCIgaGVpZ2h0PSIzNiIgcng9IjEwIiBmaWxsPSIjZjJmMmY3Ii8+CiAgPHRleHQgeD0iMTU1IiB5PSI4MSIgZmlsbD0iIzNjM2M0MyIgZm9udC1zaXplPSIxNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+bW9uYXBwLmV4ZW1wbGUuY29tPC90ZXh0PgogIDwhLS0gUmVsb2FkIC0tPgogIDx0ZXh0IHg9IjMzMCIgeT0iODIiIGZpbGw9IiMwMDdhZmYiIGZvbnQtc2l6ZT0iMjIiPuKGujwvdGV4dD4KICA8IS0tIFRhYnMgLS0+CiAgPHRleHQgeD0iMzY1IiB5PSI4MiIgZmlsbD0iIzAwN2FmZiIgZm9udC1zaXplPSIxNiI+4oqePC90ZXh0PgogIDwhLS0gUGFnZSBjb250ZW50IC0tPgogIDxyZWN0IHg9IjEwIiB5PSIxMTYiIHdpZHRoPSIzNzAiIGhlaWdodD0iNDIwIiByeD0iMTYiIGZpbGw9IiNmZmYiLz4KICA8Y2lyY2xlIGN4PSIxOTUiIGN5PSIyODAiIHI9IjYwIiBmaWxsPSIjMDA3YWZmIiBvcGFjaXR5PSIuMSIvPgogIDxyZWN0IHg9IjcwIiB5PSIzNTUiIHdpZHRoPSIyNTAiIGhlaWdodD0iMTQiIHJ4PSI3IiBmaWxsPSIjZTVlNWVhIi8+CiAgPHJlY3QgeD0iMTEwIiB5PSIzNzgiIHdpZHRoPSIxNzAiIGhlaWdodD0iMTIiIHJ4PSI2IiBmaWxsPSIjZjJmMmY3Ii8+CiAgPCEtLSBTYWZhcmkgYm90dG9tIHRvb2xiYXIgLS0+CiAgPHJlY3QgeT0iNzc4IiB3aWR0aD0iMzkwIiBoZWlnaHQ9IjY2IiBmaWxsPSIjZjlmOWY5Ii8+CiAgPGxpbmUgeDE9IjAiIHkxPSI3NzgiIHgyPSIzOTAiIHkyPSI3NzgiIHN0cm9rZT0iI2M2YzZjOCIgc3Ryb2tlLXdpZHRoPSIwLjUiLz4KICA8dGV4dCB4PSIyOCIgeT0iODE4IiBmaWxsPSIjMDA3YWZmIiBmb250LXNpemU9IjIyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7ihpA8L3RleHQ+CiAgPHRleHQgeD0iMTAwIiB5PSI4MTgiIGZpbGw9IiNjNmM2YzgiIGZvbnQtc2l6ZT0iMjIiIHRleHQtYW5jaG9yPSJtaWRkbGUiPuKGkjwvdGV4dD4KICA8IS0tIFNoYXJlIGJ1dHRvbiBoaWdobGlnaHRlZCAtLT4KICA8cmVjdCB4PSIxNTIiIHk9Ijc5MCIgd2lkdGg9Ijg2IiBoZWlnaHQ9IjM2IiByeD0iMTAiIGZpbGw9IiNlOGY0ZmQiLz4KICA8dGV4dCB4PSIxOTUiIHk9IjgxNCIgZmlsbD0iIzAwN2FmZiIgZm9udC1zaXplPSIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+4qyGPC90ZXh0PgogIDwhLS0gQ2FsbG91dCAtLT4KICA8cmVjdCB4PSI5MCIgeT0iNzQwIiB3aWR0aD0iMjEwIiBoZWlnaHQ9IjM4IiByeD0iMTAiIGZpbGw9IiMwMDdhZmYiLz4KICA8cG9seWdvbiBwb2ludHM9IjE4MCw3NzggMTk1LDgwMCAyMTAsNzc4IiBmaWxsPSIjMDA3YWZmIi8+CiAgPHRleHQgeD0iMTk1IiB5PSI3NjQiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjEyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5BcHB1eWV6IHN1ciDCqyBQYXJ0YWdlciDCuzwvdGV4dD4KICA8dGV4dCB4PSIyNjgiIHk9IjgxOCIgZmlsbD0iIzAwN2FmZiIgZm9udC1zaXplPSIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+4oqePC90ZXh0PgogIDx0ZXh0IHg9IjM2MCIgeT0iODE4IiBmaWxsPSIjMDA3YWZmIiBmb250LXNpemU9IjIyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7iiaE8L3RleHQ+CiAgPCEtLSBIb21lIGluZGljYXRvciAtLT4KICA8cmVjdCB4PSIxNTAiIHk9IjgzMCIgd2lkdGg9IjkwIiBoZWlnaHQ9IjUiIHJ4PSIyLjUiIGZpbGw9IiMwMDAiIG9wYWNpdHk9Ii4yIi8+Cjwvc3ZnPg==" alt="Safari iOS avec le bouton Partager mis en évidence"/>
+      </div>
+      <div class="step portrait">
+        <div class="step-num">2</div>
+        <h3>Choisissez « Sur l'écran d'accueil »</h3>
+        <p>Faites défiler les options et sélectionnez <strong>Sur l'écran d'accueil</strong> (icône ⊞). Elle apparaît dans la rangée du bas de la feuille de partage.</p>
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzkwIiBoZWlnaHQ9Ijg0NCIgdmlld0JveD0iMCAwIDM5MCA4NDQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgZm9udC1mYW1pbHk9Ii1hcHBsZS1zeXN0ZW0sSGVsdmV0aWNhIE5ldWUsc2Fucy1zZXJpZiI+CiAgPHJlY3Qgd2lkdGg9IjM5MCIgaGVpZ2h0PSI4NDQiIGZpbGw9IiNmMmYyZjciLz4KICA8cmVjdCB3aWR0aD0iMzkwIiBoZWlnaHQ9IjUwIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuNSkiLz4KICA8dGV4dCB4PSIyMiIgeT0iMzQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTUiIGZvbnQtd2VpZ2h0PSI2MDAiPjk6NDE8L3RleHQ+CiAgPHJlY3QgeD0iMTQzIiB5PSIxMiIgd2lkdGg9IjEwNCIgaGVpZ2h0PSIzMiIgcng9IjE2IiBmaWxsPSIjMDAwIi8+CiAgPCEtLSBCbHVycmVkIGJhY2tncm91bmQgLS0+CiAgPHJlY3QgeT0iNTAiIHdpZHRoPSIzOTAiIGhlaWdodD0iNzI4IiBmaWxsPSJyZ2JhKDAsMCwwLDAuMzUpIi8+CiAgPCEtLSBTaGFyZSBzaGVldCBwYW5lbCAtLT4KICA8cmVjdCB5PSI0ODAiIHdpZHRoPSIzOTAiIGhlaWdodD0iMzY0IiByeD0iMCIgZmlsbD0icmdiYSgyNDIsMjQyLDI0NywwLjk3KSIvPgogIDxyZWN0IHk9IjQ4MCIgd2lkdGg9IjM5MCIgaGVpZ2h0PSIzNjQiIHJ4PSIxNCIgZmlsbD0icmdiYSgyNDIsMjQyLDI0NywwLjk3KSIvPgogIDxyZWN0IHg9IjE3NSIgeT0iNDkwIiB3aWR0aD0iNDAiIGhlaWdodD0iNCIgcng9IjIiIGZpbGw9IiNjN2M3Y2MiLz4KICA8IS0tIFVSTCBwcmV2aWV3IC0tPgogIDxyZWN0IHg9IjE0IiB5PSI1MDYiIHdpZHRoPSIzNjIiIGhlaWdodD0iNjIiIHJ4PSIxMiIgZmlsbD0iI2ZmZiIvPgogIDxyZWN0IHg9IjIyIiB5PSI1MjAiIHdpZHRoPSIzNiIgaGVpZ2h0PSIzNiIgcng9IjgiIGZpbGw9IiMwMDdhZmYiLz4KICA8dGV4dCB4PSI0MCIgeT0iNTQ0IiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIxOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+4pqhPC90ZXh0PgogIDx0ZXh0IHg9IjcyIiB5PSI1MzQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSI1MDAiPk1vbiBBcHBsaWNhdGlvbjwvdGV4dD4KICA8dGV4dCB4PSI3MiIgeT0iNTUyIiBmaWxsPSIjOGU4ZTkzIiBmb250LXNpemU9IjEyIj5tb25hcHAuZXhlbXBsZS5jb208L3RleHQ+CiAgPCEtLSBJY29uIHJvdyAtLT4KICA8dGV4dCB4PSIyOCIgeT0iNjE0IiBmaWxsPSIjOGU4ZTkzIiBmb250LXNpemU9IjExIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5BaXJEcm9wPC90ZXh0PgogIDxyZWN0IHg9IjQiIHk9IjU4MCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiByeD0iMTIiIGZpbGw9IiMyYzJjMmUiLz4KICA8dGV4dCB4PSIyOCIgeT0iNjExIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+8J+ToTwvdGV4dD4KICA8cmVjdCB4PSI3MiIgeT0iNTgwIiB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHJ4PSIxMiIgZmlsbD0iIzAwN2FmZiIvPgogIDx0ZXh0IHg9Ijk2IiB5PSI2MDkiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjIyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7inInvuI88L3RleHQ+CiAgPHRleHQgeD0iOTYiIHk9IjY0MCIgZmlsbD0iIzhlOGU5MyIgZm9udC1zaXplPSIxMSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+TWFpbDwvdGV4dD4KICA8cmVjdCB4PSIxNDAiIHk9IjU4MCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiByeD0iMTIiIGZpbGw9IiM0Y2Q5NjQiLz4KICA8dGV4dCB4PSIxNjQiIHk9IjYwOSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMjIiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfkqw8L3RleHQ+CiAgPHRleHQgeD0iMTY0IiB5PSI2NDAiIGZpbGw9IiM4ZThlOTMiIGZvbnQtc2l6ZT0iMTEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPk1lc3NhZ2VzPC90ZXh0PgogIDxyZWN0IHg9IjIwOCIgeT0iNTgwIiB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHJ4PSIxMiIgZmlsbD0iI2ZmOTUwMCIvPgogIDx0ZXh0IHg9IjIzMiIgeT0iNjA5IiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+8J+UlzwvdGV4dD4KICA8dGV4dCB4PSIyMzIiIHk9IjY0MCIgZmlsbD0iIzhlOGU5MyIgZm9udC1zaXplPSIxMSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Q29waWVyPC90ZXh0PgogIDwhLS0gSGlnaGxpZ2h0ZWQgIlN1ciBsJ8OpY3JhbiBkJ2FjY3VlaWwiIC0tPgogIDxyZWN0IHg9IjE0IiB5PSI2NTYiIHdpZHRoPSIzNjIiIGhlaWdodD0iNTIiIHJ4PSIxMiIgZmlsbD0iI2U4ZjRmZCIgc3Ryb2tlPSIjMDA3YWZmIiBzdHJva2Utd2lkdGg9IjEuNSIvPgogIDx0ZXh0IHg9IjU0IiB5PSI2ODciIGZpbGw9IiMwMDdhZmYiIGZvbnQtc2l6ZT0iMjIiIHRleHQtYW5jaG9yPSJtaWRkbGUiPuKKnjwvdGV4dD4KICA8dGV4dCB4PSIxMDAiIHk9IjY4MiIgZmlsbD0iIzAwN2FmZiIgZm9udC1zaXplPSIxNCIgZm9udC13ZWlnaHQ9IjYwMCI+U3VyIGwnw6ljcmFuIGQnYWNjdWVpbDwvdGV4dD4KICA8dGV4dCB4PSIxMDAiIHk9IjcwMCIgZmlsbD0iIzAwN2FmZiIgZm9udC1zaXplPSIxMiI+QWpvdXRlciBsJ2FwcCDDoCB2b3RyZSDDqWNyYW48L3RleHQ+CiAgPCEtLSBDYWxsb3V0IC0tPgogIDxyZWN0IHg9IjIwMCIgeT0iNjE4IiB3aWR0aD0iMTgwIiBoZWlnaHQ9IjM0IiByeD0iOCIgZmlsbD0iIzAwN2FmZiIvPgogIDxwb2x5Z29uIHBvaW50cz0iNTAsNjU1IDY1LDYzOCA4MCw2NTUiIGZpbGw9IiMwMDdhZmYiLz4KICA8dGV4dCB4PSIyOTAiIHk9IjY0MCIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlPDqWxlY3Rpb25uZXogY2V0dGUgb3B0aW9uPC90ZXh0PgogIDxyZWN0IHg9IjE0IiB5PSI3MjAiIHdpZHRoPSIzNjIiIGhlaWdodD0iNDQiIHJ4PSIxMiIgZmlsbD0iI2ZmZiIvPgogIDx0ZXh0IHg9IjE5NSIgeT0iNzQ4IiBmaWxsPSIjMDA3YWZmIiBmb250LXNpemU9IjE0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXdlaWdodD0iNTAwIj5Bbm51bGVyPC90ZXh0PgogIDxyZWN0IHg9IjE1MCIgeT0iODMwIiB3aWR0aD0iOTAiIGhlaWdodD0iNSIgcng9IjIuNSIgZmlsbD0iIzAwMCIgb3BhY2l0eT0iLjIiLz4KPC9zdmc+" alt="Feuille de partage iOS avec l'option Sur l'écran d'accueil"/>
+      </div>
+      <div class="step portrait">
+        <div class="step-num">3</div>
+        <h3>Nommez et confirmez</h3>
+        <p>Un champ éditable vous permet de renommer le raccourci. Appuyez sur <strong>Ajouter</strong> en haut à droite pour terminer.</p>
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzkwIiBoZWlnaHQ9Ijg0NCIgdmlld0JveD0iMCAwIDM5MCA4NDQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgZm9udC1mYW1pbHk9Ii1hcHBsZS1zeXN0ZW0sSGVsdmV0aWNhIE5ldWUsc2Fucy1zZXJpZiI+CiAgPHJlY3Qgd2lkdGg9IjM5MCIgaGVpZ2h0PSI4NDQiIGZpbGw9IiNmMmYyZjciLz4KICA8cmVjdCB3aWR0aD0iMzkwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjZjlmOWY5Ii8+CiAgPHRleHQgeD0iMjIiIHk9IjM0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE1IiBmb250LXdlaWdodD0iNjAwIj45OjQxPC90ZXh0PgogIDxyZWN0IHg9IjE0MyIgeT0iMTIiIHdpZHRoPSIxMDQiIGhlaWdodD0iMzIiIHJ4PSIxNiIgZmlsbD0iIzAwMCIvPgogIDwhLS0gTmF2aWdhdGlvbiBiYXIgLS0+CiAgPHJlY3QgeT0iNTAiIHdpZHRoPSIzOTAiIGhlaWdodD0iNTIiIGZpbGw9IiNmOWY5ZjkiLz4KICA8bGluZSB4MT0iMCIgeTE9IjEwMiIgeDI9IjM5MCIgeTI9IjEwMiIgc3Ryb2tlPSIjYzZjNmM4IiBzdHJva2Utd2lkdGg9IjAuNSIvPgogIDx0ZXh0IHg9IjIyIiB5PSI4MiIgZmlsbD0iIzAwN2FmZiIgZm9udC1zaXplPSIxNiI+QW5udWxlcjwvdGV4dD4KICA8dGV4dCB4PSIxOTUiIHk9IjgyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE3IiBmb250LXdlaWdodD0iNjAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5TdXIgbCfDqWNyYW4gZCdhY2N1ZWlsPC90ZXh0PgogIDx0ZXh0IHg9IjM2OCIgeT0iODIiIGZpbGw9IiMwMDdhZmYiIGZvbnQtc2l6ZT0iMTYiIHRleHQtYW5jaG9yPSJlbmQiIGZvbnQtd2VpZ2h0PSI2MDAiPkFqb3V0ZXI8L3RleHQ+CiAgPCEtLSBJY29uIHByZXZpZXcgLS0+CiAgPHJlY3QgeD0iMTU1IiB5PSIxMzAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgcng9IjIwIiBmaWxsPSIjMDA3YWZmIi8+CiAgPHRleHQgeD0iMTk1IiB5PSIxODIiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjM2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7imqE8L3RleHQ+CiAgPCEtLSBFZGl0YWJsZSBuYW1lIGZpZWxkIC0tPgogIDxyZWN0IHg9IjE0IiB5PSIyMzUiIHdpZHRoPSIzNjIiIGhlaWdodD0iNTIiIHJ4PSIxMiIgZmlsbD0iI2ZmZiIvPgogIDx0ZXh0IHg9IjMwIiB5PSIyNjYiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTYiPk1vbiBBcHBsaWNhdGlvbjwvdGV4dD4KICA8cmVjdCB4PSIzMzAiIHk9IjI1MyIgd2lkdGg9IjIiIGhlaWdodD0iMTgiIGZpbGw9IiMwMDdhZmYiIG9wYWNpdHk9Ii44Ii8+CiAgPCEtLSBMYWJlbCAtLT4KICA8dGV4dCB4PSIyOCIgeT0iMjI0IiBmaWxsPSIjNmM2YzcwIiBmb250LXNpemU9IjEyIiBmb250LXdlaWdodD0iNTAwIj5OT008L3RleHQ+CiAgPHRleHQgeD0iMTQiIHk9IjMwMiIgZmlsbD0iIzhlOGU5MyIgZm9udC1zaXplPSIxMyI+TCdpY8O0bmUgc2VyYSBham91dMOpZSDDoCB2b3RyZSDDqWNyYW4gZCdhY2N1ZWlsIGFmaW4gZGUgdm91cyBwZXJtZXR0cmUgZCdhY2PDqWRlciByYXBpZGVtZW50IMOgIGNlIHNpdGUgd2ViLjwvdGV4dD4KICA8cmVjdCB4PSIxNTAiIHk9IjgzMCIgd2lkdGg9IjkwIiBoZWlnaHQ9IjUiIHJ4PSIyLjUiIGZpbGw9IiMwMDAiIG9wYWNpdHk9Ii4yIi8+Cjwvc3ZnPg==" alt="Écran de confirmation avec le nom de l'app"/>
+      </div>
+    </div>
+    <div class="tip">
+      <span class="tip-icon">⚠️</span>
+      <span>Sur iOS, seul <strong>Safari</strong> permet d'ajouter une PWA à l'écran d'accueil. Chrome et Firefox iOS ne le supportent pas encore.</span>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════ WINDOWS -->
+  <section class="platform p-windows" id="windows">
+    <div class="platform-header">
+      <div class="platform-icon">🪟</div>
+      <div>
+        <h2>Windows</h2>
+        <p>Microsoft Edge (recommandé) · Chrome · Windows 10 / 11</p>
+      </div>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Repérez l'icône d'installation</h3>
+        <p>Dans <strong>Microsoft Edge</strong>, une icône <strong>⊕</strong> apparaît à droite de la barre d'adresse quand le site est installable. Cliquez dessus.</p>
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDkwMCA2MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgZm9udC1mYW1pbHk9IlNlZ29lIFVJLEFyaWFsLHNhbnMtc2VyaWYiPgogIDxyZWN0IHdpZHRoPSI5MDAiIGhlaWdodD0iNjAwIiBmaWxsPSIjZjNmM2YzIi8+CiAgPCEtLSBUaXRsZSBiYXIgLS0+CiAgPHJlY3Qgd2lkdGg9IjkwMCIgaGVpZ2h0PSIzNiIgZmlsbD0iIzIwMjAyMCIvPgogIDxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSI2MDAiIGhlaWdodD0iMzYiIGZpbGw9IiMyZDJkMmQiLz4KICA8IS0tIFRhYiAtLT4KICA8cmVjdCB4PSI4IiB5PSI2IiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjI2IiByeD0iNiIgZmlsbD0iIzQwNDA0MCIvPgogIDxyZWN0IHg9IjE2IiB5PSIxNCIgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiByeD0iNCIgZmlsbD0iIzAwNzhkNCIvPgogIDx0ZXh0IHg9IjM4IiB5PSIyNCIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTIiPk1vbiBBcHBsaWNhdGlvbiDigJQgbW9uYXBw4oCmPC90ZXh0PgogIDx0ZXh0IHg9Ijg1MCIgeT0iMjQiIGZpbGw9IiM4ODgiIGZvbnQtc2l6ZT0iMTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiPuKclTwvdGV4dD4KICA8dGV4dCB4PSI4MjAiIHk9IjI0IiBmaWxsPSIjODg4IiBmb250LXNpemU9IjE0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7ilqE8L3RleHQ+CiAgPHRleHQgeD0iNzkwIiB5PSIyNCIgZmlsbD0iIzg4OCIgZm9udC1zaXplPSIxNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+4pSAPC90ZXh0PgogIDwhLS0gVG9vbGJhciAtLT4KICA8cmVjdCB5PSIzNiIgd2lkdGg9IjkwMCIgaGVpZ2h0PSI0NiIgZmlsbD0iI2ZmZmZmZiIvPgogIDx0ZXh0IHg9IjI2IiB5PSI2NiIgZmlsbD0iIzU1NSIgZm9udC1zaXplPSIyMCI+4oaQPC90ZXh0PgogIDx0ZXh0IHg9IjU4IiB5PSI2NiIgZmlsbD0iI2NjYyIgZm9udC1zaXplPSIyMCI+4oaSPC90ZXh0PgogIDx0ZXh0IHg9Ijg4IiB5PSI2NiIgZmlsbD0iIzU1NSIgZm9udC1zaXplPSIxOCI+4oa6PC90ZXh0PgogIDwhLS0gQWRkcmVzcyBiYXIgLS0+CiAgPHJlY3QgeD0iMTE1IiB5PSI0NCIgd2lkdGg9IjU4MCIgaGVpZ2h0PSIzMCIgcng9IjYiIGZpbGw9IiNmNWY1ZjUiIHN0cm9rZT0iI2UwZTBlMCIgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgPHRleHQgeD0iMTQwIiB5PSI2NCIgZmlsbD0iIzU1NSIgZm9udC1zaXplPSIxMyI+8J+UkiBtb25hcHAuZXhlbXBsZS5jb208L3RleHQ+CiAgPCEtLSBJbnN0YWxsIGljb24gaGlnaGxpZ2h0ZWQgLS0+CiAgPHJlY3QgeD0iNjk1IiB5PSI0NCIgd2lkdGg9IjM2IiBoZWlnaHQ9IjMwIiByeD0iNSIgZmlsbD0iI2U4ZjRmZCIvPgogIDx0ZXh0IHg9IjcxMyIgeT0iNjUiIGZpbGw9IiMwMDc4ZDQiIGZvbnQtc2l6ZT0iMTgiIHRleHQtYW5jaG9yPSJtaWRkbGUiPuKKlTwvdGV4dD4KICA8IS0tIENhbGxvdXQgLS0+CiAgPHJlY3QgeD0iNTkwIiB5PSI4MiIgd2lkdGg9IjI1MCIgaGVpZ2h0PSI1MCIgcng9IjgiIGZpbGw9IiMwMDc4ZDQiLz4KICA8cG9seWdvbiBwb2ludHM9IjcxMCw4MiA3MjUsNjUgNzQwLDgyIiBmaWxsPSIjMDA3OGQ0Ii8+CiAgPHRleHQgeD0iNzE1IiB5PSIxMDQiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjEzIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXdlaWdodD0iNjAwIj5JbnN0YWxsZXIgTW9uIEFwcGxpY2F0aW9uPC90ZXh0PgogIDx0ZXh0IHg9IjcxNSIgeT0iMTIyIiBmaWxsPSIjYmJkZWZiIiBmb250LXNpemU9IjExIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5DbGlxdWV6IHBvdXIgaW5zdGFsbGVyIGwnYXBwbGljYXRpb248L3RleHQ+CiAgPCEtLSBQYWdlIGNvbnRlbnQgLS0+CiAgPHJlY3QgeD0iMjAiIHk9IjE1MiIgd2lkdGg9Ijg2MCIgaGVpZ2h0PSI0MDAiIHJ4PSIxMCIgZmlsbD0iI2ZmZiIgc3Ryb2tlPSIjZTBlMGUwIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8Y2lyY2xlIGN4PSI0NTAiIGN5PSIzMTAiIHI9IjgwIiBmaWxsPSIjMDA3OGQ0IiBvcGFjaXR5PSIuMDgiLz4KICA8cmVjdCB4PSIyMDAiIHk9IjM5MCIgd2lkdGg9IjUwMCIgaGVpZ2h0PSIxNiIgcng9IjgiIGZpbGw9IiNmMGYwZjAiLz4KICA8cmVjdCB4PSIzMDAiIHk9IjQxNiIgd2lkdGg9IjMwMCIgaGVpZ2h0PSIxMiIgcng9IjYiIGZpbGw9IiNmN2Y3ZjciLz4KPC9zdmc+" alt="Edge affiche l'icône d'installation dans la barre d'adresse"/>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Confirmez l'installation</h3>
+        <p>Une fenêtre s'ouvre avec les options : épingler dans la barre des tâches, créer un raccourci sur le Bureau… Cochez vos préférences et cliquez <strong>Installer</strong>.</p>
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDkwMCA2MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgZm9udC1mYW1pbHk9IlNlZ29lIFVJLEFyaWFsLHNhbnMtc2VyaWYiPgogIDxyZWN0IHdpZHRoPSI5MDAiIGhlaWdodD0iNjAwIiBmaWxsPSIjZjNmM2YzIi8+CiAgPHJlY3Qgd2lkdGg9IjkwMCIgaGVpZ2h0PSIzNiIgZmlsbD0iIzIwMjAyMCIvPgogIDx0ZXh0IHg9IjI2IiB5PSIyMyIgZmlsbD0iIzg4OCIgZm9udC1zaXplPSIyMCI+4oaQPC90ZXh0PgogIDwhLS0gRGltbWVkIHBhZ2UgLS0+CiAgPHJlY3QgeT0iMzYiIHdpZHRoPSI5MDAiIGhlaWdodD0iNTY0IiBmaWxsPSJyZ2JhKDAsMCwwLDAuMykiLz4KICA8IS0tIERpYWxvZyBjYXJkIC0tPgogIDxyZWN0IHg9IjI4MCIgeT0iODAiIHdpZHRoPSIzNDAiIGhlaWdodD0iNDIwIiByeD0iMTIiIGZpbGw9IiNmZmZmZmYiIGZpbHRlcj0iZHJvcC1zaGFkb3coMCA4cHggMjRweCByZ2JhKDAsMCwwLDAuMjUpKSIvPgogIDwhLS0gQXBwIGljb24gaW4gZGlhbG9nIC0tPgogIDxyZWN0IHg9IjM3MCIgeT0iMTEwIiB3aWR0aD0iODAiIGhlaWdodD0iODAiIHJ4PSIyMCIgZmlsbD0iIzAwNzhkNCIvPgogIDx0ZXh0IHg9IjQxMCIgeT0iMTYyIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIzNiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+4pqhPC90ZXh0PgogIDx0ZXh0IHg9IjQ1MCIgeT0iMjIwIiBmaWxsPSIjMWExYTFhIiBmb250LXNpemU9IjE4IiBmb250LXdlaWdodD0iNzAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5Nb24gQXBwbGljYXRpb248L3RleHQ+CiAgPHRleHQgeD0iNDUwIiB5PSIyNDIiIGZpbGw9IiM2NjYiIGZvbnQtc2l6ZT0iMTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiPm1vbmFwcC5leGVtcGxlLmNvbTwvdGV4dD4KICA8bGluZSB4MT0iMjk2IiB5MT0iMjYwIiB4Mj0iNjA0IiB5Mj0iMjYwIiBzdHJva2U9IiNmMGYwZjAiIHN0cm9rZS13aWR0aD0iMSIvPgogIDwhLS0gQ2hlY2tib3hlcyAtLT4KICA8cmVjdCB4PSIzMDQiIHk9IjI3OCIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiByeD0iMyIgZmlsbD0iIzAwNzhkNCIvPgogIDx0ZXh0IHg9IjMxMyIgeT0iMjkyIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIxMiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+4pyTPC90ZXh0PgogIDx0ZXh0IHg9IjMzMiIgeT0iMjkyIiBmaWxsPSIjMzMzIiBmb250LXNpemU9IjEzIj7DiXBpbmdsZXIgZGFucyBsYSBiYXJyZSBkZXMgdMOiY2hlczwvdGV4dD4KICA8cmVjdCB4PSIzMDQiIHk9IjMwOCIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiByeD0iMyIgZmlsbD0iIzAwNzhkNCIvPgogIDx0ZXh0IHg9IjMxMyIgeT0iMzIyIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIxMiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+4pyTPC90ZXh0PgogIDx0ZXh0IHg9IjMzMiIgeT0iMzIyIiBmaWxsPSIjMzMzIiBmb250LXNpemU9IjEzIj5DcsOpZXIgdW4gcmFjY291cmNpIHN1ciBsZSBidXJlYXU8L3RleHQ+CiAgPHJlY3QgeD0iMzA0IiB5PSIzMzgiIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgcng9IjMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2FhYSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICA8dGV4dCB4PSIzMzIiIHk9IjM1MiIgZmlsbD0iIzMzMyIgZm9udC1zaXplPSIxMyI+RMOpbWFycmVyIGF1dG9tYXRpcXVlbWVudDwvdGV4dD4KICA8bGluZSB4MT0iMjk2IiB5MT0iMzc0IiB4Mj0iNjA0IiB5Mj0iMzc0IiBzdHJva2U9IiNmMGYwZjAiIHN0cm9rZS13aWR0aD0iMSIvPgogIDwhLS0gQnV0dG9ucyAtLT4KICA8cmVjdCB4PSIzMDQiIHk9IjM5MCIgd2lkdGg9IjE0MCIgaGVpZ2h0PSI0NCIgcng9IjYiIGZpbGw9IiNmNWY1ZjUiIHN0cm9rZT0iI2UwZTBlMCIgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgPHRleHQgeD0iMzc0IiB5PSI0MTgiIGZpbGw9IiMzMzMiIGZvbnQtc2l6ZT0iMTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlBhcyBtYWludGVuYW50PC90ZXh0PgogIDxyZWN0IHg9IjQ2MCIgeT0iMzkwIiB3aWR0aD0iMTQwIiBoZWlnaHQ9IjQ0IiByeD0iNiIgZmlsbD0iIzAwNzhkNCIvPgogIDx0ZXh0IHg9IjUzMCIgeT0iNDE4IiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIxNCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC13ZWlnaHQ9IjYwMCI+SW5zdGFsbGVyPC90ZXh0Pgo8L3N2Zz4=" alt="Boîte de dialogue d'installation Windows"/>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>L'app est installée</h3>
+        <p>La PWA s'ouvre dans sa propre fenêtre et son icône apparaît dans la barre des tâches et/ou sur le bureau selon vos choix.</p>
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDkwMCA2MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgZm9udC1mYW1pbHk9IlNlZ29lIFVJLEFyaWFsLHNhbnMtc2VyaWYiPgogIDxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZGVzayIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPjxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMwMDc4ZDQiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMwMDVhOWUiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz4KICA8cmVjdCB3aWR0aD0iOTAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0idXJsKCNkZXNrKSIvPgogIDwhLS0gQXBwIHdpbmRvdyAtLT4KICA8cmVjdCB4PSI2MCIgeT0iMzAiIHdpZHRoPSI2MDAiIGhlaWdodD0iNDgwIiByeD0iMTAiIGZpbGw9IiNmZmYiIGZpbHRlcj0iZHJvcC1zaGFkb3coMCA0cHggMjRweCByZ2JhKDAsMCwwLDAuMykpIi8+CiAgPHJlY3QgeD0iNjAiIHk9IjMwIiB3aWR0aD0iNjAwIiBoZWlnaHQ9IjM4IiByeD0iMTAiIGZpbGw9IiNmNWY1ZjUiLz4KICA8cmVjdCB4PSI2MCIgeT0iNTQiIHdpZHRoPSI2MDAiIGhlaWdodD0iMTQiIGZpbGw9IiNmNWY1ZjUiLz4KICA8Y2lyY2xlIGN4PSI4NCIgY3k9IjQ5IiByPSI3IiBmaWxsPSIjZmY1ZjU3Ii8+CiAgPGNpcmNsZSBjeD0iMTA0IiBjeT0iNDkiIHI9IjciIGZpbGw9IiNmZWJjMmUiLz4KICA8Y2lyY2xlIGN4PSIxMjQiIGN5PSI0OSIgcj0iNyIgZmlsbD0iIzI4Yzg0MCIvPgogIDx0ZXh0IHg9IjM0MCIgeT0iNTMiIGZpbGw9IiM1NTUiIGZvbnQtc2l6ZT0iMTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtd2VpZ2h0PSI1MDAiPk1vbiBBcHBsaWNhdGlvbjwvdGV4dD4KICA8IS0tIEFwcCBjb250ZW50IC0tPgogIDxjaXJjbGUgY3g9IjM2MCIgY3k9IjI4MCIgcj0iODAiIGZpbGw9IiMwMDc4ZDQiIG9wYWNpdHk9Ii4xIi8+CiAgPHJlY3QgeD0iMTYwIiB5PSIzNTAiIHdpZHRoPSI0MDAiIGhlaWdodD0iMTQiIHJ4PSI3IiBmaWxsPSIjZjBmMGYwIi8+CiAgPHJlY3QgeD0iMjIwIiB5PSIzNzQiIHdpZHRoPSIyODAiIGhlaWdodD0iMTAiIHJ4PSI1IiBmaWxsPSIjZjdmN2Y3Ii8+CiAgPCEtLSBUYXNrYmFyIC0tPgogIDxyZWN0IHk9IjU1NSIgd2lkdGg9IjkwMCIgaGVpZ2h0PSI0NSIgZmlsbD0icmdiYSgwLDAsMCwwLjcpIiBzdHlsZT0iYmFja2Ryb3AtZmlsdGVyOmJsdXIoMjBweCkiLz4KICA8IS0tIFN0YXJ0IGJ1dHRvbiAtLT4KICA8cmVjdCB4PSI4IiB5PSI1NjEiIHdpZHRoPSIzOCIgaGVpZ2h0PSIzNCIgcng9IjYiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4xKSIvPgogIDx0ZXh0IHg9IjI3IiB5PSI1ODMiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjE4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7iip48L3RleHQ+CiAgPCEtLSBTZWFyY2ggLS0+CiAgPHJlY3QgeD0iNTUiIHk9IjU2MyIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIzMCIgcng9IjYiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4xNSkiLz4KICA8dGV4dCB4PSI3MCIgeT0iNTgzIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuNykiIGZvbnQtc2l6ZT0iMTMiPlJlY2hlcmNoZXI8L3RleHQ+CiAgPCEtLSBBcHAgaWNvbiBpbiB0YXNrYmFyIGhpZ2hsaWdodGVkIC0tPgogIDxyZWN0IHg9IjQyMCIgeT0iNTYxIiB3aWR0aD0iMzgiIGhlaWdodD0iMzQiIHJ4PSI2IiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMjUpIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjEuNSIvPgogIDx0ZXh0IHg9IjQzOSIgeT0iNTgzIiBmaWxsPSIjMDA3OGQ0IiBmb250LXNpemU9IjE4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7imqE8L3RleHQ+CiAgPCEtLSBBY3RpdmUgaW5kaWNhdG9yIC0tPgogIDxyZWN0IHg9IjQzMCIgeT0iNTkzIiB3aWR0aD0iMTgiIGhlaWdodD0iMyIgcng9IjEuNSIgZmlsbD0iIzAwNzhkNCIvPgogIDwhLS0gTGFiZWwgY2FsbG91dCAtLT4KICA8cmVjdCB4PSIzOTAiIHk9IjUyMCIgd2lkdGg9IjEwMCIgaGVpZ2h0PSIyOCIgcng9IjYiIGZpbGw9InJnYmEoMCwwLDAsMC44KSIvPgogIDx0ZXh0IHg9IjQ0MCIgeT0iNTM5IiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIxMSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+TW9uIEFwcGxpY2F0aW9uPC90ZXh0PgogIDxwb2x5Z29uIHBvaW50cz0iNDMwLDU0OCA0NDAsNTYwIDQ1MCw1NDgiIGZpbGw9InJnYmEoMCwwLDAsMC44KSIvPgo8L3N2Zz4=" alt="PWA installée dans la barre des tâches Windows"/>
+      </div>
+    </div>
+    <div class="tip">
+      <span class="tip-icon">💡</span>
+      <span>Avec Chrome, cliquez sur <strong>⋮ → Enregistrer et partager → Installer la page en tant qu'application</strong> si l'icône automatique n'apparaît pas.</span>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════ macOS -->
+  <section class="platform p-macos" id="macos">
+    <div class="platform-header">
+      <div class="platform-icon">💻</div>
+      <div>
+        <h2>macOS</h2>
+        <p>Safari 17+ · macOS Sonoma (14) ou ultérieur recommandé</p>
+      </div>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Ouvrez le site dans Safari</h3>
+        <p>Accédez à la PWA dans <strong>Safari</strong>. Une icône <strong>⊕</strong> peut apparaître dans le champ d'adresse si le site le supporte.</p>
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAyNCIgaGVpZ2h0PSI3MDAiIHZpZXdCb3g9IjAgMCAxMDI0IDcwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBmb250LWZhbWlseT0iLWFwcGxlLXN5c3RlbSxIZWx2ZXRpY2EgTmV1ZSxzYW5zLXNlcmlmIj4KICA8cmVjdCB3aWR0aD0iMTAyNCIgaGVpZ2h0PSI3MDAiIGZpbGw9IiNlY2VjZWMiLz4KICA8IS0tIG1hY09TIG1lbnUgYmFyIC0tPgogIDxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjI1IiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuODUpIi8+CiAgPHRleHQgeD0iMTQiIHk9IjE3IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE1IiBmb250LXdlaWdodD0iNzAwIj7wn42OPC90ZXh0PgogIDx0ZXh0IHg9IjQwIiB5PSIxNyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgZm9udC13ZWlnaHQ9IjYwMCI+U2FmYXJpPC90ZXh0PgogIDx0ZXh0IHg9Ijk2IiB5PSIxNyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyI+RmljaGllcjwvdGV4dD4KICA8dGV4dCB4PSIxNDQiIHk9IjE3IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIj5QcsOpc2VudGF0aW9uPC90ZXh0PgogIDx0ZXh0IHg9IjIxOCIgeT0iMTciIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiPkZhdm9yaXM8L3RleHQ+CiAgPCEtLSBTYWZhcmkgd2luZG93IC0tPgogIDxyZWN0IHg9IjMwIiB5PSI0MCIgd2lkdGg9Ijk2NCIgaGVpZ2h0PSI2MzAiIHJ4PSIxMiIgZmlsbD0iI2Y1ZjVmNSIgZmlsdGVyPSJkcm9wLXNoYWRvdygwIDRweCAyMHB4IHJnYmEoMCwwLDAsMC4xOCkpIi8+CiAgPCEtLSBUaXRsZSBiYXIgLS0+CiAgPHJlY3QgeD0iMzAiIHk9IjQwIiB3aWR0aD0iOTY0IiBoZWlnaHQ9IjUyIiByeD0iMTIiIGZpbGw9IiNmMGYwZjAiLz4KICA8cmVjdCB4PSIzMCIgeT0iNzYiIHdpZHRoPSI5NjQiIGhlaWdodD0iMTYiIGZpbGw9IiNmMGYwZjAiLz4KICA8Y2lyY2xlIGN4PSI2MCIgY3k9IjY2IiByPSI3IiBmaWxsPSIjZmY1ZjU3Ii8+CiAgPGNpcmNsZSBjeD0iODQiIGN5PSI2NiIgcj0iNyIgZmlsbD0iI2ZlYmMyZSIvPgogIDxjaXJjbGUgY3g9IjEwOCIgY3k9IjY2IiByPSI3IiBmaWxsPSIjMjhjODQwIi8+CiAgPCEtLSBUYWJzIGFyZWEgLS0+CiAgPHJlY3QgeD0iMTQwIiB5PSI1MCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIzMCIgcng9IjYiIGZpbGw9IiNlMGUwZTAiLz4KICA8dGV4dCB4PSIxNzIiIHk9IjcwIiBmaWxsPSIjNTU1IiBmb250LXNpemU9IjEyIj7wn5SSIE1vbiBBcHBsaWNhdGlvbjwvdGV4dD4KICA8IS0tIFRvb2xiYXIgLS0+CiAgPHJlY3QgeD0iMzAiIHk9IjkyIiB3aWR0aD0iOTY0IiBoZWlnaHQ9IjQ0IiBmaWxsPSIjZjdmN2Y3Ii8+CiAgPGxpbmUgeDE9IjMwIiB5MT0iMTM2IiB4Mj0iOTk0IiB5Mj0iMTM2IiBzdHJva2U9IiNkOGQ4ZDgiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjcwIiB5PSIxMTkiIGZpbGw9IiM4ODgiIGZvbnQtc2l6ZT0iMTgiPuKGkDwvdGV4dD4KICA8dGV4dCB4PSIxMDAiIHk9IjExOSIgZmlsbD0iI2NjYyIgZm9udC1zaXplPSIxOCI+4oaSPC90ZXh0PgogIDwhLS0gQWRkcmVzcyBiYXIgLS0+CiAgPHJlY3QgeD0iMjIwIiB5PSIxMDIiIHdpZHRoPSI1MjAiIGhlaWdodD0iMjgiIHJ4PSI4IiBmaWxsPSIjZmZmIiBzdHJva2U9IiNkMGQwZDAiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjI4MCIgeT0iMTIxIiBmaWxsPSIjNDQ0IiBmb250LXNpemU9IjEzIj5tb25hcHAuZXhlbXBsZS5jb208L3RleHQ+CiAgPCEtLSBJbnN0YWxsIGljb24gaGlnaGxpZ2h0ZWQgLS0+CiAgPHJlY3QgeD0iNzQ4IiB5PSIxMDMiIHdpZHRoPSIzNiIgaGVpZ2h0PSIyNiIgcng9IjYiIGZpbGw9IiNlOGYwZmUiLz4KICA8dGV4dCB4PSI3NjYiIHk9IjEyMSIgZmlsbD0iIzAwNzBjOSIgZm9udC1zaXplPSIxOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+4oqVPC90ZXh0PgogIDwhLS0gQ2FsbG91dCBidWJibGUgLS0+CiAgPHJlY3QgeD0iNjQwIiB5PSIxNDgiIHdpZHRoPSIyNjAiIGhlaWdodD0iNTIiIHJ4PSIxMCIgZmlsbD0iIzAwNzBjOSIvPgogIDxwb2x5Z29uIHBvaW50cz0iNzYyLDE0OCA3NzYsMTMwIDc5MCwxNDgiIGZpbGw9IiMwMDcwYzkiLz4KICA8dGV4dCB4PSI3NzAiIHk9IjE3MCIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTMiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtd2VpZ2h0PSI2MDAiPkFqb3V0ZXIgw6AgbCfDqWNyYW4gZCdhY2N1ZWlsPC90ZXh0PgogIDx0ZXh0IHg9Ijc3MCIgeT0iMTg4IiBmaWxsPSIjYmJkZWZiIiBmb250LXNpemU9IjExIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5vdSB1dGlsaXNleiBsZSBtZW51IEZhdm9yaXM8L3RleHQ+CiAgPCEtLSBTaWRlYmFyIGRpdmlkZXIgLS0+CiAgPGxpbmUgeDE9IjMwIiB5MT0iMTM2IiB4Mj0iOTk0IiB5Mj0iMTM2IiBzdHJva2U9IiNlMGUwZTAiLz4KICA8IS0tIFBhZ2UgY29udGVudCAtLT4KICA8Y2lyY2xlIGN4PSI1MTIiIGN5PSIzOTAiIHI9IjEwMCIgZmlsbD0iIzAwNzBjOSIgb3BhY2l0eT0iLjA2Ii8+CiAgPHJlY3QgeD0iMjAwIiB5PSI0ODAiIHdpZHRoPSI2MjQiIGhlaWdodD0iMTYiIHJ4PSI4IiBmaWxsPSIjZThlOGU4Ii8+CiAgPHJlY3QgeD0iMzIwIiB5PSI1MDYiIHdpZHRoPSIzODQiIGhlaWdodD0iMTIiIHJ4PSI2IiBmaWxsPSIjZjBmMGYwIi8+Cjwvc3ZnPg==" alt="Safari macOS avec l'icône d'installation"/>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Menu Favoris → « Sur l'écran d'accueil »</h3>
+        <p>Dans la barre de menus, allez dans <strong>Favoris → Ajouter à l'écran d'accueil…</strong> (ou cliquez sur l'icône ⊕ si présente).</p>
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAyNCIgaGVpZ2h0PSI3MDAiIHZpZXdCb3g9IjAgMCAxMDI0IDcwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBmb250LWZhbWlseT0iLWFwcGxlLXN5c3RlbSxIZWx2ZXRpY2EgTmV1ZSxzYW5zLXNlcmlmIj4KICA8cmVjdCB3aWR0aD0iMTAyNCIgaGVpZ2h0PSI3MDAiIGZpbGw9IiNlY2VjZWMiLz4KICA8cmVjdCB3aWR0aD0iMTAyNCIgaGVpZ2h0PSIyNSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjg1KSIvPgogIDx0ZXh0IHg9IjE0IiB5PSIxNyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNSIgZm9udC13ZWlnaHQ9IjcwMCI+8J+NjjwvdGV4dD4KICA8IS0tIEhpZ2hsaWdodGVkICJGYXZvcmlzIiBtZW51IC0tPgogIDxyZWN0IHg9IjIxOCIgeT0iMCIgd2lkdGg9IjcwIiBoZWlnaHQ9IjI1IiBmaWxsPSIjMDA3MGM5Ii8+CiAgPHRleHQgeD0iMjUzIiB5PSIxNyIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTMiPkZhdm9yaXM8L3RleHQ+CiAgPCEtLSBPdGhlciBtZW51IGl0ZW1zIC0tPgogIDx0ZXh0IHg9IjQwIiB5PSIxNyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgZm9udC13ZWlnaHQ9IjYwMCI+U2FmYXJpPC90ZXh0PgogIDx0ZXh0IHg9Ijk2IiB5PSIxNyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyI+RmljaGllcjwvdGV4dD4KICA8dGV4dCB4PSIxNDQiIHk9IjE3IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIj5QcsOpc2VudGF0aW9uPC90ZXh0PgogIDwhLS0gU2FmYXJpIHdpbmRvdyBiYWNrZ3JvdW5kIC0tPgogIDxyZWN0IHg9IjMwIiB5PSI0MCIgd2lkdGg9Ijk2NCIgaGVpZ2h0PSI2MzAiIHJ4PSIxMiIgZmlsbD0iI2Y1ZjVmNSIgZmlsdGVyPSJkcm9wLXNoYWRvdygwIDRweCAyMHB4IHJnYmEoMCwwLDAsMC4xNSkpIi8+CiAgPHJlY3QgeD0iMzAiIHk9IjQwIiB3aWR0aD0iOTY0IiBoZWlnaHQ9Ijk2IiByeD0iMTIiIGZpbGw9IiNmMGYwZjAiLz4KICA8cmVjdCB4PSIzMCIgeT0iMTA4IiB3aWR0aD0iOTY0IiBoZWlnaHQ9IjI4IiBmaWxsPSIjZjBmMGYwIi8+CiAgPCEtLSBEcm9wZG93biBtZW51IC0tPgogIDxyZWN0IHg9IjIxOCIgeT0iMjUiIHdpZHRoPSIzMDAiIGhlaWdodD0iMzIwIiByeD0iOCIgZmlsbD0icmdiYSgyNDgsMjQ4LDI0OCwwLjk4KSIgZmlsdGVyPSJkcm9wLXNoYWRvdygwIDRweCAxNnB4IHJnYmEoMCwwLDAsMC4yKSkiLz4KICA8dGV4dCB4PSIyMzQiIHk9IjUwIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIj5BZmZpY2hlciBsZXMgZmF2b3JpczwvdGV4dD4KICA8bGluZSB4MT0iMjI2IiB5MT0iNjIiIHgyPSI1MTAiIHkyPSI2MiIgc3Ryb2tlPSIjZTBlMGUwIi8+CiAgPHRleHQgeD0iMjM0IiB5PSI4MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyI+QWpvdXRlciBhdXggZmF2b3Jpc+KApjwvdGV4dD4KICA8dGV4dCB4PSIyMzQiIHk9IjEwNCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyI+TW9kaWZpZXIgbGVzIGZhdm9yaXPigKY8L3RleHQ+CiAgPGxpbmUgeDE9IjIyNiIgeTE9IjExNiIgeDI9IjUxMCIgeTI9IjExNiIgc3Ryb2tlPSIjZTBlMGUwIi8+CiAgPHRleHQgeD0iMjM0IiB5PSIxMzYiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiPlBhcnRhZ2VyIGF2ZWMgQWlyRHJvcOKApjwvdGV4dD4KICA8bGluZSB4MT0iMjI2IiB5MT0iMTQ4IiB4Mj0iNTEwIiB5Mj0iMTQ4IiBzdHJva2U9IiNlMGUwZTAiLz4KICA8IS0tIEhpZ2hsaWdodGVkIG9wdGlvbiAtLT4KICA8cmVjdCB4PSIyMjAiIHk9IjE1NCIgd2lkdGg9IjI5NiIgaGVpZ2h0PSIyOCIgcng9IjUiIGZpbGw9IiMwMDcwYzkiLz4KICA8dGV4dCB4PSIyMzQiIHk9IjE3MiIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTMiIGZvbnQtd2VpZ2h0PSI1MDAiPkFqb3V0ZXIgw6AgbCfDqWNyYW4gZCdhY2N1ZWls4oCmPC90ZXh0PgogIDwhLS0gQXJyb3cgaW5kaWNhdG9yIC0tPgogIDx0ZXh0IHg9IjQ5OCIgeT0iMTcyIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIxMiI+4oC6PC90ZXh0PgogIDxsaW5lIHgxPSIyMjYiIHkxPSIxODQiIHgyPSI1MTAiIHkyPSIxODQiIHN0cm9rZT0iI2UwZTBlMCIvPgogIDx0ZXh0IHg9IjIzNCIgeT0iMjA1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIj5FbnZveWVyIHZlcnMgbCdhcHBhcmVpbOKApjwvdGV4dD4KICA8dGV4dCB4PSIyMzQiIHk9IjIyOCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyI+RW5yZWdpc3RyZXIgZGFucyBMZWN0dXJlcyBkaWZm4oCmPC90ZXh0PgogIDxsaW5lIHgxPSIyMjYiIHkxPSIyNDAiIHgyPSI1MTAiIHkyPSIyNDAiIHN0cm9rZT0iI2UwZTBlMCIvPgogIDx0ZXh0IHg9IjIzNCIgeT0iMjYwIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIj5JbXByaW1lcuKApjwvdGV4dD4KPC9zdmc+" alt="Menu Favoris de Safari avec l'option Ajouter à l'écran d'accueil"/>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>L'app apparaît dans le Dock</h3>
+        <p>La PWA s'installe et son icône est ajoutée au <strong>Dock</strong>. Elle s'ouvre dans sa propre fenêtre sans interface Safari.</p>
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAyNCIgaGVpZ2h0PSI3MDAiIHZpZXdCb3g9IjAgMCAxMDI0IDcwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBmb250LWZhbWlseT0iLWFwcGxlLXN5c3RlbSxIZWx2ZXRpY2EgTmV1ZSxzYW5zLXNlcmlmIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0ibWJnIiB4MT0iMCIgeTE9IjAiIHgyPSIwIiB5Mj0iMSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMxYTIzN2UiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjNGExNDhjIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iMTAyNCIgaGVpZ2h0PSI3MDAiIGZpbGw9InVybCgjbWJnKSIvPgogIDwhLS0gTWVudSBiYXIgLS0+CiAgPHJlY3Qgd2lkdGg9IjEwMjQiIGhlaWdodD0iMjUiIGZpbGw9InJnYmEoMCwwLDAsMC4zNSkiLz4KICA8dGV4dCB4PSIxNCIgeT0iMTciIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjE1IiBmb250LXdlaWdodD0iNzAwIj7wn42OPC90ZXh0PgogIDx0ZXh0IHg9IjQwIiB5PSIxNyIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTMiIGZvbnQtd2VpZ2h0PSI2MDAiPk1vbiBBcHBsaWNhdGlvbjwvdGV4dD4KICA8dGV4dCB4PSI5MjAiIHk9IjE3IiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIxMyI+MTA6MjQ8L3RleHQ+CiAgPCEtLSBBcHAgd2luZG93IC0tPgogIDxyZWN0IHg9IjgwIiB5PSI1MCIgd2lkdGg9IjcwMCIgaGVpZ2h0PSI1MjAiIHJ4PSIxMiIgZmlsbD0iI2ZmZiIgZmlsdGVyPSJkcm9wLXNoYWRvdygwIDhweCAzMHB4IHJnYmEoMCwwLDAsMC40KSkiLz4KICA8cmVjdCB4PSI4MCIgeT0iNTAiIHdpZHRoPSI3MDAiIGhlaWdodD0iNDIiIHJ4PSIxMiIgZmlsbD0iI2YwZjBmMCIvPgogIDxyZWN0IHg9IjgwIiB5PSI3OCIgd2lkdGg9IjcwMCIgaGVpZ2h0PSIxNCIgZmlsbD0iI2YwZjBmMCIvPgogIDxjaXJjbGUgY3g9IjExMCIgY3k9IjcxIiByPSI3IiBmaWxsPSIjZmY1ZjU3Ii8+CiAgPGNpcmNsZSBjeD0iMTM0IiBjeT0iNzEiIHI9IjciIGZpbGw9IiNmZWJjMmUiLz4KICA8Y2lyY2xlIGN4PSIxNTgiIGN5PSI3MSIgcj0iNyIgZmlsbD0iIzI4Yzg0MCIvPgogIDx0ZXh0IHg9IjQzMCIgeT0iNzQiIGZpbGw9IiM1NTUiIGZvbnQtc2l6ZT0iMTMiIHRleHQtYW5jaG9yPSJtaWRkbGUiPk1vbiBBcHBsaWNhdGlvbjwvdGV4dD4KICA8IS0tIENvbnRlbnQgLS0+CiAgPGNpcmNsZSBjeD0iNDMwIiBjeT0iMzIwIiByPSIxMDAiIGZpbGw9IiMwMDcwYzkiIG9wYWNpdHk9Ii4wOCIvPgogIDxyZWN0IHg9IjIwMCIgeT0iNDEwIiB3aWR0aD0iNDYwIiBoZWlnaHQ9IjE0IiByeD0iNyIgZmlsbD0iI2YwZjBmMCIvPgogIDwhLS0gbWFjT1MgRG9jayAtLT4KICA8cmVjdCB4PSIxNTAiIHk9IjY0OCIgd2lkdGg9IjcyNCIgaGVpZ2h0PSI1NiIgcng9IjE0IiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMikiIHN0eWxlPSJiYWNrZHJvcC1maWx0ZXI6Ymx1cigyMHB4KSIvPgogIDwhLS0gRG9jayBpY29ucyAtLT4KICA8dGV4dCB4PSIxODUiIHk9IjY4OCIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMzQiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCflI08L3RleHQ+CiAgPHRleHQgeD0iMjQwIiB5PSI2ODgiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjM0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7inInvuI88L3RleHQ+CiAgPHRleHQgeD0iMjk1IiB5PSI2ODgiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjM0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7wn5eT77iPPC90ZXh0PgogIDx0ZXh0IHg9IjM1MCIgeT0iNjg4IiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIzNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+8J+TnTwvdGV4dD4KICA8IS0tIFNlcGFyYXRvciAtLT4KICA8cmVjdCB4PSIzODAiIHk9IjY1OCIgd2lkdGg9IjEiIGhlaWdodD0iMzYiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4zKSIvPgogIDwhLS0gQXBwIGhpZ2hsaWdodGVkIGluIERvY2sgLS0+CiAgPHJlY3QgeD0iMzg4IiB5PSI2NDUiIHdpZHRoPSI1OCIgaGVpZ2h0PSI1OCIgcng9IjE0IiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMjUpIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjEuNSIvPgogIDxyZWN0IHg9IjM5NiIgeT0iNjUyIiB3aWR0aD0iNDIiIGhlaWdodD0iNDIiIHJ4PSIxMCIgZmlsbD0iIzAwNzBjOSIvPgogIDx0ZXh0IHg9IjQxNyIgeT0iNjgyIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+4pqhPC90ZXh0PgogIDwhLS0gQWN0aXZlIGRvdCAtLT4KICA8Y2lyY2xlIGN4PSI0MTciIGN5PSI3MDYiIHI9IjMiIGZpbGw9IndoaXRlIi8+CiAgPCEtLSBUb29sdGlwIC0tPgogIDxyZWN0IHg9IjM2MiIgeT0iNjE4IiB3aWR0aD0iMTEwIiBoZWlnaHQ9IjI0IiByeD0iNiIgZmlsbD0icmdiYSgwLDAsMCwwLjc1KSIvPgogIDx0ZXh0IHg9IjQxNyIgeT0iNjM1IiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIxMiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+TW9uIEFwcGxpY2F0aW9uPC90ZXh0PgogIDxwb2x5Z29uIHBvaW50cz0iNDA3LDY0MiA0MTcsNjU1IDQyNyw2NDIiIGZpbGw9InJnYmEoMCwwLDAsMC43NSkiLz4KICA8dGV4dCB4PSI0NjAiIHk9IjY4OCIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMzQiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjJA8L3RleHQ+CiAgPHRleHQgeD0iNTE1IiB5PSI2ODgiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjM0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7wn461PC90ZXh0PgogIDx0ZXh0IHg9IjU3MCIgeT0iNjg4IiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIzNCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+8J+TtzwvdGV4dD4KICA8dGV4dCB4PSI2MjUiIHk9IjY4OCIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMzQiIHRleHQtYW5jaG9yPSJtaWRkbGUiPuKame+4jzwvdGV4dD4KICA8dGV4dCB4PSI2ODAiIHk9IjY4OCIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMzQiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfl5HvuI88L3RleHQ+CiAgPHRleHQgeD0iODQwIiB5PSI2ODgiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjM0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7wn5OBPC90ZXh0Pgo8L3N2Zz4=" alt="PWA installée dans le Dock macOS"/>
+      </div>
+    </div>
+    <div class="tip">
+      <span class="tip-icon">🆕</span>
+      <span>Cette fonctionnalité est disponible depuis <strong>macOS Sonoma (14)</strong> avec Safari 17. Sur les versions antérieures, utilisez Chrome ou Edge.</span>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>Guide d'installation PWA · Généré automatiquement · Toutes les captures d'écran sont des illustrations factices à titre indicatif.</p>
+</footer>
+
+</body>
+</html>
